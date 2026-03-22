@@ -28,6 +28,7 @@
   justify-content: center;
   z-index: 10000;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .overlayContent {
@@ -252,6 +253,7 @@
   justify-content: center;
   z-index: 10001;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 /* ─── Welcome Screen ──────────────────────────────────────────────────── */

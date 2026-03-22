@@ -19,6 +19,7 @@ export class SequencerEngine implements ModuleAudioEngine {
   // Internal clock
   private internalTimer: number | null = null
   private useExternalClock = false
+  private stateChangeHandler: (() => void) | null = null
 
   // Sequencer state
   private stepPitches: number[] = Array(16).fill(0) // semitones 0-12 relative to C4
@@ -49,8 +50,9 @@ export class SequencerEngine implements ModuleAudioEngine {
       this.pollClock()
     }, 5)
 
-    // Start internal clock
-    this.startInternalClock()
+    // Defer internal clock until audio context is running
+    // (avoids piling up scheduled gate values while context is suspended on iOS)
+    this.deferClockUntilRunning()
 
     // Set initial CV
     this.updateCV()
@@ -71,6 +73,23 @@ export class SequencerEngine implements ModuleAudioEngine {
       window.clearInterval(this.internalTimer)
       this.internalTimer = null
     }
+  }
+
+  private deferClockUntilRunning(): void {
+    if (Tone.context.state === 'running') {
+      this.startInternalClock()
+      return
+    }
+    const onStateChange = () => {
+      if (Tone.context.state === 'running') {
+        Tone.context.rawContext.removeEventListener('statechange', onStateChange)
+        this.stateChangeHandler = null
+        this.currentStep = 0
+        this.startInternalClock()
+      }
+    }
+    this.stateChangeHandler = onStateChange
+    Tone.context.rawContext.addEventListener('statechange', onStateChange)
   }
 
   private pollClock(): void {
@@ -229,6 +248,10 @@ export class SequencerEngine implements ModuleAudioEngine {
 
   dispose(): void {
     this.stopInternalClock()
+    if (this.stateChangeHandler) {
+      Tone.context.rawContext.removeEventListener('statechange', this.stateChangeHandler)
+      this.stateChangeHandler = null
+    }
     if (this.pollInterval !== null) {
       window.clearInterval(this.pollInterval)
       this.pollInterval = null

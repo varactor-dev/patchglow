@@ -207,10 +207,10 @@ export default function App() {
 
       {/* Mobile tap-to-start overlay */}
       {isMobile && !audioStarted && (
-        <div className={styles.mobileStartOverlay} onClick={handleStartAudio}>
+        <div className={styles.mobileStartOverlay} onPointerDown={handleStartAudio}>
           <div className={styles.overlayContent}>
             <div className={styles.overlayTitle}>PatchGlow</div>
-            <button className={styles.overlayButton} type="button">
+            <button className={styles.overlayButton} type="button" onPointerDown={handleStartAudio}>
               TAP TO START
             </button>
             <div className={styles.overlayHint}>Tap anywhere to begin</div>
@@ -220,10 +220,10 @@ export default function App() {
 
       {/* Desktop audio start overlay — hidden when welcome screen is active */}
       {!isMobile && !audioStarted && !showWelcome && (
-        <div className={styles.audioOverlay} onClick={handleStartAudio}>
+        <div className={styles.audioOverlay} onPointerDown={handleStartAudio}>
           <div className={styles.overlayContent}>
             <div className={styles.overlayTitle}>PatchGlow</div>
-            <button className={styles.overlayButton} type="button">
+            <button className={styles.overlayButton} type="button" onPointerDown={handleStartAudio}>
               ◉ START AUDIO
             </button>
             <div className={styles.overlayHint}>Click anywhere to begin</div>

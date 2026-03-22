@@ -58,6 +58,11 @@ class AudioEngineManager {
   async start(): Promise<void> {
     if (this.started) return
     await Tone.start()
+    // Belt-and-suspenders: explicitly resume the raw AudioContext
+    // in case Tone.start() didn't fully resume on iOS WKWebView (Chrome)
+    if (Tone.context.rawContext.state !== 'running') {
+      await Tone.context.rawContext.resume()
+    }
     this.started = true
   }
 
