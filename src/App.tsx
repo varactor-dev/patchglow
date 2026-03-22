@@ -1,17 +1,32 @@
 function App() {
   return (
     <div style={{
-      background: '#0a0a0f',
-      color: '#00e5ff',
       minHeight: '100vh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      fontFamily: 'monospace',
-      fontSize: '24px',
-      letterSpacing: '0.2em',
+      flexDirection: 'column',
+      gap: '12px',
     }}>
-      PATCHGLOW
+      <div style={{
+        fontFamily: 'var(--font-display)',
+        fontSize: '28px',
+        fontWeight: 700,
+        letterSpacing: '0.25em',
+        color: 'var(--color-cv)',
+        textShadow: '0 0 8px var(--color-cv), 0 0 24px rgba(0,229,255,0.3)',
+        textTransform: 'uppercase',
+      }}>
+        PatchGlow
+      </div>
+      <div style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: '11px',
+        color: 'var(--text-dim)',
+        letterSpacing: '0.15em',
+      }}>
+        BROWSER MODULAR SYNTHESIZER
+      </div>
     </div>
   )
 }

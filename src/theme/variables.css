@@ -1,0 +1,55 @@
+:root {
+  /* ─── Base ─────────────────────────────────────────────────────────────── */
+  --bg-deepest:      #0a0a0f;       /* app background — near black with blue tint */
+  --bg-rack:         #111118;       /* rack rail background */
+  --bg-panel:        #1a1a24;       /* module panel face */
+  --bg-panel-raised: #22222e;       /* raised areas on panels */
+  --border-subtle:   #2a2a3a;       /* panel edges, dividers */
+
+  /* ─── Text ─────────────────────────────────────────────────────────────── */
+  --text-primary:    #e0e0ec;
+  --text-dim:        #6a6a80;
+  --text-bright:     #ffffff;
+
+  /* ─── Signal Type Colors ────────────────────────────────────────────────── */
+  --color-audio:     #ff6b35;       /* warm amber — audio signals */
+  --color-cv:        #00e5ff;       /* cyan — control voltage */
+  --color-gate:      #ff2ecb;       /* magenta — gate/trigger */
+
+  /* ─── Module Accent Colors ──────────────────────────────────────────────── */
+  --accent-oscillator:  #00e5ff;
+  --accent-filter:      #ff6b35;
+  --accent-envelope:    #a855f7;
+  --accent-lfo:         #22d3ee;
+  --accent-vca:         #84cc16;
+  --accent-mixer:       #f59e0b;
+  --accent-output:      #e0e0ec;
+  --accent-keyboard:    #ffffff;
+  --accent-sequencer:   #ff2ecb;
+
+  /* ─── Glow Effect Sizes ─────────────────────────────────────────────────── */
+  --glow-sm:  0 0 4px;
+  --glow-md:  0 0 8px;
+  --glow-lg:  0 0 16px;
+  --glow-xl:  0 0 24px, 0 0 48px;
+
+  /* ─── Visualization ─────────────────────────────────────────────────────── */
+  --viz-bg:       #0d0d14;
+  --viz-grid:     #1a1a28;
+  --viz-trace:    currentColor;
+  --viz-trace-dim: rgba(255, 255, 255, 0.15);
+
+  /* ─── Rack Hardware ─────────────────────────────────────────────────────── */
+  --rack-rail:    #252530;
+  --rack-screw:   #3a3a4a;
+  --rack-hole:    #0a0a0f;
+  --hp-width:     20px;             /* 1HP in pixels */
+
+  /* ─── Typography ────────────────────────────────────────────────────────── */
+  --font-display: 'Orbitron', 'Audiowide', sans-serif;
+  --font-mono:    'JetBrains Mono', 'IBM Plex Mono', monospace;
+
+  /* ─── Transitions ───────────────────────────────────────────────────────── */
+  --transition-fast:   80ms ease;
+  --transition-normal: 150ms ease;
+}

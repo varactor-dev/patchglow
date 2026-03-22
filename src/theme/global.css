@@ -1,0 +1,76 @@
+/* ─── Reset ──────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ─── Root ───────────────────────────────────────────────────────────────── */
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-deepest);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  height: 100%;
+  position: relative;
+}
+
+/* ─── Vignette overlay ──────────────────────────────────────────────────── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 40%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ─── Scrollbars ────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-deepest);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
+
+/* ─── Selection ─────────────────────────────────────────────────────────── */
+::selection {
+  background: rgba(0, 229, 255, 0.2);
+  color: var(--text-bright);
+}
+
+/* ─── Focus ─────────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 1px solid var(--color-cv);
+  outline-offset: 2px;
+}
+
+/* ─── Utility ───────────────────────────────────────────────────────────── */
+.font-display {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
