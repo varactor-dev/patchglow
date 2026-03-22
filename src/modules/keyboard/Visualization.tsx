@@ -1,0 +1,127 @@
+import { useRef } from 'react'
+import { useAnimationFrame } from '@/modules/_shared/useAnimationFrame'
+import { clearCanvas } from '@/modules/_shared/drawUtils'
+import type { VisualizationData } from '@/types/module'
+import panelStyles from '@/ui/ModulePanel/ModulePanel.module.css'
+
+interface Props {
+  moduleId: string
+  data: VisualizationData
+  accentColor: string
+}
+
+// One octave of keys: C D E F G A B C
+const WHITE_NOTES = [0, 2, 4, 5, 7, 9, 11, 12]   // semitones for white keys
+const BLACK_NOTES = [1, 3, -1, 6, 8, 10, -1, -1]  // -1 = no black key at that position
+
+const W = 220
+const H = 60
+const WHITE_W = W / WHITE_NOTES.length
+const WHITE_H = H
+const BLACK_W = WHITE_W * 0.55
+const BLACK_H = H * 0.62
+
+export default function KeyboardVisualization({ data }: Props) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const pressedNote = data.customData?.['pressedNote'] as number | null
+  const noteName = (data.customData?.['pressedNoteName'] as string) ?? ''
+  const octave = (data.customData?.['octave'] as number) ?? 0
+  const gateHigh = ((data.customData?.['gateValue'] as number) ?? 0) > 0.5
+
+  useAnimationFrame(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')!
+    clearCanvas(ctx)
+
+    // Draw white keys
+    WHITE_NOTES.forEach((semitone, i) => {
+      const x = i * WHITE_W
+      const isPressed = pressedNote === semitone
+
+      ctx.fillStyle = isPressed ? '#00e5ff' : '#d0d0dc'
+      ctx.fillRect(x + 1, 0, WHITE_W - 2, WHITE_H - 1)
+
+      if (isPressed) {
+        ctx.shadowColor = '#00e5ff'
+        ctx.shadowBlur = 12
+        ctx.fillRect(x + 1, 0, WHITE_W - 2, WHITE_H - 1)
+        ctx.shadowBlur = 0
+      }
+
+      // Key border
+      ctx.strokeStyle = '#2a2a3a'
+      ctx.lineWidth = 1
+      ctx.strokeRect(x + 0.5, 0.5, WHITE_W - 1, WHITE_H - 1)
+    })
+
+    // Draw black keys on top
+    BLACK_NOTES.forEach((semitone, i) => {
+      if (semitone === -1) return
+      const x = (i + 1) * WHITE_W - BLACK_W / 2
+      const isPressed = pressedNote === semitone
+
+      ctx.fillStyle = isPressed ? '#00e5ff' : '#1a1a24'
+      ctx.fillRect(x, 0, BLACK_W, BLACK_H)
+
+      if (isPressed) {
+        ctx.shadowColor = '#00e5ff'
+        ctx.shadowBlur = 10
+        ctx.fillRect(x, 0, BLACK_W, BLACK_H)
+        ctx.shadowBlur = 0
+      }
+
+      ctx.strokeStyle = '#0a0a0f'
+      ctx.lineWidth = 1
+      ctx.strokeRect(x + 0.5, 0.5, BLACK_W - 1, BLACK_H - 1)
+    })
+
+    // Keyboard label mapping hint
+    const HINT_KEYS = ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K']
+    WHITE_NOTES.forEach((_semitone, i) => {
+      const x = i * WHITE_W + WHITE_W / 2
+      ctx.fillStyle = '#4a4a60'
+      ctx.font = '7px monospace'
+      ctx.textAlign = 'center'
+      ctx.fillText(HINT_KEYS[i] ?? '', x, WHITE_H - 5)
+    })
+  })
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
+      <div className={panelStyles.vizScreen} style={{ width: W, height: H }}>
+        <canvas
+          ref={canvasRef}
+          width={W}
+          height={H}
+          style={{ display: 'block', width: W, height: H }}
+        />
+      </div>
+
+      {/* Note display */}
+      <div style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: '11px',
+        color: gateHigh ? '#00e5ff' : 'var(--text-dim)',
+        textShadow: gateHigh ? '0 0 8px #00e5ff' : 'none',
+        letterSpacing: '0.1em',
+        minHeight: '14px',
+        textAlign: 'center',
+        transition: 'color 80ms ease',
+      }}>
+        {noteName ? `${noteName}${octave + 4}` : '—'}
+      </div>
+
+      {/* Octave indicator */}
+      <div style={{
+        fontFamily: 'var(--font-display)',
+        fontSize: '8px',
+        color: 'var(--text-dim)',
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+      }}>
+        OCT {octave >= 0 ? '+' : ''}{octave}
+      </div>
+    </div>
+  )
+}

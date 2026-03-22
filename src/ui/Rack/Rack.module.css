@@ -1,0 +1,59 @@
+.rackOuter {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-rack);
+  overflow-x: auto;
+  overflow-y: hidden;
+  position: relative;
+}
+
+/* Rail — top and bottom horizontal bar */
+.rail {
+  height: 18px;
+  background: var(--rack-rail);
+  position: relative;
+  flex-shrink: 0;
+  border-top: 1px solid #1e1e28;
+  border-bottom: 1px solid #1e1e28;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), inset 0 -1px 0 rgba(0,0,0,0.3);
+}
+
+/* Screw holes in the rail */
+.railHole {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--rack-hole);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+/* Module bed — where modules sit */
+.moduleBed {
+  position: relative;
+  height: 380px;
+  flex-shrink: 0;
+}
+
+/* Faint HP grid guide lines */
+.hpGrid {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0px,
+    transparent 19px,
+    #161620 19px,
+    #161620 20px
+  );
+  pointer-events: none;
+}
+
+/* Absolute positioning of each module */
+.modulePosition {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}

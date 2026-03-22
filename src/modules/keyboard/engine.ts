@@ -1,0 +1,123 @@
+import * as Tone from 'tone'
+import type { ModuleAudioEngine, VisualizationData } from '@/types/module'
+
+// Computer keyboard layout: A-L keys = C4 through C5 (one octave + 1)
+// Matches standard piano mapping
+const KEY_NOTE_MAP: Record<string, number> = {
+  'a': 0,  // C
+  'w': 1,  // C#
+  's': 2,  // D
+  'e': 3,  // D#
+  'd': 4,  // E
+  'f': 5,  // F
+  't': 6,  // F#
+  'g': 7,  // G
+  'y': 8,  // G#
+  'h': 9,  // A
+  'u': 10, // A#
+  'j': 11, // B
+  'k': 12, // C (octave up)
+}
+
+// Semitone to frequency (C4 = 261.63 Hz)
+function noteToFreq(semitone: number, octave: number): number {
+  const midiNote = 60 + semitone + octave * 12
+  return 440 * Math.pow(2, (midiNote - 69) / 12)
+}
+
+// Frequency to V/Oct voltage (C0 = 0V, C1 = 1V, etc.)
+function freqToVOct(freq: number): number {
+  return Math.log2(freq / 16.35)  // C0 = 16.35 Hz
+}
+
+export class KeyboardEngine implements ModuleAudioEngine {
+  private cvSignal: Tone.Signal<'number'> | null = null
+  private gateSignal: Tone.Signal<'number'> | null = null
+  private octave = 0
+  private currentNote: number | null = null
+  private currentKey: string | null = null
+
+  // For visualization
+  private pressedNote: number | null = null
+  private pressedNoteName = ''
+
+  private onKeyDown = (e: KeyboardEvent) => {
+    if (e.repeat) return
+    const key = e.key.toLowerCase()
+    if (!(key in KEY_NOTE_MAP)) return
+
+    const semitone = KEY_NOTE_MAP[key]!
+    const freq = noteToFreq(semitone, this.octave)
+    const voct = freqToVOct(freq)
+
+    this.cvSignal!.value = voct
+    this.gateSignal!.value = 1
+
+    this.currentNote = semitone
+    this.currentKey = key
+    this.pressedNote = semitone
+    this.pressedNoteName = NOTE_NAMES[semitone % 12]!
+  }
+
+  private onKeyUp = (e: KeyboardEvent) => {
+    const key = e.key.toLowerCase()
+    if (key === this.currentKey) {
+      this.gateSignal!.value = 0
+      this.currentNote = null
+      this.currentKey = null
+      this.pressedNote = null
+      this.pressedNoteName = ''
+    }
+  }
+
+  initialize(_context: Tone.BaseContext): void {
+    this.cvSignal = new Tone.Signal<'number'>({ value: freqToVOct(440), units: 'number' })
+    this.gateSignal = new Tone.Signal<'number'>({ value: 0, units: 'number' })
+
+    document.addEventListener('keydown', this.onKeyDown)
+    document.addEventListener('keyup', this.onKeyUp)
+  }
+
+  getOutputNode(portId: string): Tone.ToneAudioNode {
+    if (portId === 'cv-out') return this.cvSignal!
+    if (portId === 'gate-out') return this.gateSignal!
+    throw new Error(`KeyboardEngine: unknown output port "${portId}"`)
+  }
+
+  getInputNode(_portId: string): Tone.ToneAudioNode {
+    throw new Error('KeyboardEngine has no input ports')
+  }
+
+  setParameter(parameterId: string, value: number | string): void {
+    if (parameterId === 'octave') {
+      this.octave = Math.round(Number(value))
+      // If a note is held, retune immediately
+      if (this.currentNote !== null) {
+        const freq = noteToFreq(this.currentNote, this.octave)
+        this.cvSignal!.value = freqToVOct(freq)
+      }
+    }
+  }
+
+  getVisualizationData(): VisualizationData {
+    return {
+      customData: {
+        pressedNote: this.pressedNote,
+        pressedNoteName: this.pressedNoteName,
+        octave: this.octave,
+        gateValue: this.gateSignal?.value ?? 0,
+      },
+    }
+  }
+
+  dispose(): void {
+    document.removeEventListener('keydown', this.onKeyDown)
+    document.removeEventListener('keyup', this.onKeyUp)
+    this.cvSignal?.dispose()
+    this.gateSignal?.dispose()
+    this.cvSignal = null
+    this.gateSignal = null
+  }
+}
+
+const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
