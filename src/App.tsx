@@ -44,6 +44,8 @@ export default function App() {
   const setAudioStarted = useRackStore((s) => s.setAudioStarted)
   const [showAbout, setShowAbout] = useState(false)
   const [showPhoneWarning, setShowPhoneWarning] = useState(() => window.innerWidth < 768)
+  const [showWelcome, setShowWelcome] = useState(false)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
   const initializedRef = useRef(false)
   const rackAreaRef = useRef<HTMLDivElement>(null)
   const pinchRef = useRef({ dist: 0, zoom: 1 })
@@ -53,12 +55,38 @@ export default function App() {
     setAudioStarted()
   }, [setAudioStarted])
 
+  const handleWelcomeDemo = useCallback(async () => {
+    localStorage.setItem('patchglow-welcomed', 'true')
+    setShowWelcome(false)
+    await AudioEngineManager.getInstance().start()
+    setAudioStarted()
+    try {
+      const res = await fetch('/patches/subtractive-voice.json')
+      const json = await res.text()
+      useRackStore.getState().importPatch(json)
+    } catch { /* ignore */ }
+  }, [setAudioStarted])
+
+  const handleWelcomeEmpty = useCallback(async () => {
+    localStorage.setItem('patchglow-welcomed', 'true')
+    setShowWelcome(false)
+    await AudioEngineManager.getInstance().start()
+    setAudioStarted()
+  }, [setAudioStarted])
+
+  // Auto-dismiss toast after 4 seconds
+  useEffect(() => {
+    if (!toastMessage) return
+    const timer = setTimeout(() => setToastMessage(null), 4000)
+    return () => clearTimeout(timer)
+  }, [toastMessage])
+
   useEffect(() => {
     if (initializedRef.current) return
     initializedRef.current = true
 
-    // 1. Restore autosave BEFORE engine init so engines see correct initial state
-    loadAutosave()
+    // 1. Try restoring autosave
+    const restored = loadAutosave()
 
     // 2. Init audio engine (subscribes to store, syncs modules/connections)
     AudioEngineManager.getInstance().init()
@@ -66,7 +94,20 @@ export default function App() {
     // 3. Start autosave for future changes
     initAutosave()
 
-    // 4. Auto-fit zoom if content doesn't fit viewport
+    // 4. If no autosave: show welcome or auto-load demo
+    if (!restored) {
+      if (!localStorage.getItem('patchglow-welcomed')) {
+        setShowWelcome(true)
+      } else {
+        // Returning visitor with no autosave — auto-load demo
+        fetch('/patches/subtractive-voice.json')
+          .then((r) => r.text())
+          .then((json) => useRackStore.getState().importPatch(json))
+          .catch(() => {})
+      }
+    }
+
+    // 5. Auto-fit zoom if content doesn't fit viewport
     const fit = computeFitZoom()
     if (fit < 0.95) useRackStore.getState().setZoom(fit)
   }, [])
@@ -139,13 +180,13 @@ export default function App() {
 
   return (
     <div className={styles.app}>
-      <Toolbar onAbout={() => setShowAbout(true)} />
+      <Toolbar onAbout={() => setShowAbout(true)} onToast={setToastMessage} />
       <div className={styles.rackArea} ref={rackAreaRef}>
         <Rack scrollContainerRef={rackAreaRef} />
       </div>
 
-      {/* Full-screen audio start overlay */}
-      {!audioStarted && (
+      {/* Full-screen audio start overlay — hidden when welcome screen is active */}
+      {!audioStarted && !showWelcome && (
         <div className={styles.audioOverlay} onClick={handleStartAudio}>
           <div className={styles.overlayContent}>
             <div className={styles.overlayTitle}>PatchGlow</div>
@@ -153,6 +194,57 @@ export default function App() {
               ◉ START AUDIO
             </button>
             <div className={styles.overlayHint}>Click anywhere to begin</div>
+          </div>
+        </div>
+      )}
+
+      {/* Welcome screen — first visit only */}
+      {showWelcome && (
+        <div className={styles.welcomeOverlay}>
+          <div className={styles.welcomeCard}>
+            <div className={styles.welcomeLogo}>PatchGlow</div>
+            <div className={styles.welcomeSubtitle}>Welcome to PatchGlow</div>
+            <div className={styles.welcomeTagline}>
+              A visual modular synthesizer that teaches you synthesis
+              by showing you what&apos;s happening.
+            </div>
+
+            {/* Cable illustration */}
+            <svg className={styles.welcomeCables} width="160" height="50" viewBox="0 0 160 50" fill="none">
+              <defs>
+                <filter id="glow">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                </filter>
+              </defs>
+              <path d="M10 40 C40 40, 50 10, 80 10" stroke="#ff6b35" strokeWidth="2.5" strokeLinecap="round" filter="url(#glow)" />
+              <path d="M30 45 C60 45, 80 15, 110 15" stroke="#00e5ff" strokeWidth="2.5" strokeLinecap="round" filter="url(#glow)" />
+              <path d="M60 42 C90 42, 110 12, 150 12" stroke="#ff2ecb" strokeWidth="2.5" strokeLinecap="round" filter="url(#glow)" />
+            </svg>
+
+            <div className={styles.welcomeFeatures}>
+              <div className={styles.welcomeFeature}>
+                <span className={styles.welcomeDot} style={{ color: '#ff6b35', background: '#ff6b35' }} />
+                <span>Each module visualizes its function — watch waveforms, filter curves, and envelopes in real time</span>
+              </div>
+              <div className={styles.welcomeFeature}>
+                <span className={styles.welcomeDot} style={{ color: '#00e5ff', background: '#00e5ff' }} />
+                <span>Patch cables glow with the actual signal flowing through them — see audio, modulation, and triggers</span>
+              </div>
+              <div className={styles.welcomeFeature}>
+                <span className={styles.welcomeDot} style={{ color: '#ff2ecb', background: '#ff2ecb' }} />
+                <span>Connect modules, turn knobs, and hear the result instantly — learn by doing</span>
+              </div>
+            </div>
+
+            <div className={styles.welcomeButtons}>
+              <button className={styles.welcomePrimaryBtn} onClick={handleWelcomeDemo}>
+                Explore — Load Demo Patch
+              </button>
+              <button className={styles.welcomeSecondaryBtn} onClick={handleWelcomeEmpty}>
+                Start Empty
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -201,11 +293,50 @@ export default function App() {
               </a>
             </div>
             <div className={styles.aboutDivider} />
-            <div className={styles.aboutCredits}>
-              Built with React, TypeScript, Tone.js
-              <br />
-              Inspired by Mutable Instruments, VCV Rack, Patchcab
+            <div className={styles.aboutSectionTitle}>Acknowledgments</div>
+            <div className={styles.aboutAcknowledgments}>
+              <div className={styles.ackEntry}>
+                <span className={styles.ackName} style={{ color: '#00e5ff' }}>Tone.js</span>
+                <span className={styles.ackDesc}>The Web Audio framework at the heart of PatchGlow&apos;s sound engine. Tone.js makes sophisticated audio synthesis accessible in the browser and without it this project simply wouldn&apos;t exist. Created by Yotam Mann.</span>
+                <a className={styles.aboutLink} href="https://tonejs.github.io" target="_blank" rel="noopener noreferrer">tonejs.github.io</a>
+              </div>
+              <div className={styles.ackEntry}>
+                <span className={styles.ackName} style={{ color: '#a855f7' }}>Mutable Instruments</span>
+                <span className={styles.ackDesc}>{`\u00C9milie Gillet\u2019s decision to open source the firmware for every Mutable Instruments Eurorack module set an extraordinary standard for generosity in the synth community. The DSP algorithms and synthesis concepts behind Plaits, Clouds, Rings, and others were an invaluable reference.`}</span>
+                <a className={styles.aboutLink} href="https://pichenettes.github.io/mutable-instruments-documentation" target="_blank" rel="noopener noreferrer">mutable-instruments-documentation</a>
+              </div>
+              <div className={styles.ackEntry}>
+                <span className={styles.ackName} style={{ color: '#61dafb' }}>React</span>
+                <span className={styles.ackDesc}>The UI framework that makes PatchGlow&apos;s modular, component-based architecture possible. Each module in PatchGlow is literally a React component.</span>
+                <a className={styles.aboutLink} href="https://react.dev" target="_blank" rel="noopener noreferrer">react.dev</a>
+              </div>
+              <div className={styles.ackEntry}>
+                <span className={styles.ackName} style={{ color: '#646cff' }}>Vite</span>
+                <span className={styles.ackDesc}>The build tool that enables instant development feedback and fast production builds.</span>
+                <a className={styles.aboutLink} href="https://vitejs.dev" target="_blank" rel="noopener noreferrer">vitejs.dev</a>
+              </div>
+              <div className={styles.ackEntry}>
+                <span className={styles.ackName} style={{ color: '#f59e0b' }}>Zustand</span>
+                <span className={styles.ackDesc}>The lightweight state management library that tracks every module, cable, and knob position in PatchGlow.</span>
+                <a className={styles.aboutLink} href="https://github.com/pmndrs/zustand" target="_blank" rel="noopener noreferrer">github.com/pmndrs/zustand</a>
+              </div>
+              <div className={styles.ackEntry}>
+                <span className={styles.ackName} style={{ color: '#22d3ee' }}>@dnd-kit</span>
+                <span className={styles.ackDesc}>The drag and drop toolkit that powers module placement and rearrangement in the rack.</span>
+                <a className={styles.aboutLink} href="https://dndkit.com" target="_blank" rel="noopener noreferrer">dndkit.com</a>
+              </div>
+              <div className={styles.ackEntry}>
+                <span className={styles.ackName} style={{ color: '#84cc16' }}>Patchcab</span>
+                <span className={styles.ackDesc}>An earlier browser-based modular synth built with Tone.js and Svelte by Spectrome that served as architectural inspiration for PatchGlow&apos;s module and patching systems.</span>
+                <a className={styles.aboutLink} href="https://github.com/spectrome/patchcab" target="_blank" rel="noopener noreferrer">github.com/spectrome/patchcab</a>
+              </div>
+              <div className={styles.ackEntry}>
+                <span className={styles.ackName} style={{ color: '#ff6b35' }}>VCV Rack</span>
+                <span className={styles.ackDesc}>The gold standard virtual Eurorack environment. VCV Rack&apos;s approach to faithfully emulating the modular synth experience was a constant reference point for how modules should behave and interact.</span>
+                <a className={styles.aboutLink} href="https://vcvrack.com" target="_blank" rel="noopener noreferrer">vcvrack.com</a>
+              </div>
             </div>
+            <div className={styles.aboutDivider} />
             <div className={styles.aboutLicense}>
               <a className={styles.aboutLink} href="https://github.com/kc-cl/patchglow/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">
                 MIT License
@@ -213,6 +344,11 @@ export default function App() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Toast notification */}
+      {toastMessage && (
+        <div className={styles.toast}>{toastMessage}</div>
       )}
     </div>
   )

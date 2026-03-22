@@ -19,9 +19,10 @@ function computeFitZoom(): number {
 
 interface ToolbarProps {
   onAbout?: () => void
+  onToast?: (message: string) => void
 }
 
-export default function Toolbar({ onAbout }: ToolbarProps) {
+export default function Toolbar({ onAbout, onToast }: ToolbarProps) {
   const audioStarted = useRackStore((s) => s.audioStarted)
   const setAudioStarted = useRackStore((s) => s.setAudioStarted)
   const addModule = useRackStore((s) => s.addModule)
@@ -97,7 +98,8 @@ export default function Toolbar({ onAbout }: ToolbarProps) {
     if (!window.confirm('Reset rack? This will remove all modules and cables.')) return
     clearAutosave()
     importPatch('{"modules":{},"connections":[]}')
-  }, [importPatch])
+    onToast?.('Rack cleared. Click DEMO to reload the demo patch.')
+  }, [importPatch, onToast])
 
   const handleDemo = useCallback(async () => {
     try {

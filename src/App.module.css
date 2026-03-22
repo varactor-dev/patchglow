@@ -188,6 +188,45 @@
   opacity: 0.7;
 }
 
+.aboutSectionTitle {
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.aboutAcknowledgments {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 4px;
+  width: 100%;
+}
+
+.ackEntry {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.ackName {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.ackDesc {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
 .aboutDivider {
   width: 60px;
   height: 1px;
@@ -244,4 +283,167 @@
 
 .phoneContinue:hover {
   opacity: 1;
+}
+
+/* ─── Welcome Screen ──────────────────────────────────────────────────── */
+
+.welcomeOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: welcomeFade 300ms ease-out;
+}
+
+@keyframes welcomeFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.welcomeCard {
+  max-width: 600px;
+  width: 90%;
+  background: #12121a;
+  border: 1px solid #2a2a3a;
+  border-radius: 8px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 0 40px rgba(0,229,255,0.08), 0 8px 32px rgba(0,0,0,0.6);
+  animation: welcomeSlideUp 300ms ease-out;
+}
+
+@keyframes welcomeSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.welcomeLogo {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-cv);
+  text-shadow: 0 0 20px var(--color-cv), 0 0 60px rgba(0,229,255,0.3);
+}
+
+.welcomeSubtitle {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+
+.welcomeTagline {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 1.6;
+  max-width: 420px;
+}
+
+.welcomeCables {
+  margin: 4px 0;
+}
+
+.welcomeFeatures {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 440px;
+}
+
+.welcomeFeature {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.welcomeDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.welcomeButtons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.welcomePrimaryBtn {
+  padding: 14px 40px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-cv);
+  background: transparent;
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 200ms ease;
+  box-shadow: 0 0 16px rgba(0,229,255,0.15);
+}
+
+.welcomePrimaryBtn:hover {
+  background: var(--color-cv);
+  color: #0a0a0f;
+  box-shadow: 0 0 24px var(--color-cv), 0 0 48px rgba(0,229,255,0.3);
+}
+
+.welcomeSecondaryBtn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+}
+
+.welcomeSecondaryBtn:hover {
+  opacity: 1;
+  color: var(--text-primary);
+}
+
+/* ─── Toast ────────────────────────────────────────────────────────────── */
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(20, 20, 30, 0.95);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 8px 20px;
+  border-radius: 4px;
+  z-index: 9999;
+  white-space: nowrap;
+  animation: welcomeSlideUp 200ms ease-out;
 }

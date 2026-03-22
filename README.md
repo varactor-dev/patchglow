@@ -88,12 +88,29 @@ See the in-app **DOCS** button for the full technical reference.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, module creation guide, and contribution checklist.
 
-## Credits
+## Acknowledgments
 
-- **[Tone.js](https://tonejs.github.io/)** — Web Audio framework
-- **[Mutable Instruments](https://mutable-instruments.net/)** — design inspiration from Eurorack hardware
-- **[Orbitron](https://fonts.google.com/specimen/Orbitron)** — display font
-- **[JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono)** — monospace font
+PatchGlow is made possible by the generosity of the open source community:
+
+- **[Tone.js](https://tonejs.github.io/)** — The Web Audio framework at the heart of PatchGlow's sound engine. Tone.js makes sophisticated audio synthesis accessible in the browser and without it this project simply wouldn't exist. Created by Yotam Mann.
+
+- **[Mutable Instruments](https://pichenettes.github.io/mutable-instruments-documentation)** — Emilie Gillet's decision to open source the firmware for every Mutable Instruments Eurorack module set an extraordinary standard for generosity in the synth community. The DSP algorithms and synthesis concepts behind Plaits, Clouds, Rings, and others were an invaluable reference for understanding how great modules work.
+
+- **[React](https://react.dev)** — The UI framework that makes PatchGlow's modular, component-based architecture possible. Each module in PatchGlow is literally a React component.
+
+- **[Vite](https://vitejs.dev)** — The build tool that enables instant development feedback and fast production builds.
+
+- **[Zustand](https://github.com/pmndrs/zustand)** — The lightweight state management library that tracks every module, cable, and knob position in PatchGlow.
+
+- **[@dnd-kit](https://dndkit.com)** — The drag and drop toolkit that powers module placement and rearrangement in the rack.
+
+- **[Patchcab](https://github.com/spectrome/patchcab)** by Spectrome — An earlier browser-based modular synth built with Tone.js and Svelte that served as architectural inspiration for PatchGlow's module and patching systems.
+
+- **[VCV Rack](https://vcvrack.com)** — The gold standard virtual Eurorack environment. VCV Rack's approach to faithfully emulating the modular synth experience was a constant reference point for how modules should behave and interact.
+
+- **[Orbitron](https://fonts.google.com/specimen/Orbitron)** and **[JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono)** — the display and monospace fonts that give PatchGlow its retro-futurist aesthetic.
+
+If you're inspired by PatchGlow, please explore and support these projects. Open source synthesis exists because people choose to share their work.
 
 ## License
 
