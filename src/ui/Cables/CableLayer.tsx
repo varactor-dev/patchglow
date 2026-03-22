@@ -42,6 +42,14 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
   const [, setScrollTick] = useState(0)
   const svgRef = useRef<SVGSVGElement>(null)
 
+  // Force re-render after connections change so newly mounted port DOM elements are queryable.
+  // importPatch sets modules + connections atomically; port DOM elements aren't committed yet
+  // when CableLayer first renders, so getPortCenter returns null. rAF defers until after commit.
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setScrollTick((t) => t + 1))
+    return () => cancelAnimationFrame(id)
+  }, [connections])
+
   // Re-render cables when the scroll container scrolls so coordinates stay aligned
   useEffect(() => {
     const container = containerRef.current

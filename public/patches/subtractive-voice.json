@@ -66,17 +66,17 @@
   },
   "connections": [
     {
-      "id": "keyboard-1:cv→oscillator-1:voct",
+      "id": "keyboard-1:cv-out→oscillator-1:voct",
       "sourceModuleId": "keyboard-1",
-      "sourcePortId": "cv",
+      "sourcePortId": "cv-out",
       "destModuleId": "oscillator-1",
       "destPortId": "voct",
       "signalType": "cv"
     },
     {
-      "id": "keyboard-1:gate→envelope-1:gate",
+      "id": "keyboard-1:gate-out→envelope-1:gate",
       "sourceModuleId": "keyboard-1",
-      "sourcePortId": "gate",
+      "sourcePortId": "gate-out",
       "destModuleId": "envelope-1",
       "destPortId": "gate",
       "signalType": "gate"
