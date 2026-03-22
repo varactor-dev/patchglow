@@ -1,0 +1,171 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import styles from './Knob.module.css'
+
+interface KnobProps {
+  label: string
+  value: number
+  min: number
+  max: number
+  default: number
+  unit?: string
+  curve?: 'linear' | 'exponential' | 'logarithmic'
+  accentColor: string
+  onChange: (value: number) => void
+}
+
+function normalToValue(normal: number, min: number, max: number, curve: KnobProps['curve']): number {
+  const n = Math.max(0, Math.min(1, normal))
+  if (curve === 'exponential') {
+    return min * Math.pow(max / min, n)
+  }
+  if (curve === 'logarithmic') {
+    return min + (Math.log(n + 1) / Math.log(2)) * (max - min)
+  }
+  return min + n * (max - min)
+}
+
+function valueToNormal(value: number, min: number, max: number, curve: KnobProps['curve']): number {
+  const v = Math.max(min, Math.min(max, value))
+  if (curve === 'exponential') {
+    return Math.log(v / min) / Math.log(max / min)
+  }
+  if (curve === 'logarithmic') {
+    return Math.pow(2, (v - min) / (max - min)) - 1
+  }
+  return (v - min) / (max - min)
+}
+
+function formatValue(value: number, unit?: string): string {
+  let formatted: string
+  if (Math.abs(value) >= 10000) {
+    formatted = (value / 1000).toFixed(1) + 'k'
+  } else if (Math.abs(value) >= 1000) {
+    formatted = (value / 1000).toFixed(2) + 'k'
+  } else if (Math.abs(value) >= 10) {
+    formatted = value.toFixed(1)
+  } else {
+    formatted = value.toFixed(2)
+  }
+  return unit ? `${formatted} ${unit}` : formatted
+}
+
+// Knob travel: 270 degrees (from -135° to +135°)
+const MIN_ANGLE = -135
+const MAX_ANGLE = 135
+
+export default function Knob({
+  label,
+  value,
+  min,
+  max,
+  default: defaultValue,
+  unit,
+  curve = 'linear',
+  accentColor,
+  onChange,
+}: KnobProps) {
+  const [isActive, setIsActive] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
+  const normalRef = useRef(valueToNormal(value, min, max, curve))
+  const startYRef = useRef(0)
+  const startNormalRef = useRef(0)
+
+  // Sync external value changes
+  normalRef.current = valueToNormal(value, min, max, curve)
+
+  const angle = MIN_ANGLE + normalRef.current * (MAX_ANGLE - MIN_ANGLE)
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const el = e.currentTarget as HTMLElement
+    el.requestPointerLock()
+    startYRef.current = e.clientY
+    startNormalRef.current = normalRef.current
+    setIsActive(true)
+  }, [])
+
+  const handleDoubleClick = useCallback(() => {
+    onChange(defaultValue)
+  }, [defaultValue, onChange])
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault()
+    const delta = -e.deltaY / 600
+    const next = Math.max(0, Math.min(1, normalRef.current + delta))
+    onChange(normalToValue(next, min, max, curve))
+  }, [min, max, curve, onChange])
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isActive) return
+      const sensitivity = e.shiftKey ? 0.001 : 0.01
+      const delta = -e.movementY * sensitivity
+      const next = Math.max(0, Math.min(1, normalRef.current + delta))
+      normalRef.current = next
+      onChange(normalToValue(next, min, max, curve))
+    }
+
+    const handleMouseUp = () => {
+      if (isActive) {
+        document.exitPointerLock()
+        setIsActive(false)
+      }
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isActive, min, max, curve, onChange])
+
+  const glowOpacity = isActive ? 1 : isHovered ? 0.6 : 0.2
+
+  return (
+    <div className={styles.knobWrapper}>
+      <div
+        className={styles.knob}
+        onMouseDown={handleMouseDown}
+        onDoubleClick={handleDoubleClick}
+        onWheel={handleWheel}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        style={{
+          boxShadow: `0 0 0 1px rgba(255,255,255,0.08), ${isActive || isHovered ? `0 0 12px ${accentColor}` : 'none'}`,
+          cursor: isActive ? 'none' : 'ns-resize',
+        }}
+      >
+        {/* Glow ring */}
+        <div
+          className={styles.glowRing}
+          style={{
+            border: `1px solid ${accentColor}`,
+            boxShadow: `0 0 8px ${accentColor}, inset 0 0 4px rgba(0,0,0,0.5)`,
+            opacity: glowOpacity,
+          }}
+        />
+        {/* Indicator line */}
+        <div
+          className={styles.indicator}
+          style={{
+            transform: `translateX(-50%) rotate(${angle}deg)`,
+            background: accentColor,
+            boxShadow: `0 0 4px ${accentColor}`,
+          }}
+        />
+        {/* Center dot */}
+        <div className={styles.center} />
+      </div>
+      <div className={styles.label} style={{ color: 'var(--text-dim)' }}>
+        {label}
+      </div>
+      <div
+        className={styles.value}
+        style={{ color: isActive ? accentColor : 'var(--text-dim)' }}
+      >
+        {formatValue(value, unit)}
+      </div>
+    </div>
+  )
+}
