@@ -66,9 +66,11 @@ export default function Knob({
 }: KnobProps) {
   const [isActive, setIsActive] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
+  const [touchPos, setTouchPos] = useState<{ x: number; y: number } | null>(null)
   const normalRef = useRef(valueToNormal(value, min, max, curve))
   const lastYRef = useRef(0)
   const pointerIdRef = useRef<number | null>(null)
+  const pointerTypeRef = useRef<string>('')
   const elRef = useRef<HTMLDivElement>(null)
 
   // Sync external value changes
@@ -81,8 +83,12 @@ export default function Knob({
     const el = e.currentTarget as HTMLDivElement
     el.setPointerCapture(e.pointerId)
     pointerIdRef.current = e.pointerId
+    pointerTypeRef.current = e.pointerType
     lastYRef.current = e.clientY
     setIsActive(true)
+    if (e.pointerType === 'touch') {
+      setTouchPos({ x: e.clientX, y: e.clientY })
+    }
   }, [])
 
   const handleDoubleClick = useCallback(() => {
@@ -108,11 +114,16 @@ export default function Knob({
       const next = Math.max(0, Math.min(1, normalRef.current + delta))
       normalRef.current = next
       onChange(normalToValue(next, min, max, curve))
+      if (pointerTypeRef.current === 'touch') {
+        setTouchPos({ x: e.clientX, y: e.clientY })
+      }
     }
 
     const stopCapture = () => {
       pointerIdRef.current = null
+      pointerTypeRef.current = ''
       setIsActive(false)
+      setTouchPos(null)
     }
 
     // Listen on the element — with setPointerCapture, iOS delivers events here, not document
@@ -175,6 +186,14 @@ export default function Knob({
       >
         {formatValue(value, unit)}
       </div>
+      {isActive && touchPos && (
+        <div
+          className={styles.touchTooltip}
+          style={{ left: touchPos.x, top: touchPos.y - 60 }}
+        >
+          {formatValue(value, unit)}
+        </div>
+      )}
     </div>
   )
 }

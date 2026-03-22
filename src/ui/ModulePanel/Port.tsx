@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { SIGNAL_COLORS, isCompatible } from '@/engine/signalTypes'
 import { useRackStore } from '@/store/rackStore'
 import type { SignalType } from '@/types/module'
@@ -27,6 +27,14 @@ export default function Port({
   const addConnection = useRackStore((s) => s.addConnection)
   const connections = useRackStore((s) => s.connections)
 
+  const dragTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const dragStartPosRef = useRef<{ x: number; y: number } | null>(null)
+
+  // Cleanup drag timer on unmount
+  useEffect(() => {
+    return () => { if (dragTimerRef.current) clearTimeout(dragTimerRef.current) }
+  }, [])
+
   const isConnected = connections.some(
     (c) =>
       (c.sourceModuleId === moduleId && c.sourcePortId === portId) ||
@@ -53,7 +61,34 @@ export default function Port({
       if (direction !== 'output') return
       e.preventDefault()
       e.stopPropagation()
-      startCableDrag(moduleId, portId, signalType)
+
+      // Touch: delay 100ms to disambiguate from scroll intent
+      if (e.pointerType === 'touch') {
+        dragStartPosRef.current = { x: e.clientX, y: e.clientY }
+        dragTimerRef.current = setTimeout(() => {
+          startCableDrag(moduleId, portId, signalType)
+          dragTimerRef.current = null
+          dragStartPosRef.current = null
+        }, 100)
+
+        // Listen for movement during delay — cancel if >10px (scroll intent)
+        const onMove = (ev: PointerEvent) => {
+          if (!dragStartPosRef.current) return
+          const dx = ev.clientX - dragStartPosRef.current.x
+          const dy = ev.clientY - dragStartPosRef.current.y
+          if (Math.sqrt(dx * dx + dy * dy) > 10) {
+            if (dragTimerRef.current) clearTimeout(dragTimerRef.current)
+            dragTimerRef.current = null
+            dragStartPosRef.current = null
+            document.removeEventListener('pointermove', onMove)
+          }
+        }
+        document.addEventListener('pointermove', onMove)
+        // Clean up listener after delay expires
+        setTimeout(() => document.removeEventListener('pointermove', onMove), 110)
+      } else {
+        startCableDrag(moduleId, portId, signalType)
+      }
     },
     [direction, moduleId, portId, signalType, startCableDrag],
   )

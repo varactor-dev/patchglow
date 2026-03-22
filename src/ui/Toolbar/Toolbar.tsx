@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import AudioEngineManager from '@/engine/AudioEngineManager'
 import { useRackStore } from '@/store/rackStore'
 import { getAllModules } from '@/engine/moduleRegistry'
@@ -109,6 +109,20 @@ export default function Toolbar({ onAbout }: ToolbarProps) {
     }
   }, [importPatch])
 
+  const [showMenu, setShowMenu] = useState<string | null>(null)
+
+  const handleFullscreen = useCallback(() => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen()
+    } else {
+      document.documentElement.requestFullscreen()
+    }
+  }, [])
+
+  const toggleMenu = useCallback((menu: string) => {
+    setShowMenu((prev) => (prev === menu ? null : menu))
+  }, [])
+
   const availableTypes = getAllModules().map((r) => r.definition)
 
   return (
@@ -135,8 +149,8 @@ export default function Toolbar({ onAbout }: ToolbarProps) {
 
       <div className={styles.divider} />
 
-      {/* Add Module buttons */}
-      <div className={styles.addModuleGroup}>
+      {/* Add Module buttons — inline on wide screens */}
+      <div className={`${styles.addModuleGroup} ${styles.desktopOnly}`}>
         <span className={styles.groupLabel}>ADD</span>
         {availableTypes.map((def) => (
           <button
@@ -161,10 +175,10 @@ export default function Toolbar({ onAbout }: ToolbarProps) {
         ))}
       </div>
 
-      <div className={styles.divider} />
+      <div className={`${styles.divider} ${styles.desktopOnly}`} />
 
-      {/* Patch management */}
-      <div className={styles.addModuleGroup}>
+      {/* Patch management — inline on wide screens */}
+      <div className={`${styles.addModuleGroup} ${styles.desktopOnly}`}>
         <span className={styles.groupLabel}>PATCH</span>
         <button className={styles.patchButton} onClick={handleSave}>SAVE</button>
         <button className={styles.patchButton} onClick={handleLoad}>LOAD</button>
@@ -181,21 +195,70 @@ export default function Toolbar({ onAbout }: ToolbarProps) {
         onChange={handleFileChange}
       />
 
-      <div className={styles.divider} />
+      <div className={`${styles.divider} ${styles.desktopOnly}`} />
 
-      {/* Zoom controls */}
+      {/* Narrow-screen menu toggles */}
+      <div className={styles.menuToggles}>
+        <div className={styles.menuToggleWrap}>
+          <button
+            className={`${styles.patchButton} ${styles.demoButton}`}
+            onClick={() => toggleMenu('add')}
+          >
+            + ADD
+          </button>
+          {showMenu === 'add' && (
+            <div className={styles.dropdownPanel}>
+              {availableTypes.map((def) => (
+                <button
+                  key={def.type}
+                  className={styles.addButton}
+                  style={{ borderColor: def.accentColor + '40', color: def.accentColor }}
+                  onClick={() => { handleAddModule(def.type); setShowMenu(null) }}
+                >
+                  {def.name.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className={styles.menuToggleWrap}>
+          <button
+            className={`${styles.patchButton} ${styles.demoButton}`}
+            onClick={() => toggleMenu('menu')}
+          >
+            MENU
+          </button>
+          {showMenu === 'menu' && (
+            <div className={styles.dropdownPanel}>
+              <button className={styles.patchButton} onClick={() => { handleSave(); setShowMenu(null) }}>SAVE</button>
+              <button className={styles.patchButton} onClick={() => { handleLoad(); setShowMenu(null) }}>LOAD</button>
+              <button className={styles.patchButton} onClick={() => { handleReset(); setShowMenu(null) }}>RESET</button>
+              <button className={`${styles.patchButton} ${styles.demoButton}`} onClick={() => { handleDemo(); setShowMenu(null) }}>DEMO</button>
+              <div className={styles.dropdownDivider} />
+              <button className={`${styles.patchButton} ${styles.docsButton}`} onClick={() => { window.open('/docs/guide.html', '_blank'); setShowMenu(null) }}>GUIDE</button>
+              <button className={`${styles.patchButton} ${styles.docsButton}`} onClick={() => { window.open('/docs/technical.html', '_blank'); setShowMenu(null) }}>DOCS</button>
+              {onAbout && <button className={`${styles.patchButton} ${styles.docsButton}`} onClick={() => { onAbout(); setShowMenu(null) }}>ABOUT</button>}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Zoom controls — always visible */}
       <div className={styles.addModuleGroup}>
-        <span className={styles.groupLabel}>VIEW</span>
+        <span className={`${styles.groupLabel} ${styles.desktopOnly}`}>VIEW</span>
         <button className={styles.patchButton} onClick={() => setZoom(zoom - 0.1)}>{'\u2212'}</button>
         <span className={styles.zoomDisplay}>{Math.round(zoom * 100)}%</span>
         <button className={styles.patchButton} onClick={() => setZoom(zoom + 0.1)}>+</button>
         <button className={`${styles.patchButton} ${styles.demoButton}`} onClick={() => setZoom(computeFitZoom())}>FIT</button>
+        <button className={`${styles.patchButton} ${styles.docsButton}`} onClick={handleFullscreen}>
+          {'⛶'}
+        </button>
       </div>
 
-      <div className={styles.divider} />
+      <div className={`${styles.divider} ${styles.desktopOnly}`} />
 
-      {/* Help / Documentation links */}
-      <div className={styles.addModuleGroup}>
+      {/* Help / Documentation links — desktop only */}
+      <div className={`${styles.addModuleGroup} ${styles.desktopOnly}`}>
         <span className={styles.groupLabel}>HELP</span>
         <button
           className={`${styles.patchButton} ${styles.docsButton}`}
@@ -221,10 +284,15 @@ export default function Toolbar({ onAbout }: ToolbarProps) {
 
       <div className={styles.spacer} />
 
-      {/* Hint */}
-      <div className={styles.hint}>
+      {/* Hint — desktop only */}
+      <div className={`${styles.hint} ${styles.desktopOnly}`}>
         drag from OUT → IN to patch · right-click module to remove · Delete to remove cable
       </div>
+
+      {/* Click-away overlay to close dropdown menus */}
+      {showMenu && (
+        <div className={styles.menuBackdrop} onClick={() => setShowMenu(null)} />
+      )}
     </div>
   )
 }

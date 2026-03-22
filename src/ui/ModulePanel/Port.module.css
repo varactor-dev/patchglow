@@ -18,6 +18,14 @@
   touch-action: none;
 }
 
+/* Invisible expanded touch target (48x48px) */
+.port::before {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+}
+
 .ring {
   position: absolute;
   inset: 0;

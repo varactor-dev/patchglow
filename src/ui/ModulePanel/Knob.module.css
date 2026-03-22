@@ -18,6 +18,14 @@
   user-select: none;
 }
 
+/* Invisible expanded touch target (48x48px) */
+.knob::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+}
+
 .glowRing {
   position: absolute;
   inset: -2px;
@@ -68,4 +76,19 @@
   line-height: 1;
   min-height: 11px;
   transition: color 80ms ease;
+}
+
+.touchTooltip {
+  position: fixed;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-bright);
+  background: rgba(20, 20, 30, 0.95);
+  border: 1px solid var(--border-subtle);
+  padding: 4px 10px;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 10000;
+  white-space: nowrap;
 }

@@ -43,6 +43,7 @@ export default function App() {
   const audioStarted = useRackStore((s) => s.audioStarted)
   const setAudioStarted = useRackStore((s) => s.setAudioStarted)
   const [showAbout, setShowAbout] = useState(false)
+  const [showPhoneWarning, setShowPhoneWarning] = useState(() => window.innerWidth < 768)
   const initializedRef = useRef(false)
   const rackAreaRef = useRef<HTMLDivElement>(null)
   const pinchRef = useRef({ dist: 0, zoom: 1 })
@@ -152,6 +153,22 @@ export default function App() {
               ◉ START AUDIO
             </button>
             <div className={styles.overlayHint}>Click anywhere to begin</div>
+          </div>
+        </div>
+      )}
+
+      {/* Phone warning overlay */}
+      {showPhoneWarning && (
+        <div className={styles.phoneOverlay}>
+          <div className={styles.phoneContent}>
+            <div className={styles.overlayTitle}>PatchGlow</div>
+            <div className={styles.phoneMessage}>
+              PatchGlow is designed for desktop and tablet.
+              Please visit on a larger screen for the full experience.
+            </div>
+            <button className={styles.phoneContinue} onClick={() => setShowPhoneWarning(false)}>
+              Continue anyway
+            </button>
           </div>
         </div>
       )}

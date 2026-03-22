@@ -7,8 +7,10 @@
   background: var(--bg-rack);
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
-  overflow: hidden;
+  overflow: visible;
+  position: relative;
   box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  z-index: 50;
 }
 
 .logo {
@@ -184,4 +186,60 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ─── Responsive: narrow-screen menu toggles ───────────────────────────── */
+
+.menuToggles {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.menuToggleWrap {
+  position: relative;
+}
+
+.dropdownPanel {
+  position: absolute;
+  top: 32px;
+  left: 0;
+  background: var(--bg-rack);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  z-index: 200;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  min-width: 160px;
+}
+
+.dropdownDivider {
+  width: 100%;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+.menuBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+@media (max-width: 1200px) {
+  .desktopOnly {
+    display: none;
+  }
+
+  .menuToggles {
+    display: flex;
+  }
+
+  .toolbar {
+    gap: 8px;
+    padding: 0 10px;
+  }
 }
