@@ -26,6 +26,11 @@
     --lime:       #84cc16;
     --gold:       #f59e0b;
     --white:      #ffffff;
+    --slate:      #94a3b8;
+    --sky:        #38bdf8;
+    --indigo:     #818cf8;
+    --red:        #ef4444;
+    --yellow:     #fbbf24;
     --glow-cyan:  0 0 12px #00e5ff88, 0 0 30px #00e5ff33;
     --glow-amber: 0 0 12px #ff6b3588, 0 0 30px #ff6b3533;
     --glow-mag:   0 0 12px #ff2ecb88, 0 0 30px #ff2ecb33;
@@ -558,6 +563,11 @@
   .c-lime       { color: var(--lime); }
   .c-gold       { color: var(--gold); }
   .c-white      { color: var(--white); }
+  .c-slate      { color: var(--slate); }
+  .c-sky        { color: var(--sky); }
+  .c-indigo     { color: var(--indigo); }
+  .c-red        { color: var(--red); }
+  .c-yellow     { color: var(--yellow); }
 
   .glow-cyan       { text-shadow: 0 0 10px rgba(0,229,255,0.4); }
   .glow-amber      { text-shadow: 0 0 10px rgba(255,107,53,0.4); }
@@ -573,6 +583,12 @@
   .border-lime       { border-left-color: var(--lime) !important; }
   .border-gold       { border-left-color: var(--gold) !important; }
   .border-white      { border-left-color: var(--white) !important; }
+  .border-magenta    { border-left-color: var(--magenta) !important; }
+  .border-slate      { border-left-color: var(--slate) !important; }
+  .border-sky        { border-left-color: var(--sky) !important; }
+  .border-indigo     { border-left-color: var(--indigo) !important; }
+  .border-red        { border-left-color: var(--red) !important; }
+  .border-yellow     { border-left-color: var(--yellow) !important; }
 
   .mod-section {
     background: var(--bg-raised);
@@ -1001,6 +1017,212 @@
     </div>
 
     <div class="vis-desc"><strong>Visualization:</strong> Large oscilloscope display&thinsp;&mdash;&thinsp;the biggest waveform view in the rack, with bright phosphor trace and glow trail. Frequency spectrum below.</div>
+  </div>
+
+  <!-- ──── Step Sequencer ──── -->
+  <div class="mod-head">
+    <div class="mod-icon" style="color: var(--magenta); background: var(--magenta);"></div>
+    <h3 class="c-magenta" id="mod-sequencer">Step Sequencer</h3>
+  </div>
+
+  <div class="mod-section border-magenta">
+    <p>Generates pitched CV and gate patterns from an editable step grid&thinsp;&mdash;&thinsp;the heart of self-playing patches.</p>
+    <p><strong>Teaches:</strong> A sequencer plays a repeating pattern of notes. Each step has a pitch and the sequencer advances through them at a set tempo.</p>
+
+    <h4>Knobs</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>What It Controls</th><th>Range</th></tr></thead>
+        <tbody>
+          <tr><td>BPM</td><td>Internal clock tempo</td><td>30&ndash;300 BPM</td></tr>
+          <tr><td>GATE</td><td>Gate length per step</td><td>5&ndash;95%</td></tr>
+          <tr><td>STEPS</td><td>Number of active steps</td><td>4, 8, or 16</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Ports</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Direction</th><th>Connect To</th></tr></thead>
+        <tbody>
+          <tr><td>CV</td><td><span class="badge badge-cv"><span class="dot dot-cv"></span> CV</span></td><td>Out</td><td>Oscillator V/OCT</td></tr>
+          <tr><td>GATE</td><td><span class="badge badge-gate"><span class="dot dot-gate"></span> Gate</span></td><td>Out</td><td>Envelope GATE, S&amp;H TRIG</td></tr>
+          <tr><td>CLK</td><td><span class="badge badge-gate"><span class="dot dot-gate"></span> Gate</span></td><td>In</td><td>External clock source</td></tr>
+          <tr><td>RST</td><td><span class="badge badge-gate"><span class="dot dot-gate"></span> Gate</span></td><td>In</td><td>Reset trigger</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="vis-desc"><strong>Visualization:</strong> Interactive step grid showing pitch bars for each step. Click and drag vertically to set step pitches. Active step glows magenta. Gate bar at bottom shows on/off pattern. Double-click to reset a step to C4.</div>
+  </div>
+
+  <!-- ──── Noise ──── -->
+  <div class="mod-head">
+    <div class="mod-icon" style="color: var(--slate); background: var(--slate);"></div>
+    <h3 class="c-slate" id="mod-noise">Noise</h3>
+  </div>
+
+  <div class="mod-section border-slate">
+    <p>Random noise generator&thinsp;&mdash;&thinsp;white, pink, and brown noise for percussion, textures, and random modulation.</p>
+    <p><strong>Teaches:</strong> Noise is random sound with no pitch. White noise has equal energy at all frequencies. Pink and brown have progressively more bass.</p>
+
+    <h4>Knobs</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>What It Controls</th><th>Range</th></tr></thead>
+        <tbody>
+          <tr><td>TYPE</td><td>Noise color</td><td>White, Pink, Brown</td></tr>
+          <tr><td>LEVEL</td><td>Output level</td><td>0&ndash;1</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Ports</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Direction</th><th>Connect To</th></tr></thead>
+        <tbody>
+          <tr><td>OUT</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>Out</td><td>Filter IN, S&amp;H SIG, VCA IN</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="vis-desc"><strong>Visualization:</strong> Top panel shows a phosphor-trail waveform&thinsp;&mdash;&thinsp;visual character differs per noise type. Bottom panel shows frequency spectrum bars revealing the slope of each noise color.</div>
+  </div>
+
+  <!-- ──── Delay ──── -->
+  <div class="mod-head">
+    <div class="mod-icon" style="color: var(--sky); background: var(--sky);"></div>
+    <h3 class="c-sky" id="mod-delay">Delay</h3>
+  </div>
+
+  <div class="mod-section border-sky">
+    <p>Echo / delay effect&thinsp;&mdash;&thinsp;repeating reflections that fade over time.</p>
+    <p><strong>Teaches:</strong> Delay copies a sound and plays it back later. Feedback controls how many times the echo repeats. Mix blends the dry and wet signals.</p>
+
+    <h4>Knobs</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>What It Controls</th><th>Range</th></tr></thead>
+        <tbody>
+          <tr><td>TIME</td><td>Delay time</td><td>0.01&ndash;2.0 s (exponential)</td></tr>
+          <tr><td>FDBK</td><td>Feedback amount</td><td>0&ndash;0.95</td></tr>
+          <tr><td>MIX</td><td>Dry/wet blend</td><td>0&ndash;1</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Ports</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Direction</th><th>Connect To</th></tr></thead>
+        <tbody>
+          <tr><td>IN</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>In</td><td>Filter OUT, Oscillator OUT, Distortion OUT</td></tr>
+          <tr><td>OUT</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>Out</td><td>Reverb IN, VCA IN, Output IN</td></tr>
+          <tr><td>TIME</td><td><span class="badge badge-cv"><span class="dot dot-cv"></span> CV</span></td><td>In</td><td>LFO OUT (modulate delay time)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="vis-desc"><strong>Visualization:</strong> Cascading echo traces&thinsp;&mdash;&thinsp;the input waveform appears on the left, with successive echoes trailing rightward, each dimmer than the last based on the feedback amount.</div>
+  </div>
+
+  <!-- ──── Reverb ──── -->
+  <div class="mod-head">
+    <div class="mod-icon" style="color: var(--indigo); background: var(--indigo);"></div>
+    <h3 class="c-indigo" id="mod-reverb">Reverb</h3>
+  </div>
+
+  <div class="mod-section border-indigo">
+    <p>Reverb effect&thinsp;&mdash;&thinsp;simulates the reflections of a physical space.</p>
+    <p><strong>Teaches:</strong> Reverb adds the character of a room. Decay controls how long reflections last. Damping rolls off high frequencies in the tail.</p>
+
+    <h4>Knobs</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>What It Controls</th><th>Range</th></tr></thead>
+        <tbody>
+          <tr><td>DECAY</td><td>Reverb decay time</td><td>0.1&ndash;15.0 s (exponential)</td></tr>
+          <tr><td>MIX</td><td>Dry/wet blend</td><td>0&ndash;1</td></tr>
+          <tr><td>DAMP</td><td>High-frequency damping</td><td>0&ndash;1 (higher = darker tail)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Ports</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Direction</th><th>Connect To</th></tr></thead>
+        <tbody>
+          <tr><td>IN</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>In</td><td>Delay OUT, Filter OUT, Oscillator OUT</td></tr>
+          <tr><td>OUT</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>Out</td><td>VCA IN, Output IN</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="vis-desc"><strong>Visualization:</strong> Decay envelope with dissolving particle tail&thinsp;&mdash;&thinsp;a sharp impulse spike fades into scattered dots. Tail length scales with decay, damping darkens the tail end.</div>
+  </div>
+
+  <!-- ──── Distortion ──── -->
+  <div class="mod-head">
+    <div class="mod-icon" style="color: var(--red); background: var(--red);"></div>
+    <h3 class="c-red" id="mod-distortion">Distortion</h3>
+  </div>
+
+  <div class="mod-section border-red">
+    <p>Waveshaper&thinsp;&mdash;&thinsp;soft clip, hard clip, and wave folding for harmonic richness and grit.</p>
+    <p><strong>Teaches:</strong> Distortion reshapes a waveform by clipping or folding it. This adds harmonics, making the sound brighter and grittier.</p>
+
+    <h4>Knobs</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>What It Controls</th><th>Range</th></tr></thead>
+        <tbody>
+          <tr><td>DRIVE</td><td>Distortion intensity</td><td>0&ndash;1</td></tr>
+          <tr><td>MODE</td><td>Clipping mode</td><td>Soft (tanh), Hard (clip), Fold (wave folding)</td></tr>
+          <tr><td>MIX</td><td>Dry/wet blend</td><td>0&ndash;1</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Ports</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Direction</th><th>Connect To</th></tr></thead>
+        <tbody>
+          <tr><td>IN</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>In</td><td>Oscillator OUT, Filter OUT</td></tr>
+          <tr><td>OUT</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>Out</td><td>Filter IN, Delay IN, VCA IN, Output IN</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="vis-desc"><strong>Visualization:</strong> Top panel shows the transfer curve (input&rarr;output mapping)&thinsp;&mdash;&thinsp;soft clip shows an S-curve, hard clip shows flat ceilings, fold shows a zigzag. Bottom panel overlays input (dim) and output (bright red) waveforms to show the clipping in action.</div>
+  </div>
+
+  <!-- ──── Sample & Hold ──── -->
+  <div class="mod-head">
+    <div class="mod-icon" style="color: var(--yellow); background: var(--yellow);"></div>
+    <h3 class="c-yellow" id="mod-sample-hold">Sample &amp; Hold</h3>
+  </div>
+
+  <div class="mod-section border-yellow">
+    <p>Captures the input signal value on each trigger and holds it until the next&thinsp;&mdash;&thinsp;creates staircase patterns from continuous signals.</p>
+    <p><strong>Teaches:</strong> Sample &amp; Hold grabs a snapshot of an input signal each time it receives a trigger. Feed it noise for random voltages, or an LFO for quantized steps.</p>
+
+    <h4>Ports</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Direction</th><th>Connect To</th></tr></thead>
+        <tbody>
+          <tr><td>SIG</td><td><span class="badge badge-cv"><span class="dot dot-cv"></span> CV</span></td><td>In</td><td>Noise OUT, LFO OUT</td></tr>
+          <tr><td>TRIG</td><td><span class="badge badge-gate"><span class="dot dot-gate"></span> Gate</span></td><td>In</td><td>Sequencer GATE, Keyboard GATE</td></tr>
+          <tr><td>OUT</td><td><span class="badge badge-cv"><span class="dot dot-cv"></span> CV</span></td><td>Out</td><td>Oscillator V/OCT, Filter CUTOFF CV</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="vis-desc"><strong>Visualization:</strong> Staircase waveform showing held values as horizontal steps with vertical jumps. A dim input reference line shows the continuous signal being sampled. Sample points flash on trigger.</div>
   </div>
 
   <!-- ════════ 5. SIGNAL TYPES EXPLAINED ════════ -->

@@ -18,7 +18,7 @@ PatchGlow is designed for anyone curious about how synthesizers work. No prior e
 
 ## Features
 
-- **8 Modules** — Oscillator, Filter, VCA, Envelope, LFO, Mixer, Keyboard, and Output
+- **14 Modules** — Oscillator, Filter, VCA, Envelope, LFO, Mixer, Keyboard, Output, Step Sequencer, Noise, Delay, Reverb, Distortion, and Sample & Hold
 - **Waveform-Riding Cables** — patch cables show the actual audio waveform traveling through them
 - **Three Signal Types** — audio (cyan), CV/control voltage (amber), and gate (green), with type-safe connections
 - **Multi-Row Rack** — Eurorack-style layout with rail holes, HP grid, and mounting screws

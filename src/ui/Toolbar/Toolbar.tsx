@@ -103,7 +103,7 @@ export default function Toolbar({ onAbout, onToast }: ToolbarProps) {
 
   const handleDemo = useCallback(async () => {
     try {
-      const res = await fetch('/patches/subtractive-voice.json')
+      const res = await fetch('/patches/sequencer-melody.json')
       const json = await res.text()
       importPatch(json)
     } catch {

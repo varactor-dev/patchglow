@@ -10,6 +10,12 @@ import envelopeReg from '@/modules/envelope'
 import vcaReg from '@/modules/vca'
 import lfoReg from '@/modules/lfo'
 import mixerReg from '@/modules/mixer'
+import sequencerReg from '@/modules/sequencer'
+import noiseReg from '@/modules/noise'
+import delayReg from '@/modules/delay'
+import reverbReg from '@/modules/reverb'
+import distortionReg from '@/modules/distortion'
+import sampleHoldReg from '@/modules/samplehold'
 
 registerModule(oscillatorReg)
 registerModule(outputReg)
@@ -19,6 +25,12 @@ registerModule(envelopeReg)
 registerModule(vcaReg)
 registerModule(lfoReg)
 registerModule(mixerReg)
+registerModule(sequencerReg)
+registerModule(noiseReg)
+registerModule(delayReg)
+registerModule(reverbReg)
+registerModule(distortionReg)
+registerModule(sampleHoldReg)
 
 // Core
 import { useRackStore } from '@/store/rackStore'
@@ -62,7 +74,7 @@ export default function App() {
     await AudioEngineManager.getInstance().start()
     setAudioStarted()
     try {
-      const res = await fetch('/patches/subtractive-voice.json')
+      const res = await fetch('/patches/sequencer-melody.json')
       const json = await res.text()
       useRackStore.getState().importPatch(json)
     } catch { /* ignore */ }
@@ -100,7 +112,7 @@ export default function App() {
       if (isMobile) {
         // Mobile: always load demo, skip welcome
         localStorage.setItem('patchglow-welcomed', 'true')
-        fetch('/patches/subtractive-voice.json')
+        fetch('/patches/sequencer-melody.json')
           .then((r) => r.text())
           .then((json) => useRackStore.getState().importPatch(json))
           .catch(() => {})
@@ -108,7 +120,7 @@ export default function App() {
         setShowWelcome(true)
       } else {
         // Returning visitor with no autosave — auto-load demo
-        fetch('/patches/subtractive-voice.json')
+        fetch('/patches/sequencer-melody.json')
           .then((r) => r.text())
           .then((json) => useRackStore.getState().importPatch(json))
           .catch(() => {})

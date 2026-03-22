@@ -1,0 +1,125 @@
+{
+  "modules": {
+    "keyboard-1": {
+      "instanceId": "keyboard-1",
+      "type": "keyboard",
+      "position": { "row": 0, "col": 0 },
+      "parameters": {}
+    },
+    "oscillator-1": {
+      "instanceId": "oscillator-1",
+      "type": "oscillator",
+      "position": { "row": 0, "col": 16 },
+      "parameters": {
+        "frequency": 440,
+        "detune": 0,
+        "waveform": "sawtooth"
+      }
+    },
+    "filter-1": {
+      "instanceId": "filter-1",
+      "type": "filter",
+      "position": { "row": 0, "col": 30 },
+      "parameters": {
+        "frequency": 800,
+        "resonance": 4,
+        "type": "lowpass"
+      }
+    },
+    "vca-1": {
+      "instanceId": "vca-1",
+      "type": "vca",
+      "position": { "row": 0, "col": 42 },
+      "parameters": {
+        "level": 1
+      }
+    },
+    "output-1": {
+      "instanceId": "output-1",
+      "type": "output",
+      "position": { "row": 0, "col": 50 },
+      "parameters": {
+        "volume": -12
+      }
+    },
+    "lfo-1": {
+      "instanceId": "lfo-1",
+      "type": "lfo",
+      "position": { "row": 1, "col": 30 },
+      "parameters": {
+        "rate": 2,
+        "shape": "sine",
+        "depth": 0.5
+      }
+    },
+    "envelope-1": {
+      "instanceId": "envelope-1",
+      "type": "envelope",
+      "position": { "row": 1, "col": 42 },
+      "parameters": {
+        "attack": 0.02,
+        "decay": 0.3,
+        "sustain": 0.6,
+        "release": 0.8
+      }
+    }
+  },
+  "connections": [
+    {
+      "id": "keyboard-1:cv-out→oscillator-1:voct",
+      "sourceModuleId": "keyboard-1",
+      "sourcePortId": "cv-out",
+      "destModuleId": "oscillator-1",
+      "destPortId": "voct",
+      "signalType": "cv"
+    },
+    {
+      "id": "keyboard-1:gate-out→envelope-1:gate",
+      "sourceModuleId": "keyboard-1",
+      "sourcePortId": "gate-out",
+      "destModuleId": "envelope-1",
+      "destPortId": "gate",
+      "signalType": "gate"
+    },
+    {
+      "id": "oscillator-1:out→filter-1:in",
+      "sourceModuleId": "oscillator-1",
+      "sourcePortId": "out",
+      "destModuleId": "filter-1",
+      "destPortId": "in",
+      "signalType": "audio"
+    },
+    {
+      "id": "lfo-1:out→filter-1:cutoff-cv",
+      "sourceModuleId": "lfo-1",
+      "sourcePortId": "out",
+      "destModuleId": "filter-1",
+      "destPortId": "cutoff-cv",
+      "signalType": "cv"
+    },
+    {
+      "id": "filter-1:out→vca-1:in",
+      "sourceModuleId": "filter-1",
+      "sourcePortId": "out",
+      "destModuleId": "vca-1",
+      "destPortId": "in",
+      "signalType": "audio"
+    },
+    {
+      "id": "envelope-1:out→vca-1:cv",
+      "sourceModuleId": "envelope-1",
+      "sourcePortId": "out",
+      "destModuleId": "vca-1",
+      "destPortId": "cv",
+      "signalType": "cv"
+    },
+    {
+      "id": "vca-1:out→output-1:in",
+      "sourceModuleId": "vca-1",
+      "sourcePortId": "out",
+      "destModuleId": "output-1",
+      "destPortId": "in",
+      "signalType": "audio"
+    }
+  ]
+}
