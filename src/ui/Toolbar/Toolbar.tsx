@@ -7,6 +7,14 @@ import { RACK_HP, NUM_ROWS, ROW_HEIGHT, RAIL_HEIGHT } from '@/ui/Rack/Rack'
 import { HP_PX } from '@/ui/ModulePanel/ModulePanel'
 import styles from './Toolbar.module.css'
 
+const PRESETS = [
+  { name: 'Neon Dreams', file: 'showcase.json' },
+  { name: 'Sequencer Melody', file: 'sequencer-melody.json' },
+  { name: 'Random Melody', file: 'random-melody.json' },
+  { name: 'Ambient Pad', file: 'ambient-pad.json' },
+  { name: 'Basic Voice', file: 'basic-voice.json' },
+]
+
 function computeFitZoom(): number {
   const contentH = NUM_ROWS * (ROW_HEIGHT + RAIL_HEIGHT) + RAIL_HEIGHT
   const contentW = RACK_HP * HP_PX
@@ -101,13 +109,13 @@ export default function Toolbar({ onAbout, onToast }: ToolbarProps) {
     onToast?.('Rack cleared. Click DEMO to reload the demo patch.')
   }, [importPatch, onToast])
 
-  const handleDemo = useCallback(async () => {
+  const handleLoadPreset = useCallback(async (filename: string) => {
     try {
-      const res = await fetch('/patches/sequencer-melody.json')
+      const res = await fetch(`/patches/${filename}`)
       const json = await res.text()
       importPatch(json)
     } catch {
-      console.error('Failed to load demo patch')
+      console.error('Failed to load preset')
     }
   }, [importPatch])
 
@@ -185,7 +193,27 @@ export default function Toolbar({ onAbout, onToast }: ToolbarProps) {
         <button className={styles.patchButton} onClick={handleSave}>SAVE</button>
         <button className={styles.patchButton} onClick={handleLoad}>LOAD</button>
         <button className={styles.patchButton} onClick={handleReset}>RESET</button>
-        <button className={`${styles.patchButton} ${styles.demoButton}`} onClick={handleDemo}>DEMO</button>
+        <div className={styles.menuToggleWrap}>
+          <button
+            className={`${styles.patchButton} ${styles.demoButton}`}
+            onClick={() => toggleMenu('patches')}
+          >
+            PATCHES
+          </button>
+          {showMenu === 'patches' && (
+            <div className={styles.dropdownPanel}>
+              {PRESETS.map((p) => (
+                <button
+                  key={p.file}
+                  className={`${styles.patchButton} ${styles.demoButton}`}
+                  onClick={() => { handleLoadPreset(p.file); setShowMenu(null) }}
+                >
+                  {p.name.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Hidden file input for load */}
@@ -235,7 +263,16 @@ export default function Toolbar({ onAbout, onToast }: ToolbarProps) {
               <button className={styles.patchButton} onClick={() => { handleSave(); setShowMenu(null) }}>SAVE</button>
               <button className={styles.patchButton} onClick={() => { handleLoad(); setShowMenu(null) }}>LOAD</button>
               <button className={styles.patchButton} onClick={() => { handleReset(); setShowMenu(null) }}>RESET</button>
-              <button className={`${styles.patchButton} ${styles.demoButton}`} onClick={() => { handleDemo(); setShowMenu(null) }}>DEMO</button>
+              <div className={styles.dropdownDivider} />
+              {PRESETS.map((p) => (
+                <button
+                  key={p.file}
+                  className={`${styles.patchButton} ${styles.demoButton}`}
+                  onClick={() => { handleLoadPreset(p.file); setShowMenu(null) }}
+                >
+                  {p.name.toUpperCase()}
+                </button>
+              ))}
               <div className={styles.dropdownDivider} />
               <button className={`${styles.patchButton} ${styles.docsButton}`} onClick={() => { window.open('/docs/guide.html', '_blank'); setShowMenu(null) }}>GUIDE</button>
               <button className={`${styles.patchButton} ${styles.docsButton}`} onClick={() => { window.open('/docs/technical.html', '_blank'); setShowMenu(null) }}>DOCS</button>
