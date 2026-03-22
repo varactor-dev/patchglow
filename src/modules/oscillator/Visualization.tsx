@@ -34,9 +34,11 @@ export default function OscillatorVisualization({ data, accentColor }: Props) {
     drawGrid(ctx, 4)
 
     if (data.waveform && data.waveform.length > 0) {
-      // Triggered display — find zero crossing for stable image
+      // Triggered display: find zero crossing, then show a fixed-length window.
+      // Fixed window = same number of samples every frame → stable alignment.
       const offset = findZeroCrossing(data.waveform)
-      const stable = data.waveform.slice(offset)
+      const displayLen = Math.floor(data.waveform.length / 2)
+      const stable = data.waveform.slice(offset, offset + displayLen)
       drawWaveform(ctx, stable.length > 0 ? stable : data.waveform, accentColor)
     }
   })

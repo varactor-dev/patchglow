@@ -14,7 +14,7 @@ export class OscillatorEngine implements ModuleAudioEngine {
     })
 
     this.gainNode = new Tone.Gain(0.8)
-    this.waveformAnalyser = new Tone.Analyser('waveform', 256)
+    this.waveformAnalyser = new Tone.Analyser('waveform', 1024)
     this.fftAnalyser = new Tone.Analyser('fft', 256)
 
     // Chain: osc → gain → analysers
@@ -32,8 +32,13 @@ export class OscillatorEngine implements ModuleAudioEngine {
     throw new Error(`OscillatorEngine: unknown output port "${portId}"`)
   }
 
-  getInputNode(portId: string): Tone.ToneAudioNode | Tone.Param<'frequency'> {
-    if (portId === 'voct' || portId === 'fm') {
+  getInputNode(portId: string): Tone.ToneAudioNode | Tone.Param<'frequency'> | Tone.Param<'cents'> | Tone.Param<'normalRange'> {
+    if (portId === 'voct') {
+      // V/Oct input routes to detune (in cents): keyboard outputs (midiNote-69)*100 cents
+      return this.osc!.detune
+    }
+    if (portId === 'fm') {
+      // FM input routes to frequency for linear frequency modulation
       return this.osc!.frequency
     }
     throw new Error(`OscillatorEngine: unknown input port "${portId}"`)

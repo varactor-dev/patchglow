@@ -59,7 +59,7 @@ export interface ModuleDefinition {
 export interface ModuleAudioEngine {
   initialize(context: Tone.BaseContext): void
   getOutputNode(portId: string): Tone.ToneAudioNode | Tone.Signal<'frequency'> | Tone.Signal<'normalRange'>
-  getInputNode(portId: string): Tone.ToneAudioNode | Tone.Param<'frequency'> | Tone.Param<'normalRange'> | Tone.Signal<'frequency'>
+  getInputNode(portId: string): Tone.ToneAudioNode | Tone.Param<'frequency'> | Tone.Param<'normalRange'> | Tone.Param<'cents'> | Tone.Signal<'frequency'>
   setParameter(parameterId: string, value: number | string): void
   getVisualizationData(): VisualizationData
   dispose(): void

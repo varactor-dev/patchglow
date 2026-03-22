@@ -19,16 +19,6 @@ const KEY_NOTE_MAP: Record<string, number> = {
   'k': 12, // C (octave up)
 }
 
-// Semitone to frequency (C4 = 261.63 Hz)
-function noteToFreq(semitone: number, octave: number): number {
-  const midiNote = 60 + semitone + octave * 12
-  return 440 * Math.pow(2, (midiNote - 69) / 12)
-}
-
-// Frequency to V/Oct voltage (C0 = 0V, C1 = 1V, etc.)
-function freqToVOct(freq: number): number {
-  return Math.log2(freq / 16.35)  // C0 = 16.35 Hz
-}
 
 export class KeyboardEngine implements ModuleAudioEngine {
   private cvSignal: Tone.Signal<'number'> | null = null
@@ -42,8 +32,9 @@ export class KeyboardEngine implements ModuleAudioEngine {
   private pressedNoteName = ''
 
   noteOn(semitone: number): void {
-    const freq = noteToFreq(semitone, this.octave)
-    this.cvSignal!.value = freqToVOct(freq)
+    const midiNote = 60 + semitone + this.octave * 12
+    // Output cents relative to A4 (MIDI 69) so the signal connects to osc.detune
+    this.cvSignal!.value = (midiNote - 69) * 100
     this.gateSignal!.value = 1
     this.currentNote = semitone
     this.pressedNote = semitone
@@ -79,7 +70,7 @@ export class KeyboardEngine implements ModuleAudioEngine {
   }
 
   initialize(_context: Tone.BaseContext): void {
-    this.cvSignal = new Tone.Signal<'number'>({ value: freqToVOct(440), units: 'number' })
+    this.cvSignal = new Tone.Signal<'number'>({ value: 0, units: 'number' })
     this.gateSignal = new Tone.Signal<'number'>({ value: 0, units: 'number' })
 
     document.addEventListener('keydown', this.onKeyDown)
@@ -99,10 +90,10 @@ export class KeyboardEngine implements ModuleAudioEngine {
   setParameter(parameterId: string, value: number | string): void {
     if (parameterId === 'octave') {
       this.octave = Math.round(Number(value))
-      // If a note is held, retune immediately
+      // If a note is held, retune immediately using the same cents formula
       if (this.currentNote !== null) {
-        const freq = noteToFreq(this.currentNote, this.octave)
-        this.cvSignal!.value = freqToVOct(freq)
+        const midiNote = 60 + this.currentNote + this.octave * 12
+        this.cvSignal!.value = (midiNote - 69) * 100
       }
     }
   }
