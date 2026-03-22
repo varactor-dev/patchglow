@@ -1,13 +1,28 @@
-import { useState, useCallback, useRef } from 'react'
+import { useCallback, useRef } from 'react'
 import AudioEngineManager from '@/engine/AudioEngineManager'
 import { useRackStore } from '@/store/rackStore'
 import { getAllModules } from '@/engine/moduleRegistry'
 import { clearAutosave } from '@/store/persistence'
+import { RACK_HP, NUM_ROWS, ROW_HEIGHT, RAIL_HEIGHT } from '@/ui/Rack/Rack'
+import { HP_PX } from '@/ui/ModulePanel/ModulePanel'
 import styles from './Toolbar.module.css'
 
+function computeFitZoom(): number {
+  const contentH = NUM_ROWS * (ROW_HEIGHT + RAIL_HEIGHT) + RAIL_HEIGHT
+  const contentW = RACK_HP * HP_PX
+  const vh = window.innerHeight - 44
+  const vw = window.innerWidth
+  const fitH = (vh - 16) / contentH
+  const fitW = (vw - 16) / contentW
+  return Math.max(0.4, Math.min(1.0, Math.min(fitH, fitW)))
+}
+
 export default function Toolbar() {
-  const [audioStarted, setAudioStarted] = useState(false)
+  const audioStarted = useRackStore((s) => s.audioStarted)
+  const setAudioStarted = useRackStore((s) => s.setAudioStarted)
   const addModule = useRackStore((s) => s.addModule)
+  const zoom = useRackStore((s) => s.zoom)
+  const setZoom = useRackStore((s) => s.setZoom)
   const modules = useRackStore((s) => s.modules)
   const exportPatch = useRackStore((s) => s.exportPatch)
   const importPatch = useRackStore((s) => s.importPatch)
@@ -15,8 +30,8 @@ export default function Toolbar() {
 
   const handleStartAudio = useCallback(async () => {
     await AudioEngineManager.getInstance().start()
-    setAudioStarted(true)
-  }, [])
+    setAudioStarted()
+  }, [setAudioStarted])
 
   // Find the next available column position (pack to the right of existing modules)
   const getNextCol = useCallback(
@@ -161,6 +176,36 @@ export default function Toolbar() {
         style={{ display: 'none' }}
         onChange={handleFileChange}
       />
+
+      <div className={styles.divider} />
+
+      {/* Zoom controls */}
+      <div className={styles.addModuleGroup}>
+        <span className={styles.groupLabel}>VIEW</span>
+        <button className={styles.patchButton} onClick={() => setZoom(zoom - 0.1)}>{'\u2212'}</button>
+        <span className={styles.zoomDisplay}>{Math.round(zoom * 100)}%</span>
+        <button className={styles.patchButton} onClick={() => setZoom(zoom + 0.1)}>+</button>
+        <button className={`${styles.patchButton} ${styles.demoButton}`} onClick={() => setZoom(computeFitZoom())}>FIT</button>
+      </div>
+
+      <div className={styles.divider} />
+
+      {/* Help / Documentation links */}
+      <div className={styles.addModuleGroup}>
+        <span className={styles.groupLabel}>HELP</span>
+        <button
+          className={`${styles.patchButton} ${styles.docsButton}`}
+          onClick={() => window.open('/docs/guide.html', '_blank')}
+        >
+          GUIDE
+        </button>
+        <button
+          className={`${styles.patchButton} ${styles.docsButton}`}
+          onClick={() => window.open('/docs/technical.html', '_blank')}
+        >
+          DOCS
+        </button>
+      </div>
 
       <div className={styles.spacer} />
 

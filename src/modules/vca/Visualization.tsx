@@ -34,18 +34,18 @@ export default function VcaVisualization({ moduleId, accentColor }: Props) {
     const inputWaveform = (customData?.inputWaveform as Float32Array) ?? new Float32Array(256)
     const cvWaveform = (customData?.cvWaveform as Float32Array) ?? new Float32Array(256)
 
-    // Three stacked panels: IN (top), CV (mid), OUT (bottom)
-    drawWaveform(ctx, inputWaveform, accentColor, 0, 0.333, 1.2)
-    drawWaveform(ctx, cvWaveform, '#a855f7', 0.333, 0.333, 1.2)
+    // Three stacked panels: IN (top, dim), CV (mid, cyan), OUT (bottom, bright)
+    drawWaveform(ctx, inputWaveform, accentColor, 0, 0.333, 1.2, 0.5)
+    drawWaveform(ctx, cvWaveform, '#00e5ff', 0.333, 0.333, 1.2)
     drawWaveform(ctx, outputWaveform, accentColor, 0.667, 0.333, 1.2)
 
-    // Panel labels (dim, top-left of each panel)
+    // Panel labels
     ctx.font = '7px monospace'
     ctx.fillStyle = 'rgba(132, 204, 22, 0.35)'
     ctx.fillText('IN', 4, canvas.height * 0.08)
-    ctx.fillStyle = 'rgba(168, 85, 247, 0.35)'
+    ctx.fillStyle = 'rgba(0, 229, 255, 0.35)'
     ctx.fillText('CV', 4, canvas.height * 0.42)
-    ctx.fillStyle = 'rgba(132, 204, 22, 0.35)'
+    ctx.fillStyle = 'rgba(132, 204, 22, 0.6)'
     ctx.fillText('OUT', 4, canvas.height * 0.75)
 
     // Faint divider lines at 1/3 and 2/3 height

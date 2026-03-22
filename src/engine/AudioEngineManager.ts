@@ -104,15 +104,18 @@ class AudioEngineManager {
       if (newIds.has(conn.id)) continue
       const sourceEngine = this.engines.get(conn.sourceModuleId)
       const destEngine = this.engines.get(conn.destModuleId)
-      if (!sourceEngine || !destEngine) continue
-      try {
-        const outputNode = sourceEngine.getOutputNode(conn.sourcePortId)
-        const inputNode = destEngine.getInputNode(conn.destPortId)
-        outputNode.disconnect(inputNode as Tone.InputNode)
-      } catch { /* node may already be disconnected */ }
-      // Notify engines of disconnection (e.g. oscillator gate bias restore)
-      destEngine.onPortDisconnected?.(conn.destPortId)
-      sourceEngine.onPortDisconnected?.(conn.sourcePortId)
+      if (sourceEngine && destEngine) {
+        // Both engines alive — sever the Web Audio connection
+        try {
+          const outputNode = sourceEngine.getOutputNode(conn.sourcePortId)
+          const inputNode = destEngine.getInputNode(conn.destPortId)
+          outputNode.disconnect(inputNode as Tone.InputNode)
+        } catch { /* node may already be disconnected */ }
+      }
+      // Always notify surviving engines so they can restore internal state
+      // (e.g. VCA reconnects internalBias when envelope module is removed)
+      destEngine?.onPortDisconnected?.(conn.destPortId)
+      sourceEngine?.onPortDisconnected?.(conn.sourcePortId)
     }
 
     // Keep stable connections, add only new ones
@@ -136,6 +139,11 @@ class AudioEngineManager {
     }
 
     this.activeConnections = established
+  }
+
+  // ─── Connection queries ────────────────────────────────────────────────────
+  getActiveConnections(): Connection[] {
+    return this.activeConnections
   }
 
   // ─── Parameter updates ─────────────────────────────────────────────────────

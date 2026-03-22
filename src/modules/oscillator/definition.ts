@@ -25,13 +25,6 @@ const oscillatorDefinition: ModuleDefinition = {
       description: 'Frequency modulation — CV controls pitch deviation',
     },
     {
-      id: 'gate',
-      label: 'GATE',
-      direction: 'input',
-      signalType: 'gate',
-      description: 'Gate input — high (1) plays note, low (0) silences. Without a cable, oscillator drones.',
-    },
-    {
       id: 'out',
       label: 'OUT',
       direction: 'output',

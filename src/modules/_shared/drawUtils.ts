@@ -73,6 +73,7 @@ export function drawGlowLine(
   points: { x: number; y: number }[],
   color: string,
   thickness = 1.5,
+  opacity = 1.0,
 ): void {
   if (points.length < 2) return
   ctx.save()
@@ -85,19 +86,19 @@ export function drawGlowLine(
 
   // Outer glow (wide, dim)
   ctx.strokeStyle = color
-  ctx.globalAlpha = 0.25
+  ctx.globalAlpha = 0.25 * opacity
   ctx.lineWidth = thickness * 8
   ctx.lineJoin = 'round'
   ctx.lineCap = 'round'
   ctx.stroke(path)
 
   // Mid glow
-  ctx.globalAlpha = 0.4
+  ctx.globalAlpha = 0.4 * opacity
   ctx.lineWidth = thickness * 3
   ctx.stroke(path)
 
   // Core (bright, sharp)
-  ctx.globalAlpha = 1.0
+  ctx.globalAlpha = 1.0 * opacity
   ctx.lineWidth = thickness
   ctx.stroke(path)
 
@@ -114,6 +115,7 @@ export function drawWaveform(
   yOffset = 0,       // 0 = use full canvas height; use 0.5 for top half
   yScale = 1.0,      // fraction of canvas height to use
   thickness = 1.5,   // line thickness — increase for hero displays
+  opacity = 1.0,     // overall opacity — reduce for dimmer panels
 ): void {
   const { width, height } = ctx.canvas
   const centerY = height * yOffset + (height * yScale) / 2
@@ -128,7 +130,7 @@ export function drawWaveform(
     pts.push({ x, y })
   }
 
-  drawGlowLine(ctx, pts, color, thickness)
+  drawGlowLine(ctx, pts, color, thickness, opacity)
 }
 
 /**

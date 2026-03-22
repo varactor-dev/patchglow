@@ -25,7 +25,8 @@ export class KeyboardEngine implements ModuleAudioEngine {
   private gateSignal: Tone.Signal<'number'> | null = null
   private octave = 0
   private currentNote: number | null = null
-  private currentKey: string | null = null
+  // Stack of currently pressed keys (most recent last) for last-key-priority
+  private pressedKeys: string[] = []
 
   // For visualization
   private pressedNote: number | null = null
@@ -35,16 +36,39 @@ export class KeyboardEngine implements ModuleAudioEngine {
     const midiNote = 60 + semitone + this.octave * 12
     // Output cents relative to A4 (MIDI 69) so the signal connects to osc.detune
     this.cvSignal!.value = (midiNote - 69) * 100
-    this.gateSignal!.value = 1
+
+    if (this.currentNote !== null) {
+      // Retrigger: pulse gate low for 10ms so envelope poll detects the low→high transition
+      // and fires a fresh triggerAttack. 10ms > 2× the 5ms poll interval, ensuring detection.
+      const now = Tone.now()
+      this.gateSignal!.cancelScheduledValues(now)
+      this.gateSignal!.setValueAtTime(0, now)
+      this.gateSignal!.setValueAtTime(1, now + 0.01)
+    } else {
+      this.gateSignal!.value = 1
+    }
+
+    this.currentNote = semitone
+    this.pressedNote = semitone
+    this.pressedNoteName = NOTE_NAMES[semitone % 12]!
+  }
+
+  /** Switch CV to a new semitone without retriggering the gate (for key fallback). */
+  private switchPitch(semitone: number): void {
+    const midiNote = 60 + semitone + this.octave * 12
+    this.cvSignal!.value = (midiNote - 69) * 100
     this.currentNote = semitone
     this.pressedNote = semitone
     this.pressedNoteName = NOTE_NAMES[semitone % 12]!
   }
 
   noteOff(): void {
+    // Cancel any pending retrigger pulse before setting gate low,
+    // so the scheduled gate=1 at +10ms doesn't override the noteOff
+    this.gateSignal!.cancelScheduledValues(Tone.now())
     this.gateSignal!.value = 0
     this.currentNote = null
-    this.currentKey = null
+    this.pressedKeys = []
     this.pressedNote = null
     this.pressedNoteName = ''
   }
@@ -53,13 +77,31 @@ export class KeyboardEngine implements ModuleAudioEngine {
     if (e.repeat) return
     const key = e.key.toLowerCase()
     if (!(key in KEY_NOTE_MAP)) return
-    this.currentKey = key
+    // Remove if already in stack (shouldn't happen, but defensive)
+    this.pressedKeys = this.pressedKeys.filter((k) => k !== key)
+    this.pressedKeys.push(key)
     this.noteOn(KEY_NOTE_MAP[key]!)
   }
 
   private onKeyUp = (e: KeyboardEvent) => {
     const key = e.key.toLowerCase()
-    if (key === this.currentKey) {
+    if (!(key in KEY_NOTE_MAP)) return
+    // Remove this key from the pressed stack
+    this.pressedKeys = this.pressedKeys.filter((k) => k !== key)
+
+    if (this.pressedKeys.length > 0) {
+      // Other keys still held — revert to the most recently pressed remaining key
+      // without retriggering the gate (smooth pitch change, continuous sound)
+      const fallbackKey = this.pressedKeys[this.pressedKeys.length - 1]!
+      this.switchPitch(KEY_NOTE_MAP[fallbackKey]!)
+    } else {
+      // No keys held — release
+      this.noteOff()
+    }
+  }
+
+  private onBlur = () => {
+    if (this.currentNote !== null) {
       this.noteOff()
     }
   }
@@ -75,6 +117,7 @@ export class KeyboardEngine implements ModuleAudioEngine {
 
     document.addEventListener('keydown', this.onKeyDown)
     document.addEventListener('keyup', this.onKeyUp)
+    window.addEventListener('blur', this.onBlur)
   }
 
   getOutputNode(portId: string): Tone.ToneAudioNode {
@@ -112,6 +155,7 @@ export class KeyboardEngine implements ModuleAudioEngine {
   dispose(): void {
     document.removeEventListener('keydown', this.onKeyDown)
     document.removeEventListener('keyup', this.onKeyUp)
+    window.removeEventListener('blur', this.onBlur)
     this.cvSignal?.dispose()
     this.gateSignal?.dispose()
     this.cvSignal = null

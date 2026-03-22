@@ -16,8 +16,9 @@ export class FilterEngine implements ModuleAudioEngine {
     this.fftAnalyser = new Tone.Analyser('fft', 256)
     this.outputGain = new Tone.Gain(1)
 
-    // CV intermediary: scales ±1 CV signal to ±2000 Hz offset on filter.frequency
-    this.cutoffCvGain = new Tone.Gain(2000)
+    // CV intermediary: scales ±1 CV signal proportionally to the current cutoff frequency.
+    // Gain is set to freq × 1.5 so modulation depth tracks the cutoff position musically.
+    this.cutoffCvGain = new Tone.Gain(1000 * 1.5)
     this.cutoffCvGain.connect(this.filter.frequency as unknown as Tone.InputNode)
 
     // Chain: inputGain → filter → analysers → outputGain
@@ -42,9 +43,13 @@ export class FilterEngine implements ModuleAudioEngine {
     if (!this.filter) return
 
     switch (parameterId) {
-      case 'frequency':
-        this.filter.frequency.value = Number(value)
+      case 'frequency': {
+        const freq = Number(value)
+        this.filter.frequency.value = freq
+        // Keep CV modulation depth proportional to the cutoff frequency
+        if (this.cutoffCvGain) this.cutoffCvGain.gain.value = freq * 1.5
         break
+      }
       case 'resonance':
         this.filter.Q.value = Number(value)
         break

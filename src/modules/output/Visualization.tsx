@@ -19,10 +19,10 @@ interface Props {
   accentColor: string
 }
 
-const W = 178
-const H_SCOPE = 90    // main oscilloscope — hero display
-const H_SPEC  = 40    // spectrum analyzer
-const W_METER = 12    // dB level meter width
+const W = 270
+const H_SCOPE = 120   // main oscilloscope — hero display
+const H_SPEC  = 54    // spectrum analyzer
+const W_METER = 16    // dB level meter width
 
 export default function OutputVisualization({ moduleId, accentColor }: Props) {
   const scopeRef  = useRef<HTMLCanvasElement>(null)

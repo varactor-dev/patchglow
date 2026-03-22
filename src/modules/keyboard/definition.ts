@@ -5,7 +5,7 @@ const keyboardDefinition: ModuleDefinition = {
   name: 'Keyboard',
   description: 'Computer keyboard → CV pitch + Gate signal',
   learningSummary: 'Notes have pitch (CV) and on/off state (gate). A keyboard sends both.',
-  hp: 14,
+  hp: 16,
   category: 'source',
   accentColor: '#ffffff',
 

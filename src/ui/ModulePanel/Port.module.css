@@ -63,4 +63,7 @@
   text-align: center;
   line-height: 1;
   white-space: nowrap;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 1px 4px;
+  border-radius: 2px;
 }

@@ -5,7 +5,7 @@ const outputDefinition: ModuleDefinition = {
   name: 'Output',
   description: 'Master output — routes audio to your speakers',
   learningSummary: 'This is where sound leaves the synth. The oscilloscope shows exactly what waveform is playing.',
-  hp: 12,
+  hp: 16,
   category: 'output',
   accentColor: '#ffffff',
 

@@ -1,7 +1,14 @@
 {
   "name": "patchglow",
-  "private": true,
   "version": "0.1.0",
+  "description": "A visual modular synthesizer that teaches synthesis by showing you what's happening",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOURUSERNAME/patchglow.git"
+  },
+  "homepage": "https://patchglow.pages.dev",
+  "keywords": ["synthesizer", "modular", "web-audio", "tone-js", "eurorack", "education"],
   "type": "module",
   "scripts": {
     "dev": "vite",

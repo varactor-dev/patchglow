@@ -3,29 +3,34 @@ import { useRackStore } from '@/store/rackStore'
 import { isCompatible } from '@/engine/signalTypes'
 import { getModuleDefinition } from '@/engine/moduleRegistry'
 import { HP_PX } from '@/ui/ModulePanel/ModulePanel'
+import { RACK_HP, NUM_ROWS, ROW_HEIGHT, RAIL_HEIGHT } from '@/ui/Rack/Rack'
+import { useAnimationFrame } from '@/modules/_shared/useAnimationFrame'
+import { CableSignalMonitor } from './CableSignalMonitor'
 import Cable, { DragCable, CableFlowKeyframes } from './Cable'
 
 interface Point { x: number; y: number }
 
-// Coordinates are in scroll-content space (scrollLeft/scrollTop added so cables
-// stay aligned when the rack scrolls horizontally)
-function getPortCenter(moduleId: string, portId: string, container: HTMLElement): Point | null {
+// Coordinates are in content space (pre-transform).
+// With CSS zoom, getBoundingClientRect returns scaled coords, so we divide by zoom.
+function getPortCenter(moduleId: string, portId: string, container: HTMLElement, zoom: number): Point | null {
   const selector = `[data-module-id="${moduleId}"][data-port-id="${portId}"]`
   const portEl = container.querySelector(selector)
   if (!portEl) return null
   const portRect = portEl.getBoundingClientRect()
   const containerRect = container.getBoundingClientRect()
   return {
-    x: portRect.left + portRect.width / 2 - containerRect.left + container.scrollLeft,
-    y: portRect.top + portRect.height / 2 - containerRect.top + container.scrollTop,
+    x: (portRect.left + portRect.width / 2 - containerRect.left) / zoom,
+    y: (portRect.top + portRect.height / 2 - containerRect.top) / zoom,
   }
 }
 
 interface CableLayerProps {
   containerRef: React.RefObject<HTMLElement | null>
+  scrollContainerRef: React.RefObject<HTMLElement | null>
+  zoom: number
 }
 
-export default function CableLayer({ containerRef }: CableLayerProps) {
+export default function CableLayer({ containerRef, scrollContainerRef, zoom }: CableLayerProps) {
   const connections = useRackStore((s) => s.connections)
   const selectedCableId = useRackStore((s) => s.selectedCableId)
   const draggingCable = useRackStore((s) => s.draggingCable)
@@ -36,11 +41,24 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
   // Keep a ref to draggingCable so async handlers see the latest value
   const draggingCableRef = useRef(draggingCable)
   draggingCableRef.current = draggingCable
+  // Keep zoom in a ref for event handlers
+  const zoomRef = useRef(zoom)
+  zoomRef.current = zoom
 
   const [cursorPos, setCursorPos] = useState<Point>({ x: 0, y: 0 })
   // Bump this counter on scroll to force cable position recalculation
   const [, setScrollTick] = useState(0)
+  // Signal level tick — bumped every frame to propagate dynamic brightness
+  const [, setSignalTick] = useState(0)
   const svgRef = useRef<SVGSVGElement>(null)
+  const monitorRef = useRef<CableSignalMonitor | null>(null)
+  if (!monitorRef.current) monitorRef.current = new CableSignalMonitor()
+
+  // Sample signal levels every animation frame and trigger re-render
+  useAnimationFrame(() => {
+    monitorRef.current!.update()
+    setSignalTick((t) => t + 1)
+  })
 
   // Force re-render after connections change so newly mounted port DOM elements are queryable.
   // importPatch sets modules + connections atomically; port DOM elements aren't committed yet
@@ -52,7 +70,7 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
 
   // Re-render cables when the scroll container scrolls so coordinates stay aligned
   useEffect(() => {
-    const container = containerRef.current
+    const container = scrollContainerRef.current
     if (!container) return
     let rafId = 0
     const onScroll = () => {
@@ -64,7 +82,7 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
       container.removeEventListener('scroll', onScroll)
       cancelAnimationFrame(rafId)
     }
-  }, [containerRef])
+  }, [scrollContainerRef])
 
   // Track cursor/touch during cable drag
   useEffect(() => {
@@ -73,14 +91,16 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
       const container = containerRef.current
       if (!container) return
       const rect = container.getBoundingClientRect()
-      // Convert to content space (same as getPortCenter)
+      const z = zoomRef.current
+      // Convert to content space (divide by zoom since getBoundingClientRect is in scaled coords)
       setCursorPos({
-        x: clientX - rect.left + container.scrollLeft,
-        y: clientY - rect.top + container.scrollTop,
+        x: (clientX - rect.left) / z,
+        y: (clientY - rect.top) / z,
       })
     }
     const onPointerMove = (e: PointerEvent) => update(e.clientX, e.clientY)
     const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault() // prevent scroll while dragging cable
       const t = e.touches[0]
       if (t) update(t.clientX, t.clientY)
     }
@@ -126,7 +146,7 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
     }
 
     document.addEventListener('pointermove', onPointerMove)
-    document.addEventListener('touchmove', onTouchMove, { passive: true })
+    document.addEventListener('touchmove', onTouchMove, { passive: false })
     document.addEventListener('pointerup', onPointerUp)
     document.addEventListener('touchend', onTouchEnd)
     return () => {
@@ -160,8 +180,8 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
       style={{
         position: 'absolute',
         inset: 0,
-        width: 84 * HP_PX,  // full rack content width — must match the scroll container
-        height: '100%',
+        width: RACK_HP * HP_PX,
+        height: NUM_ROWS * (ROW_HEIGHT + RAIL_HEIGHT) + RAIL_HEIGHT,
         pointerEvents: 'none',  // always passthrough — cable <g> elements re-enable individually
         overflow: 'visible',
         zIndex: 10,
@@ -172,10 +192,11 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
       {/* Rendered connections — pointer-events disabled during drag so elementFromPoint finds ports */}
       <g style={{ pointerEvents: draggingCable ? 'none' : undefined }}>
       {container && connections.map((conn) => {
-        const start = getPortCenter(conn.sourceModuleId, conn.sourcePortId, container)
-        const end = getPortCenter(conn.destModuleId, conn.destPortId, container)
+        const start = getPortCenter(conn.sourceModuleId, conn.sourcePortId, container, zoom)
+        const end = getPortCenter(conn.destModuleId, conn.destPortId, container, zoom)
         if (!start || !end) return null
 
+        const sigState = monitorRef.current!.getSignalState(conn.id)
         return (
           <Cable
             key={conn.id}
@@ -184,6 +205,13 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
             end={end}
             signalType={conn.signalType}
             selected={conn.id === selectedCableId}
+            signalLevel={sigState.level}
+            gateHigh={sigState.gateHigh}
+            pulseProgress={sigState.pulseProgress}
+            pulseDirection={sigState.pulseDirection}
+            flowPhase={sigState.flowPhase}
+            dominantFreqHz={sigState.dominantFreqHz}
+            waveform={sigState.waveform}
           />
         )
       })}
@@ -191,7 +219,7 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
 
       {/* In-progress drag cable */}
       {container && draggingCable && (() => {
-        const start = getPortCenter(draggingCable.moduleId, draggingCable.portId, container)
+        const start = getPortCenter(draggingCable.moduleId, draggingCable.portId, container, zoom)
         if (!start) return null
         return (
           <DragCable

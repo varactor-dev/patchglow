@@ -2,8 +2,6 @@
   display: flex;
   flex-direction: column;
   background: var(--bg-rack);
-  overflow-x: auto;
-  overflow-y: hidden;
   position: relative;
 }
 
@@ -48,10 +46,28 @@
     90deg,
     transparent 0px,
     transparent 19px,
-    #161620 19px,
-    #161620 20px
+    rgba(255,255,255,0.03) 19px,
+    rgba(255,255,255,0.03) 20px
   );
   pointer-events: none;
+}
+
+/* Mounting holes in empty rack space */
+.mountingHoles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.mountHole {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.02);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,0.4);
 }
 
 /* Absolute positioning of each module */

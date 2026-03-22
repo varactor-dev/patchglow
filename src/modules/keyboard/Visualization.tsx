@@ -15,8 +15,8 @@ interface Props {
 const WHITE_NOTES = [0, 2, 4, 5, 7, 9, 11, 12]   // semitones for white keys
 const BLACK_NOTES = [1, 3, -1, 6, 8, 10, -1, -1]  // -1 = no black key at that position
 
-const W = 220
-const H = 60
+const W = 260
+const H = 70
 const WHITE_W = W / WHITE_NOTES.length
 const WHITE_H = H
 const BLACK_W = WHITE_W * 0.55

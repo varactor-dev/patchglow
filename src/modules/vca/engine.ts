@@ -65,14 +65,16 @@ export class VcaEngine implements ModuleAudioEngine {
   onPortConnected(portId: string): void {
     if (portId === 'cv') {
       // Disconnect internalBias so CV signal takes full control
-      this.internalBias?.disconnect(this.cvGain!.gain as unknown as Tone.InputNode)
+      try { this.internalBias?.disconnect(this.cvGain!.gain as unknown as Tone.InputNode) }
+      catch { /* already disconnected */ }
     }
   }
 
   onPortDisconnected(portId: string): void {
     if (portId === 'cv') {
       // Reconnect internalBias so audio passes through when no CV
-      this.internalBias?.connect(this.cvGain!.gain as unknown as Tone.InputNode)
+      try { this.internalBias?.connect(this.cvGain!.gain as unknown as Tone.InputNode) }
+      catch { /* already connected */ }
     }
   }
 

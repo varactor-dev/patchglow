@@ -36,6 +36,8 @@ export const useRackStore = create<RackStore>()(
     connections: [],
     selectedCableId: null,
     draggingCable: null,
+    audioStarted: false,
+    zoom: 1.0,
 
     // ─── Module Actions ──────────────────────────────────────────────────────
     addModule(type, position) {
@@ -173,6 +175,14 @@ export const useRackStore = create<RackStore>()(
     exportPatch() {
       const { modules, connections } = get()
       return JSON.stringify({ modules, connections }, null, 2)
+    },
+
+    setAudioStarted() {
+      set({ audioStarted: true })
+    },
+
+    setZoom(zoom: number) {
+      set({ zoom: Math.max(0.4, Math.min(1.5, zoom)) })
     },
 
     importPatch(patchJson) {

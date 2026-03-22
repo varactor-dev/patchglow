@@ -36,6 +36,8 @@ export interface RackStore {
   connections: Connection[]
   selectedCableId: string | null
   draggingCable: DraggingCable | null
+  audioStarted: boolean
+  zoom: number
 
   // Module actions
   addModule: (type: string, position: { row: number; col: number }) => string
@@ -58,4 +60,10 @@ export interface RackStore {
   // Patch management
   exportPatch: () => string
   importPatch: (patchJson: string) => void
+
+  // Audio state
+  setAudioStarted: () => void
+
+  // Zoom
+  setZoom: (zoom: number) => void
 }

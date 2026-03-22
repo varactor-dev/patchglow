@@ -8,11 +8,6 @@ export class OscillatorEngine implements ModuleAudioEngine {
   private gainNode: Tone.Gain | null = null
   private voctGain: Tone.Gain | null = null
   private fmGain: Tone.Gain | null = null
-  // Gate system: gateGain(0) + internalGate(1) bias = drone by default.
-  // When a cable connects, internalGate is disconnected so gate signal (0/1) takes full control.
-  private gateGain: Tone.Gain | null = null
-  private gateInputGain: Tone.Gain | null = null
-  private internalGate: Tone.Signal<'number'> | null = null
 
   initialize(_context: Tone.BaseContext): void {
     this.osc = new Tone.Oscillator({
@@ -30,30 +25,22 @@ export class OscillatorEngine implements ModuleAudioEngine {
     this.voctGain.connect(this.osc.detune)
 
     // FM intermediary: same pattern for frequency — prevents connectSignal() from zeroing osc.frequency
-    this.fmGain = new Tone.Gain(1)
+    // Gain of 200 means a ±1 CV signal produces ±200 Hz frequency deviation — clearly audible FM
+    this.fmGain = new Tone.Gain(200)
     this.fmGain.connect(this.osc.frequency)
 
-    // Gate system: intrinsic gain=0, internalGate provides the bias of 1 for drone behavior.
-    // When a gate cable connects, internalGate is disconnected (via onPortConnected) so
-    // the external signal (0 or 1) controls gateGain.gain directly (additive onto 0).
-    this.gateGain = new Tone.Gain(0)
-    this.gateInputGain = new Tone.Gain(1)
-    this.internalGate = new Tone.Signal<'number'>({ value: 1, units: 'number' })
-    this.gateInputGain.connect(this.gateGain.gain as unknown as Tone.InputNode)
-    this.internalGate.connect(this.gateGain.gain as unknown as Tone.InputNode)
-
-    // Chain: osc → gainNode → gateGain → analysers
+    // Chain: osc → gainNode → analysers
+    // Oscillators always run continuously — no gate. Use a VCA + Envelope to shape volume.
     this.osc.connect(this.gainNode)
-    this.gainNode.connect(this.gateGain)
-    this.gateGain.connect(this.waveformAnalyser)
-    this.gateGain.connect(this.fftAnalyser)
+    this.gainNode.connect(this.waveformAnalyser)
+    this.gainNode.connect(this.fftAnalyser)
 
     this.osc.start()
   }
 
   getOutputNode(portId: string): Tone.ToneAudioNode {
     if (portId === 'out') {
-      return this.gateGain!
+      return this.gainNode!
     }
     throw new Error(`OscillatorEngine: unknown output port "${portId}"`)
   }
@@ -67,10 +54,6 @@ export class OscillatorEngine implements ModuleAudioEngine {
     if (portId === 'fm') {
       // FM input routes to fmGain, which feeds osc.frequency internally
       return this.fmGain!
-    }
-    if (portId === 'gate') {
-      // Gate input routes to gateInputGain, which adds to gateGain.gain
-      return this.gateInputGain!
     }
     throw new Error(`OscillatorEngine: unknown input port "${portId}"`)
   }
@@ -88,20 +71,6 @@ export class OscillatorEngine implements ModuleAudioEngine {
       case 'waveform':
         this.osc.type = value as OscillatorType
         break
-    }
-  }
-
-  onPortConnected(portId: string): void {
-    if (portId === 'gate') {
-      // Disconnect internal bias so external gate signal takes full control (0 or 1)
-      this.internalGate?.disconnect(this.gateGain!.gain as unknown as Tone.InputNode)
-    }
-  }
-
-  onPortDisconnected(portId: string): void {
-    if (portId === 'gate') {
-      // Reconnect internal bias so oscillator returns to drone behavior
-      this.internalGate?.connect(this.gateGain!.gain as unknown as Tone.InputNode)
     }
   }
 
@@ -128,17 +97,11 @@ export class OscillatorEngine implements ModuleAudioEngine {
     this.fftAnalyser?.dispose()
     this.voctGain?.dispose()
     this.fmGain?.dispose()
-    this.gateGain?.dispose()
-    this.gateInputGain?.dispose()
-    this.internalGate?.dispose()
     this.osc = null
     this.gainNode = null
     this.waveformAnalyser = null
     this.fftAnalyser = null
     this.voctGain = null
     this.fmGain = null
-    this.gateGain = null
-    this.gateInputGain = null
-    this.internalGate = null
   }
 }
