@@ -80,6 +80,9 @@
   letter-spacing: 0.15em;
   text-align: center;
   padding: 2px 0;
+  user-select: none;
+  cursor: grab;
+  touch-action: none;
 }
 
 /* Viz screen — the CRT-style display */

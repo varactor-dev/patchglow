@@ -76,3 +76,26 @@
   top: 0;
   bottom: 0;
 }
+
+/* Brighter grid lines during module drag */
+.hpGridActive {
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0px,
+    transparent 19px,
+    rgba(255,255,255,0.08) 19px,
+    rgba(255,255,255,0.08) 20px
+  );
+}
+
+/* Ghost outline showing snap position during drag */
+.dragGhost {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border: 2px dashed;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 50;
+  transition: left 80ms ease, border-color 80ms ease;
+}

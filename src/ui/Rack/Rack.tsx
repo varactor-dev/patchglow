@@ -7,6 +7,7 @@ import Knob from '@/ui/ModulePanel/Knob'
 import Port from '@/ui/ModulePanel/Port'
 import Switch from '@/ui/ModulePanel/Switch'
 import CableLayer from '@/ui/Cables/CableLayer'
+import { useDragModule } from './useDragModule'
 import type { ParameterDefinition, PortDefinition } from '@/types/module'
 import panelStyles from '@/ui/ModulePanel/ModulePanel.module.css'
 import styles from './Rack.module.css'
@@ -34,6 +35,7 @@ export default function Rack({ scrollContainerRef }: RackProps) {
   const zoom = useRackStore((s) => s.zoom)
 
   const rackRef = useRef<HTMLDivElement>(null)
+  const { dragState, handleDragStart } = useDragModule(zoom, rackRef)
 
   const contentW = RACK_HP * HP_PX
   const contentH = NUM_ROWS * (ROW_HEIGHT + RAIL_HEIGHT) + RAIL_HEIGHT
@@ -92,7 +94,7 @@ export default function Rack({ scrollContainerRef }: RackProps) {
             {/* Module bed */}
             <div className={styles.moduleBed}>
               <div
-                className={styles.hpGrid}
+                className={`${styles.hpGrid} ${dragState ? styles.hpGridActive : ''}`}
                 style={{
                   backgroundSize: `${HP_PX}px 100%`,
                   width: RACK_HP * HP_PX,
@@ -109,6 +111,7 @@ export default function Rack({ scrollContainerRef }: RackProps) {
                 if (!registration) return null
                 const { definition, VisualizationComponent } = registration
                 const { accentColor, parameters, ports } = definition
+                const isDragging = dragState?.instanceId === mod.instanceId
 
                 const handleRemove = (e: React.MouseEvent) => {
                   e.preventDefault()
@@ -119,14 +122,26 @@ export default function Rack({ scrollContainerRef }: RackProps) {
                   <div
                     key={mod.instanceId}
                     className={styles.modulePosition}
-                    style={{ left: mod.position.col * HP_PX }}
+                    style={{
+                      left: mod.position.col * HP_PX,
+                      ...(isDragging ? {
+                        transform: `translate(${dragState.offsetX}px, ${dragState.offsetY}px)`,
+                        opacity: 0.7,
+                        zIndex: 100,
+                        pointerEvents: 'none' as const,
+                      } : {}),
+                    }}
                   >
                     <ModulePanel
                       hp={definition.hp}
                       accentColor={accentColor}
                       onContextMenu={handleRemove}
                     >
-                      <ModuleLabel name={definition.name} accentColor={accentColor} />
+                      <ModuleLabel
+                        name={definition.name}
+                        accentColor={accentColor}
+                        onPointerDown={(e) => handleDragStart(mod.instanceId, e)}
+                      />
 
                       <VisualizationComponent
                         moduleId={mod.instanceId}
@@ -183,6 +198,21 @@ export default function Rack({ scrollContainerRef }: RackProps) {
                   </div>
                 )
               })}
+
+              {/* Drag ghost outline */}
+              {dragState && dragState.snapRow === rowIdx && (
+                <div
+                  className={styles.dragGhost}
+                  style={{
+                    left: dragState.snapCol * HP_PX,
+                    width: dragState.hp * HP_PX,
+                    borderColor: dragState.snapValid ? '#22d3ee' : '#ff4444',
+                    boxShadow: dragState.snapValid
+                      ? '0 0 12px rgba(34, 211, 238, 0.3)'
+                      : '0 0 12px rgba(255, 68, 68, 0.3)',
+                  }}
+                />
+              )}
             </div>
           </React.Fragment>
         ))}

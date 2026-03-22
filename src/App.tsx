@@ -29,6 +29,8 @@ import Rack, { RACK_HP, NUM_ROWS, ROW_HEIGHT, RAIL_HEIGHT } from '@/ui/Rack/Rack
 import { HP_PX } from '@/ui/ModulePanel/ModulePanel'
 import styles from './App.module.css'
 
+const isMobile = window.innerWidth < 768
+
 function computeFitZoom(): number {
   const contentH = NUM_ROWS * (ROW_HEIGHT + RAIL_HEIGHT) + RAIL_HEIGHT
   const contentW = RACK_HP * HP_PX
@@ -43,7 +45,6 @@ export default function App() {
   const audioStarted = useRackStore((s) => s.audioStarted)
   const setAudioStarted = useRackStore((s) => s.setAudioStarted)
   const [showAbout, setShowAbout] = useState(false)
-  const [showPhoneWarning, setShowPhoneWarning] = useState(() => window.innerWidth < 768)
   const [showWelcome, setShowWelcome] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const initializedRef = useRef(false)
@@ -96,7 +97,14 @@ export default function App() {
 
     // 4. If no autosave: show welcome or auto-load demo
     if (!restored) {
-      if (!localStorage.getItem('patchglow-welcomed')) {
+      if (isMobile) {
+        // Mobile: always load demo, skip welcome
+        localStorage.setItem('patchglow-welcomed', 'true')
+        fetch('/patches/subtractive-voice.json')
+          .then((r) => r.text())
+          .then((json) => useRackStore.getState().importPatch(json))
+          .catch(() => {})
+      } else if (!localStorage.getItem('patchglow-welcomed')) {
         setShowWelcome(true)
       } else {
         // Returning visitor with no autosave — auto-load demo
@@ -185,8 +193,21 @@ export default function App() {
         <Rack scrollContainerRef={rackAreaRef} />
       </div>
 
-      {/* Full-screen audio start overlay — hidden when welcome screen is active */}
-      {!audioStarted && !showWelcome && (
+      {/* Mobile tap-to-start overlay */}
+      {isMobile && !audioStarted && (
+        <div className={styles.mobileStartOverlay} onClick={handleStartAudio}>
+          <div className={styles.overlayContent}>
+            <div className={styles.overlayTitle}>PatchGlow</div>
+            <button className={styles.overlayButton} type="button">
+              TAP TO START
+            </button>
+            <div className={styles.overlayHint}>Tap anywhere to begin</div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop audio start overlay — hidden when welcome screen is active */}
+      {!isMobile && !audioStarted && !showWelcome && (
         <div className={styles.audioOverlay} onClick={handleStartAudio}>
           <div className={styles.overlayContent}>
             <div className={styles.overlayTitle}>PatchGlow</div>
@@ -198,8 +219,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Welcome screen — first visit only */}
-      {showWelcome && (
+      {/* Welcome screen — first visit only, desktop only */}
+      {!isMobile && showWelcome && (
         <div className={styles.welcomeOverlay}>
           <div className={styles.welcomeCard}>
             <div className={styles.welcomeLogo}>PatchGlow</div>
@@ -245,22 +266,6 @@ export default function App() {
                 Start Empty
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Phone warning overlay */}
-      {showPhoneWarning && (
-        <div className={styles.phoneOverlay}>
-          <div className={styles.phoneContent}>
-            <div className={styles.overlayTitle}>PatchGlow</div>
-            <div className={styles.phoneMessage}>
-              PatchGlow is designed for desktop and tablet.
-              Please visit on a larger screen for the full experience.
-            </div>
-            <button className={styles.phoneContinue} onClick={() => setShowPhoneWarning(false)}>
-              Continue anyway
-            </button>
           </div>
         </div>
       )}

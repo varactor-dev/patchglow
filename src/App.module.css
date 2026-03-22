@@ -241,9 +241,9 @@
   opacity: 0.6;
 }
 
-/* ─── Phone Warning Overlay ────────────────────────────────────────────── */
+/* ─── Mobile Start Overlay ─────────────────────────────────────────────── */
 
-.phoneOverlay {
+.mobileStartOverlay {
   position: fixed;
   inset: 0;
   background: #0a0a0f;
@@ -251,38 +251,7 @@
   align-items: center;
   justify-content: center;
   z-index: 10001;
-}
-
-.phoneContent {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
-  padding: 32px;
-  text-align: center;
-}
-
-.phoneMessage {
-  font-family: var(--font-mono);
-  font-size: 14px;
-  color: var(--text-dim);
-  line-height: 1.8;
-  max-width: 300px;
-}
-
-.phoneContinue {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--color-cv);
-  opacity: 0.6;
   cursor: pointer;
-  background: none;
-  border: none;
-  letter-spacing: 0.05em;
-}
-
-.phoneContinue:hover {
-  opacity: 1;
 }
 
 /* ─── Welcome Screen ──────────────────────────────────────────────────── */

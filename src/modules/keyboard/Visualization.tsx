@@ -1,9 +1,11 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAnimationFrame } from '@/modules/_shared/useAnimationFrame'
 import { clearCanvas } from '@/modules/_shared/drawUtils'
 import AudioEngineManager from '@/engine/AudioEngineManager'
+import { useRackStore } from '@/store/rackStore'
 import type { VisualizationData } from '@/types/module'
 import panelStyles from '@/ui/ModulePanel/ModulePanel.module.css'
+import hintStyles from './Visualization.module.css'
 
 interface Props {
   moduleId: string
@@ -42,10 +44,24 @@ function getSemitoneAtPoint(x: number, y: number): number | null {
   return null
 }
 
+const isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches
+
 export default function KeyboardVisualization({ moduleId }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [display, setDisplay] = useState({ noteName: '', octave: 0, gateHigh: false })
   const displayRef = useRef(display)
+  const hasEverPlayed = useRef(false)
+  const [showHint, setShowHint] = useState(false)
+  const audioStarted = useRackStore((s) => s.audioStarted)
+
+  // Show hint tooltip 3s after audio starts if no note has been played
+  useEffect(() => {
+    if (!audioStarted || hasEverPlayed.current) return
+    const timer = setTimeout(() => {
+      if (!hasEverPlayed.current) setShowHint(true)
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [audioStarted])
 
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
@@ -67,7 +83,7 @@ export default function KeyboardVisualization({ moduleId }: Props) {
     AudioEngineManager.getInstance().sendAction(moduleId, 'noteOff')
   }, [moduleId])
 
-  useAnimationFrame(() => {
+  useAnimationFrame((timestamp) => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
@@ -78,6 +94,12 @@ export default function KeyboardVisualization({ moduleId }: Props) {
     const newNoteName = (customData?.['pressedNoteName'] as string) ?? ''
     const newOctave = (customData?.['octave'] as number) ?? 0
     const newGateHigh = ((customData?.['gateValue'] as number) ?? 0) > 0.5
+
+    // Dismiss hint on first note
+    if (newGateHigh && !hasEverPlayed.current) {
+      hasEverPlayed.current = true
+      setShowHint(false)
+    }
 
     // Update JSX display state only when values change (avoids re-render every frame)
     const prev = displayRef.current
@@ -143,19 +165,36 @@ export default function KeyboardVisualization({ moduleId }: Props) {
       ctx.strokeRect(x + 0.5, 0.5, BLACK_W - 1, BLACK_H - 1)
     })
 
+    // Breathing pulse when no note has been played yet
+    if (!hasEverPlayed.current && pressedNote === null) {
+      const pulse = 0.5 + 0.5 * Math.sin(timestamp * 0.003)
+      ctx.globalAlpha = pulse * 0.06
+      ctx.fillStyle = '#00e5ff'
+      ctx.fillRect(0, 0, W, H)
+      ctx.globalAlpha = 1
+    }
+
     // Keyboard label mapping hint
     const HINT_KEYS = ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K']
     WHITE_NOTES.forEach((_semitone, i) => {
       const x = i * WHITE_W + WHITE_W / 2
-      ctx.fillStyle = '#4a4a60'
-      ctx.font = '7px monospace'
+      ctx.fillStyle = '#7a7a90'
+      ctx.font = '9px monospace'
       ctx.textAlign = 'center'
-      ctx.fillText(HINT_KEYS[i] ?? '', x, WHITE_H - 5)
+      ctx.fillText(HINT_KEYS[i] ?? '', x, WHITE_H - 6)
     })
   })
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center', position: 'relative' }}>
+      {/* Play hint tooltip */}
+      {showHint && (
+        <div className={hintStyles.hintTooltip}>
+          {isDesktop ? 'Press A\u2013K keys to play' : 'Tap the keys to play'}
+          <div className={hintStyles.hintArrow} />
+        </div>
+      )}
+
       <div className={panelStyles.vizScreen} style={{ width: W, height: H }}>
         <canvas
           ref={canvasRef}

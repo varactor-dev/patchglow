@@ -1,0 +1,47 @@
+.hintTooltip {
+  position: absolute;
+  top: -42px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10, 10, 15, 0.92);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  border-radius: 4px;
+  padding: 6px 14px;
+  font-family: var(--font-display);
+  font-size: 9px;
+  color: var(--color-cv);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  z-index: 20;
+  pointer-events: none;
+  animation: hintPulse 2s ease-in-out infinite;
+}
+
+.hintArrow {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid rgba(0, 229, 255, 0.5);
+  animation: hintBounce 1.5s ease-in-out infinite;
+}
+
+@keyframes hintPulse {
+  0%, 100% {
+    border-color: rgba(0, 229, 255, 0.3);
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.1);
+  }
+  50% {
+    border-color: rgba(0, 229, 255, 0.6);
+    box-shadow: 0 0 16px rgba(0, 229, 255, 0.25);
+  }
+}
+
+@keyframes hintBounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(3px); }
+}
