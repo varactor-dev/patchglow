@@ -17,7 +17,11 @@ function computeFitZoom(): number {
   return Math.max(0.4, Math.min(1.0, Math.min(fitH, fitW)))
 }
 
-export default function Toolbar() {
+interface ToolbarProps {
+  onAbout?: () => void
+}
+
+export default function Toolbar({ onAbout }: ToolbarProps) {
   const audioStarted = useRackStore((s) => s.audioStarted)
   const setAudioStarted = useRackStore((s) => s.setAudioStarted)
   const addModule = useRackStore((s) => s.addModule)
@@ -205,6 +209,14 @@ export default function Toolbar() {
         >
           DOCS
         </button>
+        {onAbout && (
+          <button
+            className={`${styles.patchButton} ${styles.docsButton}`}
+            onClick={onAbout}
+          >
+            ABOUT
+          </button>
+        )}
       </div>
 
       <div className={styles.spacer} />

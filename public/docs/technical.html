@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PatchGlow — Technical Documentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════════
+       PatchGlow — Technical Documentation
+       Self-contained styles, retro-futurist dark aesthetic
+       ═══════════════════════════════════════════════════════════════════════ */
+
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-deepest:    #0a0a0f;
+      --bg-panel:      #1a1a24;
+      --bg-raised:     #22222e;
+      --bg-code:       #12121c;
+      --border-subtle: #2a2a3a;
+      --text-primary:  #e0e0ec;
+      --text-dim:      #6a6a80;
+      --text-bright:   #ffffff;
+      --cyan:          #00e5ff;
+      --amber:         #ff6b35;
+      --magenta:       #ff2ecb;
+      --purple:        #a855f7;
+      --green:         #84cc16;
+      --font-display:  'Orbitron', sans-serif;
+      --font-mono:     'JetBrains Mono', monospace;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg-deepest);
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 14px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── Vignette overlay ──────────────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.5) 100%);
+      z-index: 9999;
+    }
+
+    /* ─── CRT scanline hint ─────────────────────────────────────────────── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.03) 2px,
+        rgba(0, 0, 0, 0.03) 4px
+      );
+      z-index: 9998;
+    }
+
+    /* ─── Container ─────────────────────────────────────────────────────── */
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+      position: relative;
+    }
+
+    /* ─── Logo ──────────────────────────────────────────────────────────── */
+    .logo {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .logo-text {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 42px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      text-shadow:
+        0 0 8px var(--cyan),
+        0 0 24px rgba(0, 229, 255, 0.4),
+        0 0 48px rgba(0, 229, 255, 0.15);
+    }
+
+    .logo-sub {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 12px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    /* ─── Divider ───────────────────────────────────────────────────────── */
+    .divider {
+      border: none;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-subtle), transparent);
+      margin: 32px 0;
+    }
+
+    .divider-glow {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      opacity: 0.3;
+      margin: 40px 0;
+    }
+
+    /* ─── Table of Contents ─────────────────────────────────────────────── */
+    .toc {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 28px 32px;
+      margin-bottom: 48px;
+    }
+
+    .toc-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      text-shadow: 0 0 6px rgba(0, 229, 255, 0.4);
+      margin-bottom: 16px;
+    }
+
+    .toc ol {
+      list-style: none;
+      counter-reset: toc-counter;
+      padding: 0;
+    }
+
+    .toc li {
+      counter-increment: toc-counter;
+      margin-bottom: 6px;
+    }
+
+    .toc li::before {
+      content: counter(toc-counter, decimal-leading-zero) ".";
+      color: var(--text-dim);
+      font-size: 12px;
+      margin-right: 10px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .toc a {
+      color: var(--text-primary);
+      text-decoration: none;
+      font-size: 13px;
+      transition: color 0.15s ease, text-shadow 0.15s ease;
+    }
+
+    .toc a:hover {
+      color: var(--cyan);
+      text-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+    }
+
+    /* ─── Section headings ──────────────────────────────────────────────── */
+    .section {
+      margin-bottom: 56px;
+    }
+
+    h2 {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 20px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      text-shadow:
+        0 0 6px rgba(0, 229, 255, 0.5),
+        0 0 20px rgba(0, 229, 255, 0.2);
+      margin-bottom: 24px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(0, 229, 255, 0.15);
+    }
+
+    h2 .num {
+      color: var(--text-dim);
+      font-size: 14px;
+      margin-right: 8px;
+    }
+
+    h3 {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--amber);
+      text-shadow: 0 0 6px rgba(255, 107, 53, 0.3);
+      margin-top: 32px;
+      margin-bottom: 12px;
+    }
+
+    h4 {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--magenta);
+      text-shadow: 0 0 4px rgba(255, 46, 203, 0.3);
+      margin-top: 24px;
+      margin-bottom: 10px;
+    }
+
+    /* ─── Body text ─────────────────────────────────────────────────────── */
+    p {
+      margin-bottom: 14px;
+      color: var(--text-primary);
+    }
+
+    strong {
+      color: var(--text-bright);
+      font-weight: 500;
+    }
+
+    a {
+      color: var(--cyan);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-shadow: 0 0 6px rgba(0, 229, 255, 0.3);
+    }
+
+    /* ─── Inline code ───────────────────────────────────────────────────── */
+    code:not(pre code) {
+      background: var(--bg-code);
+      color: var(--amber);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 13px;
+      font-family: var(--font-mono);
+      border: 1px solid rgba(255, 107, 53, 0.12);
+    }
+
+    /* ─── Code blocks ───────────────────────────────────────────────────── */
+    pre {
+      background: var(--bg-code);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin-bottom: 20px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      position: relative;
+    }
+
+    pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: inherit;
+      color: inherit;
+    }
+
+    /* Syntax coloring spans */
+    .kw { color: var(--magenta); }          /* keywords: interface, const, import, export, etc. */
+    .ty { color: var(--cyan); }             /* types: string, number, void, etc. */
+    .st { color: var(--amber); }            /* strings */
+    .cm { color: var(--text-dim); }         /* comments */
+    .fn { color: #84cc16; }                 /* function names */
+    .nu { color: var(--purple); }           /* numbers */
+    .op { color: var(--text-dim); }         /* operators, punctuation */
+    .pr { color: var(--text-primary); }     /* properties */
+
+    /* ─── Architecture diagram ──────────────────────────────────────────── */
+    pre.diagram {
+      border-color: rgba(0, 229, 255, 0.15);
+      background: linear-gradient(135deg, var(--bg-code) 0%, rgba(0, 229, 255, 0.02) 100%);
+      text-align: center;
+      color: var(--cyan);
+      text-shadow: 0 0 4px rgba(0, 229, 255, 0.2);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    /* ─── File tree ─────────────────────────────────────────────────────── */
+    pre.file-tree {
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text-dim);
+    }
+
+    pre.file-tree .dir { color: var(--cyan); }
+    pre.file-tree .file { color: var(--text-primary); }
+    pre.file-tree .comment { color: var(--text-dim); font-style: italic; }
+
+    /* ─── Tables ────────────────────────────────────────────────────────── */
+    .table-wrap {
+      overflow-x: auto;
+      margin-bottom: 20px;
+      border-radius: 6px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead {
+      background: var(--bg-panel);
+    }
+
+    th {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 10px 16px;
+      border-bottom: 1px solid rgba(42, 42, 58, 0.5);
+      color: var(--text-primary);
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: rgba(0, 229, 255, 0.02);
+    }
+
+    td:first-child {
+      color: var(--text-bright);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    td code {
+      font-size: 12px;
+    }
+
+    /* ─── Lists ─────────────────────────────────────────────────────────── */
+    ul, ol {
+      padding-left: 24px;
+      margin-bottom: 14px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    ul.key-points {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    ul.key-points li {
+      padding-left: 20px;
+      position: relative;
+      margin-bottom: 8px;
+    }
+
+    ul.key-points li::before {
+      content: '\25B8';
+      position: absolute;
+      left: 0;
+      color: var(--cyan);
+      font-size: 12px;
+    }
+
+    /* ─── Checklist ─────────────────────────────────────────────────────── */
+    ul.checklist {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    ul.checklist li {
+      padding-left: 24px;
+      position: relative;
+      margin-bottom: 6px;
+    }
+
+    ul.checklist li::before {
+      content: '\25A1';
+      position: absolute;
+      left: 0;
+      color: var(--magenta);
+      font-size: 13px;
+    }
+
+    /* ─── Labeled block (for color coding, etc.) ────────────────────────── */
+    .info-block {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--cyan);
+      border-radius: 0 6px 6px 0;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+
+    .info-block p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* ─── Color swatches ────────────────────────────────────────────────── */
+    .swatch {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-right: 4px;
+      box-shadow: 0 0 4px currentColor;
+    }
+
+    .swatch-audio { background: var(--amber); color: var(--amber); }
+    .swatch-cv    { background: var(--cyan); color: var(--cyan); }
+    .swatch-gate  { background: var(--magenta); color: var(--magenta); }
+
+    /* ─── Step numbers ──────────────────────────────────────────────────── */
+    .steps {
+      counter-reset: step-counter;
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .steps li {
+      counter-increment: step-counter;
+      padding-left: 36px;
+      position: relative;
+      margin-bottom: 24px;
+    }
+
+    .steps li::before {
+      content: counter(step-counter);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 24px;
+      height: 24px;
+      background: var(--bg-panel);
+      border: 1px solid var(--cyan);
+      border-radius: 50%;
+      color: var(--cyan);
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      line-height: 24px;
+      box-shadow: 0 0 6px rgba(0, 229, 255, 0.2);
+    }
+
+    /* ─── Back to top ───────────────────────────────────────────────────── */
+    .back-top {
+      text-align: center;
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .back-top a {
+      font-family: var(--font-display);
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      transition: color 0.15s ease, text-shadow 0.15s ease;
+    }
+
+    .back-top a:hover {
+      color: var(--cyan);
+      text-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+    }
+
+    /* ─── Footer ───────────────────────────────────────────────────────── */
+    .footer {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      padding: 1rem 0 2rem;
+      letter-spacing: 0.05em;
+      line-height: 2;
+    }
+
+    .footer a {
+      color: var(--cyan);
+      text-decoration: none;
+      transition: text-shadow 0.15s ease;
+    }
+
+    .footer a:hover {
+      text-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+    }
+
+    /* ─── CSS animation path ────────────────────────────────────────────── */
+    .anim-block {
+      background: var(--bg-code);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 16px 24px;
+      margin-bottom: 16px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+
+    /* ─── Responsive ────────────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .container {
+        padding: 24px 16px 60px;
+      }
+
+      .logo-text {
+        font-size: 28px;
+      }
+
+      h2 {
+        font-size: 16px;
+      }
+
+      pre {
+        padding: 14px 16px;
+        font-size: 12px;
+      }
+
+      pre.diagram {
+        font-size: 10px;
+      }
+
+      table {
+        font-size: 12px;
+      }
+
+      th, td {
+        padding: 8px 10px;
+      }
+
+      .toc {
+        padding: 20px 22px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .logo-text {
+        font-size: 22px;
+        letter-spacing: 0.1em;
+      }
+
+      pre.diagram {
+        font-size: 9px;
+        padding: 14px 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="top">
+
+    <!-- ═══ Logo ═══ -->
+    <div class="logo">
+      <div class="logo-text">PatchGlow</div>
+      <div class="logo-sub">Technical Documentation</div>
+    </div>
+
+    <hr class="divider-glow" />
+
+    <!-- ═══ Table of Contents ═══ -->
+    <nav class="toc">
+      <div class="toc-title">Contents</div>
+      <ol>
+        <li><a href="#architecture">Architecture Overview</a></li>
+        <li><a href="#tech-stack">Tech Stack</a></li>
+        <li><a href="#file-structure">File Structure</a></li>
+        <li><a href="#module-system">Module System</a></li>
+        <li><a href="#audio-engine">Audio Engine</a></li>
+        <li><a href="#state-management">State Management</a></li>
+        <li><a href="#cable-system">Cable System</a></li>
+        <li><a href="#visualization">Visualization System</a></li>
+        <li><a href="#add-module">How to Add a New Module</a></li>
+        <li><a href="#limitations">Known Limitations &amp; Future Work</a></li>
+      </ol>
+    </nav>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         1. ARCHITECTURE OVERVIEW
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="section" id="architecture">
+      <h2><span class="num">01</span> Architecture Overview</h2>
+
+      <p>PatchGlow follows a unidirectional data flow with a clean separation between state, UI, and audio processing. The Zustand store is the single source of truth.</p>
+
+<pre class="diagram"><code>
+&#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;     &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;     &#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+&#x2502;  Zustand     &#x2502;&#x2500;&#x2500;&#x2500;&#x2500;&#x25B6;&#x2502;  React UI    &#x2502;&#x2500;&#x2500;&#x2500;&#x2500;&#x25B6;&#x2502;  User sees   &#x2502;
+&#x2502;  Store       &#x2502;     &#x2502;  Components  &#x2502;     &#x2502;  &amp; interacts &#x2502;
+&#x2502;              &#x2502;&#x25C0;&#x2500;&#x2500;&#x2500;&#x2500;&#x2502;              &#x2502;&#x25C0;&#x2500;&#x2500;&#x2500;&#x2500;&#x2502;              &#x2502;
+&#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x252C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;     &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;     &#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;
+       &#x2502;
+       &#x2502; subscribes
+       &#x25BC;
+&#x250C;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2510;
+&#x2502;  Audio       &#x2502;
+&#x2502;  Engine      &#x2502;
+&#x2502;  (Tone.js)   &#x2502;
+&#x2514;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2518;
+</code></pre>
+
+      <h3>Key Principles</h3>
+      <ul class="key-points">
+        <li>The <strong>Zustand store</strong> (<code>src/store/rackStore.ts</code>) is the single source of truth for all rack state: modules, connections, parameters, and UI state.</li>
+        <li>The <strong>AudioEngineManager</strong> (<code>src/engine/AudioEngineManager.ts</code>) is a singleton that subscribes to store changes and keeps the Tone.js audio graph in sync.</li>
+        <li><strong>React components</strong> render from store state and dispatch actions back to it. No component holds audio state.</li>
+        <li><strong>Visualization data</strong> flows from Tone.js Analyser nodes through <code>AudioEngineManager.getVisualizationData()</code> into Canvas rendering at 60fps.</li>
+      </ul>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         2. TECH STACK
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="section" id="tech-stack">
+      <h2><span class="num">02</span> Tech Stack</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Layer</th>
+              <th>Technology</th>
+              <th>Version</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Framework</td>
+              <td>React + TypeScript</td>
+              <td><code>^18.3.0</code></td>
+              <td>Component model maps naturally to modules</td>
+            </tr>
+            <tr>
+              <td>Build</td>
+              <td>Vite</td>
+              <td><code>^6.4.0</code></td>
+              <td>Fast HMR, excellent TS support</td>
+            </tr>
+            <tr>
+              <td>Audio Engine</td>
+              <td>Tone.js</td>
+              <td><code>^15.1.0</code></td>
+              <td>High-level Web Audio wrapper</td>
+            </tr>
+            <tr>
+              <td>State</td>
+              <td>Zustand</td>
+              <td><code>^5.0.0</code></td>
+              <td>Lightweight reactive state management</td>
+            </tr>
+            <tr>
+              <td>Drag &amp; Drop</td>
+              <td>@dnd-kit/core + sortable</td>
+              <td><code>^6.3.0</code> / <code>^10.0.0</code></td>
+              <td>Module placement</td>
+            </tr>
+            <tr>
+              <td>Styling</td>
+              <td>CSS Modules + custom properties</td>
+              <td>&mdash;</td>
+              <td>Scoped styles, global theme</td>
+            </tr>
+            <tr>
+              <td>Cable Rendering</td>
+              <td>SVG with React</td>
+              <td>&mdash;</td>
+              <td>B&eacute;zier curves, CSS animation</td>
+            </tr>
+            <tr>
+              <td>Visualization</td>
+              <td>Canvas 2D per module</td>
+              <td>&mdash;</td>
+              <td>60fps waveform/spectrum rendering</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Dev Dependencies</h3>
+      <p>TypeScript <code>^5.4.0</code>, @vitejs/plugin-react <code>^4.3.0</code>, @types/react <code>^18.3.0</code>, @types/react-dom <code>^18.3.0</code>, @types/node <code>^22.0.0</code></p>
+
+      <div class="info-block">
+        <p><strong>No backend required.</strong> PatchGlow is a pure client-side SPA. Production deployment is static file hosting (Cloudflare Pages).</p>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         3. FILE STRUCTURE
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="section" id="file-structure">
+      <h2><span class="num">03</span> File Structure</h2>
+
+<pre class="file-tree"><code><span class="dir">patchglow/</span>
+&#x251C;&#x2500;&#x2500; <span class="dir">public/</span>
+&#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">docs/</span>                    <span class="comment"># Documentation pages (this file)</span>
+&#x2502;   &#x2514;&#x2500;&#x2500; <span class="dir">patches/</span>
+&#x2502;       &#x2514;&#x2500;&#x2500; <span class="file">subtractive-voice.json</span>  <span class="comment"># Demo patch</span>
+&#x251C;&#x2500;&#x2500; <span class="dir">src/</span>
+&#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">App.tsx</span>                  <span class="comment"># Root component &mdash; registers modules, initializes engine</span>
+&#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">App.module.css</span>           <span class="comment"># App-level layout styles</span>
+&#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">main.tsx</span>                 <span class="comment"># React entry point</span>
+&#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">vite-env.d.ts</span>            <span class="comment"># Vite type declarations</span>
+&#x2502;   &#x2502;
+&#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">engine/</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">AudioEngineManager.ts</span>  <span class="comment"># Singleton &mdash; syncs Tone.js graph with store</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">moduleRegistry.ts</span>      <span class="comment"># Module registration + lookup</span>
+&#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; <span class="file">signalTypes.ts</span>         <span class="comment"># Signal type colors, labels, compatibility</span>
+&#x2502;   &#x2502;
+&#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">store/</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">rackStore.ts</span>           <span class="comment"># Zustand store &mdash; all rack state + actions</span>
+&#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; <span class="file">persistence.ts</span>         <span class="comment"># localStorage autosave, import/export</span>
+&#x2502;   &#x2502;
+&#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">types/</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">module.ts</span>              <span class="comment"># ModuleDefinition, ModuleAudioEngine, etc.</span>
+&#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; <span class="file">store.ts</span>               <span class="comment"># RackModule, Connection, RackStore</span>
+&#x2502;   &#x2502;
+&#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">modules/</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">_shared/</span>
+&#x2502;   &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">drawUtils.ts</span>         <span class="comment"># Canvas drawing: glow lines, waveforms, spectra</span>
+&#x2502;   &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">useAnimationFrame.ts</span>  <span class="comment"># Shared RAF hook for visualizations</span>
+&#x2502;   &#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; <span class="file">WaveformCanvas.tsx</span>    <span class="comment"># Reusable waveform canvas component</span>
+&#x2502;   &#x2502;   &#x2502;
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">oscillator/</span>             <span class="comment"># Each module has its own folder:</span>
+&#x2502;   &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">definition.ts</span>       <span class="comment">#   ModuleDefinition (ports, params, metadata)</span>
+&#x2502;   &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">engine.ts</span>           <span class="comment">#   ModuleAudioEngine (Tone.js lifecycle)</span>
+&#x2502;   &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">Visualization.tsx</span>   <span class="comment">#   Canvas visualization component</span>
+&#x2502;   &#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; <span class="file">index.ts</span>            <span class="comment">#   ModuleRegistration export</span>
+&#x2502;   &#x2502;   &#x2502;
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">filter/</span>                 <span class="comment"># (same structure as oscillator)</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">envelope/</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">lfo/</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">vca/</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">mixer/</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">keyboard/</span>
+&#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; <span class="dir">output/</span>
+&#x2502;   &#x2502;
+&#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">ui/</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">Toolbar/</span>
+&#x2502;   &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">Toolbar.tsx</span>          <span class="comment"># Top toolbar &mdash; start audio, add modules, patch mgmt</span>
+&#x2502;   &#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; <span class="file">Toolbar.module.css</span>
+&#x2502;   &#x2502;   &#x2502;
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">Rack/</span>
+&#x2502;   &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">Rack.tsx</span>             <span class="comment"># HP-based grid, module rendering, context menus</span>
+&#x2502;   &#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; <span class="file">Rack.module.css</span>
+&#x2502;   &#x2502;   &#x2502;
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">ModulePanel/</span>
+&#x2502;   &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">ModulePanel.tsx</span>      <span class="comment"># Module shell (panel bg, screws, accent line)</span>
+&#x2502;   &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">ModulePanel.module.css</span>
+&#x2502;   &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">Knob.tsx</span>             <span class="comment"># Rotary knob with pointer capture, curves</span>
+&#x2502;   &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">Knob.module.css</span>
+&#x2502;   &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">Port.tsx</span>             <span class="comment"># Colored signal port with drag initiation</span>
+&#x2502;   &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">Port.module.css</span>
+&#x2502;   &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">Switch.tsx</span>           <span class="comment"># Selector switch component</span>
+&#x2502;   &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">Switch.module.css</span>
+&#x2502;   &#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; <span class="file">ModuleLabel.tsx</span>      <span class="comment"># Glowing module title label</span>
+&#x2502;   &#x2502;   &#x2502;
+&#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; <span class="dir">Cables/</span>
+&#x2502;   &#x2502;       &#x251C;&#x2500;&#x2500; <span class="file">CableLayer.tsx</span>       <span class="comment"># SVG overlay, cable rendering, drag-to-connect</span>
+&#x2502;   &#x2502;       &#x251C;&#x2500;&#x2500; <span class="file">Cable.tsx</span>            <span class="comment"># Individual cable (B&eacute;zier, glow, animation)</span>
+&#x2502;   &#x2502;       &#x2514;&#x2500;&#x2500; <span class="file">cableColors.ts</span>       <span class="comment"># Signal type &rarr; color/animation mappings</span>
+&#x2502;   &#x2502;
+&#x2502;   &#x2514;&#x2500;&#x2500; <span class="dir">theme/</span>
+&#x2502;       &#x251C;&#x2500;&#x2500; <span class="file">variables.css</span>            <span class="comment"># CSS custom properties (colors, fonts, glow sizes)</span>
+&#x2502;       &#x251C;&#x2500;&#x2500; <span class="file">global.css</span>               <span class="comment"># Global reset + base styles</span>
+&#x2502;       &#x2514;&#x2500;&#x2500; <span class="file">fonts.css</span>                <span class="comment"># Google Fonts import (Orbitron, JetBrains Mono)</span>
+&#x2502;
+&#x251C;&#x2500;&#x2500; <span class="file">CLAUDE.MD</span>                    <span class="comment"># Project instructions for Claude Code</span>
+&#x251C;&#x2500;&#x2500; <span class="file">SPEC.MD</span>                      <span class="comment"># Full project specification</span>
+&#x251C;&#x2500;&#x2500; <span class="file">package.json</span>
+&#x251C;&#x2500;&#x2500; <span class="file">tsconfig.json</span>
+&#x251C;&#x2500;&#x2500; <span class="file">vite.config.ts</span>
+&#x2514;&#x2500;&#x2500; <span class="file">index.html</span>                   <span class="comment"># HTML entry point</span>
+</code></pre>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         4. MODULE SYSTEM
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="section" id="module-system">
+      <h2><span class="num">04</span> Module System</h2>
+
+      <p>The module system is the core extensibility mechanism. Every module implements three parts, packaged together as a <code>ModuleRegistration</code>.</p>
+
+      <h3>ModuleDefinition</h3>
+      <p>Defined in <code>src/types/module.ts</code>. Describes the module's interface &mdash; ports, parameters, and metadata.</p>
+
+<pre><code><span class="kw">interface</span> <span class="ty">ModuleDefinition</span> {
+  <span class="pr">type</span>: <span class="ty">string</span>           <span class="cm">// Unique identifier, e.g. 'oscillator'</span>
+  <span class="pr">name</span>: <span class="ty">string</span>           <span class="cm">// Display name</span>
+  <span class="pr">description</span>: <span class="ty">string</span>    <span class="cm">// Short description</span>
+  <span class="pr">learningSummary</span>: <span class="ty">string</span> <span class="cm">// What synthesis concept this teaches</span>
+  <span class="pr">hp</span>: <span class="ty">number</span>             <span class="cm">// Width in HP (1HP = 20px)</span>
+  <span class="pr">category</span>: <span class="st">'source'</span> | <span class="st">'modifier'</span> | <span class="st">'modulation'</span> | <span class="st">'utility'</span> | <span class="st">'output'</span>
+  <span class="pr">ports</span>: <span class="ty">PortDefinition</span>[]
+  <span class="pr">parameters</span>: <span class="ty">ParameterDefinition</span>[]
+  <span class="pr">accentColor</span>: <span class="ty">string</span>    <span class="cm">// Hex color for panel accent</span>
+}</code></pre>
+
+      <h4>PortDefinition</h4>
+<pre><code>{ <span class="pr">id</span>, <span class="pr">label</span>, <span class="pr">direction</span>: <span class="st">'input'</span> | <span class="st">'output'</span>, <span class="pr">signalType</span>: <span class="st">'audio'</span> | <span class="st">'cv'</span> | <span class="st">'gate'</span>, <span class="pr">description?</span> }</code></pre>
+
+      <h4>ParameterDefinition</h4>
+<pre><code>{ <span class="pr">id</span>, <span class="pr">label</span>, <span class="pr">type</span>: <span class="st">'knob'</span> | <span class="st">'switch'</span> | <span class="st">'select'</span>,
+  <span class="pr">min?</span>, <span class="pr">max?</span>, <span class="pr">default</span>, <span class="pr">step?</span>, <span class="pr">unit?</span>,
+  <span class="pr">curve?</span>: <span class="st">'linear'</span> | <span class="st">'exponential'</span> | <span class="st">'logarithmic'</span>,
+  <span class="pr">options?</span> }</code></pre>
+
+      <h3>ModuleAudioEngine</h3>
+      <p>Defined in <code>src/types/module.ts</code>. Manages the Tone.js audio nodes for a single module instance.</p>
+
+<pre><code><span class="kw">interface</span> <span class="ty">ModuleAudioEngine</span> {
+  <span class="fn">initialize</span>(<span class="pr">context</span>: <span class="ty">Tone.BaseContext</span>): <span class="ty">void</span>
+  <span class="fn">getOutputNode</span>(<span class="pr">portId</span>: <span class="ty">string</span>): <span class="ty">Tone.ToneAudioNode</span> | <span class="ty">Tone.Signal</span>
+  <span class="fn">getInputNode</span>(<span class="pr">portId</span>: <span class="ty">string</span>): <span class="ty">Tone.ToneAudioNode</span> | <span class="ty">Tone.Param</span> | <span class="ty">Tone.Signal</span>
+  <span class="fn">setParameter</span>(<span class="pr">parameterId</span>: <span class="ty">string</span>, <span class="pr">value</span>: <span class="ty">number</span> | <span class="ty">string</span>): <span class="ty">void</span>
+  <span class="fn">getVisualizationData</span>(): <span class="ty">VisualizationData</span>
+  <span class="fn">dispose</span>(): <span class="ty">void</span>
+  <span class="fn">handleAction?</span>(<span class="pr">action</span>: <span class="ty">string</span>, <span class="pr">payload?</span>: <span class="ty">unknown</span>): <span class="ty">void</span>
+  <span class="fn">onPortConnected?</span>(<span class="pr">portId</span>: <span class="ty">string</span>): <span class="ty">void</span>
+  <span class="fn">onPortDisconnected?</span>(<span class="pr">portId</span>: <span class="ty">string</span>): <span class="ty">void</span>
+}</code></pre>
+
+      <h3>VisualizationComponent</h3>
+      <p>A React component receiving <code>{ moduleId, data: VisualizationData, accentColor }</code>. Renders onto a <code>&lt;canvas&gt;</code> element using the shared <code>useAnimationFrame</code> hook from <code>src/modules/_shared/useAnimationFrame.ts</code>.</p>
+
+      <h3>ModuleRegistration</h3>
+      <p>Bundles all three parts into a single export.</p>
+
+<pre><code>{ <span class="pr">definition</span>, <span class="fn">createEngine</span>: () =&gt; <span class="ty">ModuleAudioEngine</span>, <span class="pr">VisualizationComponent</span> }</code></pre>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         5. AUDIO ENGINE
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="section" id="audio-engine">
+      <h2><span class="num">05</span> Audio Engine</h2>
+
+      <p><strong>AudioEngineManager</strong> (<code>src/engine/AudioEngineManager.ts</code>) is a singleton that bridges the Zustand store and Tone.js.</p>
+
+      <h3>init()</h3>
+      <p>Syncs initial state, then subscribes to three store selectors:</p>
+      <ol>
+        <li><code>state.modules</code> &rarr; <code>syncModules()</code> &mdash; create/dispose engines</li>
+        <li><code>state.connections</code> &rarr; <code>syncConnections()</code> &mdash; connect/disconnect Tone.js nodes</li>
+        <li><code>state.modules</code> (again) &rarr; detect parameter changes by deep comparison</li>
+      </ol>
+
+      <h3>syncModules()</h3>
+      <p>Iterates store modules. Creates engines for new modules via <code>registration.createEngine()</code> &rarr; <code>engine.initialize()</code> &rarr; apply default params. Disposes engines for removed modules.</p>
+
+      <h3>syncConnections()</h3>
+      <p>Diffs old vs new connection arrays:</p>
+      <ul class="key-points">
+        <li><strong>Removed connections:</strong> <code>sourceEngine.getOutputNode().disconnect(destEngine.getInputNode())</code></li>
+        <li><strong>New connections:</strong> <code>outputNode.connect(inputNode)</code></li>
+        <li>Notifies engines via <code>onPortConnected</code> / <code>onPortDisconnected</code> so modules can adjust internal state (e.g., VCA reconnects internal bias when external CV is disconnected).</li>
+      </ul>
+
+      <h3>Parameter Propagation</h3>
+      <p>Store change &rarr; subscribe callback compares param values &rarr; <code>engine.setParameter(id, value)</code> &rarr; engine sets Tone.js AudioParam.</p>
+
+      <h3>Visualization</h3>
+      <p><code>getVisualizationData(instanceId)</code> returns the engine's current analyser/state data. Called at ~60fps by visualization components via <code>requestAnimationFrame</code>.</p>
+
+      <h3>Signal Types in Implementation</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Signal</th>
+              <th>Implementation</th>
+              <th>Value Range</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="swatch swatch-audio"></span> Audio</td>
+              <td>Tone.js audio nodes (Oscillator, Filter, etc.)</td>
+              <td>-1.0 to 1.0 (waveform)</td>
+            </tr>
+            <tr>
+              <td><span class="swatch swatch-cv"></span> CV</td>
+              <td><code>Tone.Signal&lt;'number'&gt;</code></td>
+              <td>Control values (pitch in cents, envelope 0&ndash;1, etc.)</td>
+            </tr>
+            <tr>
+              <td><span class="swatch swatch-gate"></span> Gate</td>
+              <td><code>Tone.Signal&lt;'number'&gt;</code></td>
+              <td>0 = off, 1 = on</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         6. STATE MANAGEMENT
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="section" id="state-management">
+      <h2><span class="num">06</span> State Management</h2>
+
+      <p><strong>Zustand store</strong> (<code>src/store/rackStore.ts</code>) using <code>subscribeWithSelector</code> middleware.</p>
+
+<pre><code><span class="kw">interface</span> <span class="ty">RackStore</span> {
+  <span class="cm">// State</span>
+  <span class="pr">modules</span>: <span class="ty">Record</span>&lt;<span class="ty">string</span>, <span class="ty">RackModule</span>&gt;    <span class="cm">// instanceId &rarr; module</span>
+  <span class="pr">connections</span>: <span class="ty">Connection</span>[]
+  <span class="pr">selectedCableId</span>: <span class="ty">string</span> | <span class="ty">null</span>
+  <span class="pr">draggingCable</span>: <span class="ty">DraggingCable</span> | <span class="ty">null</span>
+
+  <span class="cm">// Module actions</span>
+  <span class="fn">addModule</span>(<span class="pr">type</span>, <span class="pr">position</span>) &rarr; <span class="ty">instanceId</span>
+  <span class="fn">removeModule</span>(<span class="pr">instanceId</span>) &rarr; <span class="ty">void</span>       <span class="cm">// also removes connected cables</span>
+  <span class="fn">moveModule</span>(<span class="pr">instanceId</span>, <span class="pr">position</span>) &rarr; <span class="ty">void</span>
+  <span class="fn">setParameter</span>(<span class="pr">instanceId</span>, <span class="pr">parameterId</span>, <span class="pr">value</span>) &rarr; <span class="ty">void</span>
+
+  <span class="cm">// Connection actions</span>
+  <span class="fn">addConnection</span>(<span class="pr">source</span>, <span class="pr">dest</span>) &rarr; <span class="ty">connectionId</span> | <span class="ty">null</span>
+  <span class="fn">removeConnection</span>(<span class="pr">connectionId</span>) &rarr; <span class="ty">void</span>
+  <span class="fn">selectCable</span>(<span class="pr">connectionId</span> | <span class="ty">null</span>) &rarr; <span class="ty">void</span>
+
+  <span class="cm">// Cable drag</span>
+  <span class="fn">startCableDrag</span>(<span class="pr">moduleId</span>, <span class="pr">portId</span>, <span class="pr">signalType</span>) &rarr; <span class="ty">void</span>
+  <span class="fn">endCableDrag</span>() &rarr; <span class="ty">void</span>
+
+  <span class="cm">// Patch management</span>
+  <span class="fn">exportPatch</span>() &rarr; <span class="ty">string</span> <span class="cm">(JSON)</span>
+  <span class="fn">importPatch</span>(<span class="pr">json</span>: <span class="ty">string</span>) &rarr; <span class="ty">void</span>
+}</code></pre>
+
+      <h3>Key Details</h3>
+      <ul class="key-points">
+        <li><strong>Instance IDs:</strong> <code>{type}-{counter}</code> (e.g., <code>oscillator-1</code>, <code>filter-2</code>)</li>
+        <li><strong>Connection IDs:</strong> <code>{srcModule}:{srcPort}&rarr;{destModule}:{destPort}</code></li>
+        <li><code>addConnection</code> validates: no duplicates, no self-loops, signal type determined from source port.</li>
+        <li><code>removeModule</code> cascades: removes all connections involving that module.</li>
+        <li>Registry lookup is injected via <code>setRegistryLookup()</code> to avoid circular dependencies between store and engine.</li>
+      </ul>
+
+      <h3>Persistence</h3>
+      <p>Implemented in <code>src/store/persistence.ts</code>:</p>
+      <ul class="key-points">
+        <li><code>initAutosave()</code> &mdash; subscribes to store, debounces 500ms, saves to <code>localStorage['patchglow-autosave']</code></li>
+        <li><code>loadAutosave()</code> &mdash; restores from localStorage on app start (before engine init)</li>
+        <li><code>exportPatch()</code> / <code>importPatch()</code> &mdash; JSON serialization of <code>{ modules, connections }</code></li>
+        <li>Import restores module counters from instance IDs so new modules get unique IDs</li>
+      </ul>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         7. CABLE SYSTEM
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="section" id="cable-system">
+      <h2><span class="num">07</span> Cable System</h2>
+
+      <p>Cables are rendered as an SVG overlay (<code>src/ui/Cables/</code>) positioned absolutely over the rack. <code>pointerEvents: none</code> on the SVG root, <code>pointerEvents: auto</code> on individual cable <code>&lt;g&gt;</code> elements.</p>
+
+      <h3>Bezier Curve Calculation</h3>
+      <p>Computed in <code>Cable.tsx: getCablePath()</code>:</p>
+
+<pre><code><span class="pr">dx</span>    = <span class="pr">end.x</span> - <span class="pr">start.x</span>
+<span class="pr">dy</span>    = <span class="pr">end.y</span> - <span class="pr">start.y</span>
+<span class="pr">dist</span>  = <span class="fn">sqrt</span>(<span class="pr">dx</span>&sup2; + <span class="pr">dy</span>&sup2;)
+<span class="pr">droop</span> = <span class="fn">min</span>(<span class="pr">dist</span> * <span class="nu">0.3</span>, <span class="nu">120</span>)     <span class="cm">// gravity sag, capped</span>
+
+<span class="pr">cp1</span> = (<span class="pr">start.x</span> + <span class="pr">dx</span>*<span class="nu">0.25</span>,  <span class="pr">start.y</span> + <span class="pr">droop</span>)
+<span class="pr">cp2</span> = (<span class="pr">start.x</span> + <span class="pr">dx</span>*<span class="nu">0.75</span>,  <span class="pr">end.y</span>   + <span class="pr">droop</span>)
+&rarr; M <span class="pr">start</span> C <span class="pr">cp1</span>, <span class="pr">cp2</span>, <span class="pr">end</span></code></pre>
+
+      <h3>Multi-Layer Rendering</h3>
+      <p>Each cable draws 4 SVG paths for depth and interactivity:</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Layer</th>
+              <th>Stroke Width</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>Hit area</td>
+              <td>12</td>
+              <td>Transparent, easy click targeting</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>Cable body</td>
+              <td>4&ndash;5</td>
+              <td>Accent color, opacity 0.25&ndash;0.5, <code>drop-shadow</code> glow</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>Cable core</td>
+              <td>2&ndash;2.5</td>
+              <td>Accent color, full opacity, stronger glow</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>Signal flow</td>
+              <td>2</td>
+              <td>White, <code>dasharray="4 20"</code>, animated via CSS keyframes</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Signal Flow Animation</h3>
+<pre><code><span class="kw">@keyframes</span> <span class="fn">cableFlow</span> {
+  <span class="kw">to</span> { <span class="pr">stroke-dashoffset</span>: <span class="nu">-24</span>; }
+}</code></pre>
+
+      <p>Duration varies by signal type: <span class="swatch swatch-audio"></span> audio = <code>0.4s</code> (fast), <span class="swatch swatch-cv"></span> cv = <code>1.8s</code> (slow), <span class="swatch swatch-gate"></span> gate = <code>0.7s</code> (medium).</p>
+
+      <h3>Color Coding</h3>
+<pre><code>{ <span class="pr">audio</span>: <span class="st">'#ff6b35'</span>, <span class="pr">cv</span>: <span class="st">'#00e5ff'</span>, <span class="pr">gate</span>: <span class="st">'#ff2ecb'</span> }</code></pre>
+
+      <h3>Connection Validation</h3>
+      <p>Implemented in <code>CableLayer.tsx</code>:</p>
+      <ul class="key-points">
+        <li>Drag starts from output port &rarr; preview cable follows cursor</li>
+        <li>On drop, <code>elementFromPoint()</code> hit-tests to find destination port element</li>
+        <li>Walks up DOM to find <code>data-module-id</code>, <code>data-port-id</code>, <code>data-direction</code> attributes</li>
+        <li>Validates: direction must be <code>'input'</code>, signal types must be compatible (matching types only)</li>
+        <li>Calls <code>addConnection()</code> on the store</li>
+      </ul>
+
+      <h3>Cable Selection</h3>
+      <p>Click toggles selection via <code>selectCable()</code>. <strong>Delete / Backspace</strong> removes selected cable. <strong>Escape</strong> deselects.</p>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         8. VISUALIZATION SYSTEM
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="section" id="visualization">
+      <h2><span class="num">08</span> Visualization System</h2>
+
+      <p>Per-module Canvas 2D rendering at ~60fps. Each module's visualization component uses the <code>useAnimationFrame</code> hook (<code>src/modules/_shared/useAnimationFrame.ts</code>) which manages a shared <code>requestAnimationFrame</code> loop.</p>
+
+      <h3>Drawing Utilities</h3>
+      <p>Defined in <code>src/modules/_shared/drawUtils.ts</code>:</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Function</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>clearWithFade(ctx, alpha)</code></td>
+              <td>Semi-transparent dark rect instead of clear &mdash; creates a phosphor trail "persistence of vision" effect. Default alpha <code>0.25</code>.</td>
+            </tr>
+            <tr>
+              <td><code>clearCanvas(ctx)</code></td>
+              <td>Full clear with dark background fill.</td>
+            </tr>
+            <tr>
+              <td><code>drawGrid(ctx, divisions, color)</code></td>
+              <td>Faint grid lines with a brighter center zero-reference line.</td>
+            </tr>
+            <tr>
+              <td><code>drawGlowLine(ctx, points, color, thickness)</code></td>
+              <td>Three-pass neon glow &mdash; wide dim outer glow, medium mid glow, thin bright core.</td>
+            </tr>
+            <tr>
+              <td><code>drawWaveform(ctx, data, color)</code></td>
+              <td>Maps Float32Array samples (-1 to 1) to canvas coordinates. Uses <code>findZeroCrossing()</code> for stable triggered display.</td>
+            </tr>
+            <tr>
+              <td><code>drawSpectrum(ctx, data, color)</code></td>
+              <td>FFT data as vertical bars with glow effect and <code>shadowBlur</code> on peaks.</td>
+            </tr>
+            <tr>
+              <td><code>findZeroCrossing(data)</code></td>
+              <td>Finds first negative&rarr;positive zero crossing for triggered oscilloscope display.</td>
+            </tr>
+            <tr>
+              <td><code>mapRange(value, ...)</code></td>
+              <td>Linear interpolation utility for value mapping.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Data Flow</h3>
+      <ol>
+        <li>Module engine creates <code>Tone.Analyser</code> nodes (waveform + FFT)</li>
+        <li><code>AudioEngineManager.getVisualizationData(instanceId)</code> calls <code>engine.getVisualizationData()</code></li>
+        <li>Engine reads analyser data (<code>analyser.getValue()</code>) and returns <code>VisualizationData</code></li>
+        <li>Visualization component calls this in its RAF callback and draws to canvas</li>
+      </ol>
+
+      <h3>CRT / Phosphor Aesthetic</h3>
+      <ul class="key-points">
+        <li><code>clearWithFade()</code> creates trailing afterglow on waveform traces</li>
+        <li><code>drawGlowLine()</code> multi-pass rendering creates the neon phosphor effect</li>
+        <li>CSS class <code>vizScreen</code> on canvas containers provides dark inset background with subtle border</li>
+        <li>Module panels use CSS custom properties from <code>src/theme/variables.css</code> for consistent dark theme</li>
+      </ul>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         9. HOW TO ADD A NEW MODULE
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="section" id="add-module">
+      <h2><span class="num">09</span> How to Add a New Module</h2>
+
+      <p>Follow these steps to implement a new PatchGlow module. Each module lives in its own folder under <code>src/modules/</code>.</p>
+
+      <ol class="steps">
+
+        <li>
+          <h3>Create Folder</h3>
+          <p>Create <code>src/modules/&lt;name&gt;/</code> with four files: <code>definition.ts</code>, <code>engine.ts</code>, <code>Visualization.tsx</code>, <code>index.ts</code>.</p>
+        </li>
+
+        <li>
+          <h3>definition.ts &mdash; Define the Module Interface</h3>
+<pre><code><span class="kw">import</span> <span class="kw">type</span> { <span class="ty">ModuleDefinition</span> } <span class="kw">from</span> <span class="st">'@/types/module'</span>
+
+<span class="kw">const</span> <span class="pr">myModuleDefinition</span>: <span class="ty">ModuleDefinition</span> = {
+  <span class="pr">type</span>: <span class="st">'my-module'</span>,
+  <span class="pr">name</span>: <span class="st">'My Module'</span>,
+  <span class="pr">description</span>: <span class="st">'What this module does'</span>,
+  <span class="pr">learningSummary</span>: <span class="st">'What synthesis concept this teaches'</span>,
+  <span class="pr">hp</span>: <span class="nu">10</span>,
+  <span class="pr">category</span>: <span class="st">'modifier'</span>,
+  <span class="pr">accentColor</span>: <span class="st">'#ff00ff'</span>,
+  <span class="pr">ports</span>: [
+    { <span class="pr">id</span>: <span class="st">'in'</span>,  <span class="pr">label</span>: <span class="st">'IN'</span>,  <span class="pr">direction</span>: <span class="st">'input'</span>,  <span class="pr">signalType</span>: <span class="st">'audio'</span> },
+    { <span class="pr">id</span>: <span class="st">'out'</span>, <span class="pr">label</span>: <span class="st">'OUT'</span>, <span class="pr">direction</span>: <span class="st">'output'</span>, <span class="pr">signalType</span>: <span class="st">'audio'</span> },
+  ],
+  <span class="pr">parameters</span>: [
+    { <span class="pr">id</span>: <span class="st">'amount'</span>, <span class="pr">label</span>: <span class="st">'AMT'</span>, <span class="pr">type</span>: <span class="st">'knob'</span>,
+      <span class="pr">min</span>: <span class="nu">0</span>, <span class="pr">max</span>: <span class="nu">1</span>, <span class="pr">default</span>: <span class="nu">0.5</span>, <span class="pr">curve</span>: <span class="st">'linear'</span> },
+  ],
+}
+<span class="kw">export default</span> <span class="pr">myModuleDefinition</span></code></pre>
+        </li>
+
+        <li>
+          <h3>engine.ts &mdash; Implement the Tone.js Audio Engine</h3>
+<pre><code><span class="kw">import</span> * <span class="kw">as</span> <span class="pr">Tone</span> <span class="kw">from</span> <span class="st">'tone'</span>
+<span class="kw">import</span> <span class="kw">type</span> { <span class="ty">ModuleAudioEngine</span>, <span class="ty">VisualizationData</span> } <span class="kw">from</span> <span class="st">'@/types/module'</span>
+
+<span class="kw">export class</span> <span class="ty">MyModuleEngine</span> <span class="kw">implements</span> <span class="ty">ModuleAudioEngine</span> {
+  <span class="kw">private</span> <span class="pr">node</span>: <span class="ty">Tone.ToneAudioNode</span> | <span class="ty">null</span> = <span class="ty">null</span>
+  <span class="kw">private</span> <span class="pr">analyser</span>: <span class="ty">Tone.Analyser</span> | <span class="ty">null</span> = <span class="ty">null</span>
+
+  <span class="fn">initialize</span>(<span class="pr">context</span>: <span class="ty">Tone.BaseContext</span>): <span class="ty">void</span> {
+    <span class="cm">// Create Tone.js nodes</span>
+    <span class="kw">this</span>.<span class="pr">analyser</span> = <span class="kw">new</span> <span class="ty">Tone.Analyser</span>(<span class="st">'waveform'</span>, <span class="nu">256</span>)
+  }
+
+  <span class="fn">getOutputNode</span>(<span class="pr">portId</span>: <span class="ty">string</span>) { <span class="cm">/* return appropriate node */</span> }
+  <span class="fn">getInputNode</span>(<span class="pr">portId</span>: <span class="ty">string</span>)  { <span class="cm">/* return appropriate node */</span> }
+
+  <span class="fn">setParameter</span>(<span class="pr">id</span>: <span class="ty">string</span>, <span class="pr">value</span>: <span class="ty">number</span> | <span class="ty">string</span>): <span class="ty">void</span> {
+    <span class="cm">// Update Tone.js node parameters</span>
+  }
+
+  <span class="fn">getVisualizationData</span>(): <span class="ty">VisualizationData</span> {
+    <span class="kw">return</span> {
+      <span class="pr">waveform</span>: <span class="kw">this</span>.<span class="pr">analyser</span>?.<span class="fn">getValue</span>() <span class="kw">as</span> <span class="ty">Float32Array</span>,
+    }
+  }
+
+  <span class="fn">dispose</span>(): <span class="ty">void</span> {
+    <span class="cm">// Clean up all Tone.js nodes</span>
+    <span class="kw">this</span>.<span class="pr">node</span>?.<span class="fn">dispose</span>()
+    <span class="kw">this</span>.<span class="pr">analyser</span>?.<span class="fn">dispose</span>()
+  }
+}</code></pre>
+        </li>
+
+        <li>
+          <h3>Visualization.tsx &mdash; Canvas Rendering</h3>
+<pre><code><span class="kw">import</span> { <span class="pr">useRef</span> } <span class="kw">from</span> <span class="st">'react'</span>
+<span class="kw">import</span> { <span class="pr">useAnimationFrame</span> } <span class="kw">from</span> <span class="st">'@/modules/_shared/useAnimationFrame'</span>
+<span class="kw">import</span> { <span class="pr">clearWithFade</span>, <span class="pr">drawWaveform</span> } <span class="kw">from</span> <span class="st">'@/modules/_shared/drawUtils'</span>
+<span class="kw">import</span> <span class="pr">AudioEngineManager</span> <span class="kw">from</span> <span class="st">'@/engine/AudioEngineManager'</span>
+<span class="kw">import</span> <span class="pr">panelStyles</span> <span class="kw">from</span> <span class="st">'@/ui/ModulePanel/ModulePanel.module.css'</span>
+
+<span class="kw">export default function</span> <span class="fn">MyModuleVisualization</span>({ <span class="pr">moduleId</span>, <span class="pr">accentColor</span> }) {
+  <span class="kw">const</span> <span class="pr">canvasRef</span> = <span class="fn">useRef</span>&lt;<span class="ty">HTMLCanvasElement</span>&gt;(<span class="ty">null</span>)
+
+  <span class="fn">useAnimationFrame</span>(() =&gt; {
+    <span class="kw">const</span> <span class="pr">ctx</span> = <span class="pr">canvasRef</span>.<span class="pr">current</span>?.<span class="fn">getContext</span>(<span class="st">'2d'</span>)
+    <span class="kw">if</span> (!<span class="pr">ctx</span>) <span class="kw">return</span>
+    <span class="fn">clearWithFade</span>(<span class="pr">ctx</span>)
+    <span class="kw">const</span> { <span class="pr">waveform</span> } = <span class="pr">AudioEngineManager</span>.<span class="fn">getInstance</span>()
+      .<span class="fn">getVisualizationData</span>(<span class="pr">moduleId</span>)
+    <span class="kw">if</span> (<span class="pr">waveform</span>) <span class="fn">drawWaveform</span>(<span class="pr">ctx</span>, <span class="pr">waveform</span>, <span class="pr">accentColor</span>)
+  })
+
+  <span class="kw">return</span> (
+    &lt;<span class="ty">div</span> <span class="pr">className</span>={<span class="pr">panelStyles</span>.<span class="pr">vizScreen</span>}&gt;
+      &lt;<span class="ty">canvas</span> <span class="pr">ref</span>={<span class="pr">canvasRef</span>}
+        <span class="pr">width</span>={<span class="nu">180</span>} <span class="pr">height</span>={<span class="nu">80</span>} /&gt;
+    &lt;/<span class="ty">div</span>&gt;
+  )
+}</code></pre>
+        </li>
+
+        <li>
+          <h3>index.ts &mdash; Bundle as ModuleRegistration</h3>
+<pre><code><span class="kw">import</span> <span class="kw">type</span> { <span class="ty">ModuleRegistration</span> } <span class="kw">from</span> <span class="st">'@/types/module'</span>
+<span class="kw">import</span> <span class="pr">definition</span> <span class="kw">from</span> <span class="st">'./definition'</span>
+<span class="kw">import</span> { <span class="ty">MyModuleEngine</span> } <span class="kw">from</span> <span class="st">'./engine'</span>
+<span class="kw">import</span> <span class="pr">Visualization</span> <span class="kw">from</span> <span class="st">'./Visualization'</span>
+
+<span class="kw">const</span> <span class="pr">registration</span>: <span class="ty">ModuleRegistration</span> = {
+  <span class="pr">definition</span>,
+  <span class="fn">createEngine</span>: () =&gt; <span class="kw">new</span> <span class="ty">MyModuleEngine</span>(),
+  <span class="pr">VisualizationComponent</span>: <span class="pr">Visualization</span>,
+}
+<span class="kw">export default</span> <span class="pr">registration</span></code></pre>
+        </li>
+
+        <li>
+          <h3>Register in App.tsx</h3>
+<pre><code><span class="kw">import</span> <span class="pr">myModuleReg</span> <span class="kw">from</span> <span class="st">'@/modules/my-module'</span>
+<span class="fn">registerModule</span>(<span class="pr">myModuleReg</span>)</code></pre>
+        </li>
+
+      </ol>
+
+      <h3>Checklist</h3>
+      <ul class="checklist">
+        <li>Clear <code>learningSummary</code> &mdash; what synthesis concept does this teach?</li>
+        <li>Visualization reveals the module's function in real time</li>
+        <li>All knobs produce visible changes in the visualization</li>
+        <li>Works with at least one example patch</li>
+        <li>TypeScript strict mode &mdash; no <code>any</code> types</li>
+        <li>Proper <code>dispose()</code> cleanup of all Tone.js nodes</li>
+      </ul>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         10. KNOWN LIMITATIONS & FUTURE WORK
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="section" id="limitations">
+      <h2><span class="num">10</span> Known Limitations &amp; Future Work</h2>
+
+      <h3>Current Limitations</h3>
+      <ul class="key-points">
+        <li><strong>Module count:</strong> ~15&ndash;20 modules work smoothly on a modern machine. Each adds Canvas rendering and Tone.js nodes.</li>
+        <li><strong>Browser compatibility:</strong> Best in Chrome (strongest Web Audio support). Firefox works well. Safari has occasional Web Audio quirks.</li>
+        <li><strong>Mobile / touch:</strong> Basic touch support exists (pointer events, touch cable dragging). Not optimized for small screens.</li>
+        <li><strong>No undo/redo:</strong> State changes are one-way. Use Save/Load for checkpoints.</li>
+      </ul>
+
+      <h3>Planned: Phase 4 &mdash; Extended Modules</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Module</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Step Sequencer</td>
+              <td>8/16 steps, CV + gate output, step grid visualization</td>
+            </tr>
+            <tr>
+              <td>Noise Source</td>
+              <td>White, pink, brown noise with noise character visualization</td>
+            </tr>
+            <tr>
+              <td>Delay Effect</td>
+              <td>Time, feedback, mix with delay tap visualization</td>
+            </tr>
+            <tr>
+              <td>Reverb</td>
+              <td>Tone.Reverb with decay envelope visualization</td>
+            </tr>
+            <tr>
+              <td>Distortion / Waveshaper</td>
+              <td>Drive knob, transfer curve + before/after waveform</td>
+            </tr>
+            <tr>
+              <td>Sample &amp; Hold</td>
+              <td>Clock in, signal in, stepped CV out, staircase visualization</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Planned: Phase 5 &mdash; Advanced Features</h3>
+      <ul class="key-points">
+        <li><strong>Signal Probes</strong> &mdash; click any cable to see a popup oscilloscope of that cable's signal</li>
+        <li><strong>Guided Patches</strong> &mdash; step-by-step tutorial mode with annotations</li>
+        <li><strong>Patch Sharing</strong> &mdash; shareable URLs encoding patch state</li>
+        <li><strong>Web MIDI</strong> &mdash; connect physical MIDI keyboards</li>
+        <li><strong>Preset Sounds</strong> &mdash; pre-built module configurations</li>
+        <li><strong>Undo / Redo</strong> &mdash; state history for rack operations</li>
+        <li><strong>Module Contributions Guide</strong> &mdash; template for community module development</li>
+      </ul>
+    </div>
+
+    <!-- ═══ Back to top ═══ -->
+    <div class="back-top">
+      <a href="#top">Back to Top</a>
+    </div>
+
+    <div class="footer">
+      PatchGlow is open source &mdash; <a href="https://github.com/kc-cl/patchglow" target="_blank">contribute on GitHub</a><br>
+      Questions? <a href="mailto:info@patchglow.app">info@patchglow.app</a><br>
+      <a href="https://patchglow.app">patchglow.app</a>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 // Register all modules before anything renders
 import { registerModule } from '@/engine/moduleRegistry'
@@ -42,6 +42,7 @@ function computeFitZoom(): number {
 export default function App() {
   const audioStarted = useRackStore((s) => s.audioStarted)
   const setAudioStarted = useRackStore((s) => s.setAudioStarted)
+  const [showAbout, setShowAbout] = useState(false)
   const initializedRef = useRef(false)
   const rackAreaRef = useRef<HTMLDivElement>(null)
   const pinchRef = useRef({ dist: 0, zoom: 1 })
@@ -137,7 +138,7 @@ export default function App() {
 
   return (
     <div className={styles.app}>
-      <Toolbar />
+      <Toolbar onAbout={() => setShowAbout(true)} />
       <div className={styles.rackArea} ref={rackAreaRef}>
         <Rack scrollContainerRef={rackAreaRef} />
       </div>
@@ -151,6 +152,48 @@ export default function App() {
               ◉ START AUDIO
             </button>
             <div className={styles.overlayHint}>Click anywhere to begin</div>
+          </div>
+        </div>
+      )}
+
+      {/* About modal */}
+      {showAbout && (
+        <div className={styles.aboutOverlay} onClick={() => setShowAbout(false)}>
+          <div className={styles.aboutModal} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.aboutClose} onClick={() => setShowAbout(false)}>
+              ✕
+            </button>
+            <div className={styles.aboutLogo}>PatchGlow</div>
+            <div className={styles.aboutTagline}>
+              A visual modular synthesizer that teaches synthesis by showing you what&apos;s happening
+            </div>
+            <div className={styles.aboutVersion}>v0.1.0</div>
+            <div className={styles.aboutDivider} />
+            <div className={styles.aboutBody}>
+              PatchGlow is an open-source creative coding project. Every module visualizes its function
+              in real time. Patch cables glow with the actual signal flowing through them. Built for
+              learning, built for exploring.
+            </div>
+            <div className={styles.aboutDivider} />
+            <div className={styles.aboutLinks}>
+              <a className={styles.aboutLink} href="https://github.com/kc-cl/patchglow" target="_blank" rel="noopener noreferrer">
+                GitHub
+              </a>
+              <a className={styles.aboutLink} href="mailto:info@patchglow.app">
+                info@patchglow.app
+              </a>
+            </div>
+            <div className={styles.aboutDivider} />
+            <div className={styles.aboutCredits}>
+              Built with React, TypeScript, Tone.js
+              <br />
+              Inspired by Mutable Instruments, VCV Rack, Patchcab
+            </div>
+            <div className={styles.aboutLicense}>
+              <a className={styles.aboutLink} href="https://github.com/kc-cl/patchglow/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">
+                MIT License
+              </a>
+            </div>
           </div>
         </div>
       )}

@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PatchGlow — User Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /* ── Custom Properties ─────────────────────────────── */
+  :root {
+    --bg:         #0a0a0f;
+    --bg-raised:  #12121a;
+    --bg-surface: #1a1a26;
+    --bg-hover:   #22223a;
+    --border:     #2a2a3e;
+    --text:       #c8c8d8;
+    --text-dim:   #8888a0;
+    --text-bright:#eeeef4;
+    --cyan:       #00e5ff;
+    --amber:      #ff6b35;
+    --magenta:    #ff2ecb;
+    --purple:     #a855f7;
+    --light-cyan: #22d3ee;
+    --lime:       #84cc16;
+    --gold:       #f59e0b;
+    --white:      #ffffff;
+    --glow-cyan:  0 0 12px #00e5ff88, 0 0 30px #00e5ff33;
+    --glow-amber: 0 0 12px #ff6b3588, 0 0 30px #ff6b3533;
+    --glow-mag:   0 0 12px #ff2ecb88, 0 0 30px #ff2ecb33;
+    --font-head:  'Orbitron', sans-serif;
+    --font-body:  'JetBrains Mono', monospace;
+  }
+
+  /* ── Reset & Base ──────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html {
+    scroll-behavior: smooth;
+    scrollbar-color: var(--border) var(--bg);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.75;
+    min-height: 100vh;
+    position: relative;
+  }
+
+  /* ── Vignette Overlay ──────────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.55) 100%);
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── Container ─────────────────────────────────────── */
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+    position: relative;
+  }
+
+  /* ── Links ─────────────────────────────────────────── */
+  a { color: var(--cyan); text-decoration: none; transition: color 0.2s, text-shadow 0.2s; }
+  a:hover { color: var(--white); text-shadow: var(--glow-cyan); }
+
+  /* ── Logo ──────────────────────────────────────────── */
+  .logo-wrap {
+    text-align: center;
+    padding: 3rem 0 1.5rem;
+  }
+
+  .logo {
+    font-family: var(--font-head);
+    font-weight: 900;
+    font-size: clamp(2.4rem, 6vw, 3.6rem);
+    text-transform: uppercase;
+    letter-spacing: 0.35em;
+    color: var(--cyan);
+    text-shadow:
+      0 0 8px  var(--cyan),
+      0 0 24px rgba(0,229,255,0.45),
+      0 0 60px rgba(0,229,255,0.18);
+    position: relative;
+    display: inline-block;
+  }
+
+  .logo .glow-letter {
+    color: var(--amber);
+    text-shadow:
+      0 0 8px  var(--amber),
+      0 0 24px rgba(255,107,53,0.5),
+      0 0 60px rgba(255,107,53,0.2);
+  }
+
+  .logo-sub {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 300;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-top: 0.5rem;
+  }
+
+  /* ── Section Headers ───────────────────────────────── */
+  h2 {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: clamp(1.15rem, 3vw, 1.4rem);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--cyan);
+    text-shadow: 0 0 10px rgba(0,229,255,0.4);
+    margin: 3.5rem 0 1.5rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  /* Scanline effect on h2 */
+  h2::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; top: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,229,255,0.03) 2px,
+      rgba(0,229,255,0.03) 4px
+    );
+    pointer-events: none;
+  }
+
+  h3 {
+    font-family: var(--font-head);
+    font-weight: 600;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--text-bright);
+    margin: 2rem 0 0.8rem;
+  }
+
+  h4 {
+    font-family: var(--font-head);
+    font-weight: 500;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-bright);
+    margin: 1.5rem 0 0.6rem;
+  }
+
+  /* Module-colored headers */
+  .mod-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 2.5rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mod-head h3 {
+    margin: 0;
+    padding: 0;
+    border: none;
+  }
+
+  .mod-icon {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 8px currentColor;
+  }
+
+  p { margin-bottom: 1rem; }
+
+  /* ── Table of Contents ─────────────────────────────── */
+  .toc {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem 2rem;
+    margin: 2rem 0 2.5rem;
+  }
+
+  .toc-title {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    color: var(--text-dim);
+    margin-bottom: 1rem;
+  }
+
+  .toc ol {
+    list-style: none;
+    counter-reset: toc-count;
+    padding: 0;
+  }
+
+  .toc li {
+    counter-increment: toc-count;
+    margin-bottom: 0.35rem;
+  }
+
+  .toc li a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: background 0.2s, color 0.2s, text-shadow 0.2s;
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+
+  .toc li a::before {
+    content: counter(toc-count, decimal-leading-zero);
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+    min-width: 1.6rem;
+    transition: color 0.2s;
+  }
+
+  .toc li a:hover {
+    background: var(--bg-hover);
+    color: var(--white);
+    text-shadow: var(--glow-cyan);
+  }
+
+  .toc li a:hover::before { color: var(--cyan); }
+
+  /* ── Signal Dots / Badges ──────────────────────────── */
+  .dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 4px;
+    position: relative;
+    top: -1px;
+  }
+
+  .dot-audio  { background: var(--amber);  box-shadow: 0 0 6px var(--amber); }
+  .dot-cv     { background: var(--cyan);   box-shadow: 0 0 6px var(--cyan); }
+  .dot-gate   { background: var(--magenta);box-shadow: 0 0 6px var(--magenta); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.15rem 0.55rem;
+    border-radius: 4px;
+    vertical-align: middle;
+  }
+
+  .badge-audio  { background: rgba(255,107,53,0.15); color: var(--amber);  border: 1px solid rgba(255,107,53,0.3); }
+  .badge-cv     { background: rgba(0,229,255,0.1);   color: var(--cyan);   border: 1px solid rgba(0,229,255,0.25); }
+  .badge-gate   { background: rgba(255,46,203,0.12); color: var(--magenta);border: 1px solid rgba(255,46,203,0.25); }
+
+  /* ── Keyboard Key Badges ───────────────────────────── */
+  kbd {
+    display: inline-block;
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-bright);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-bottom: 2px solid #3a3a54;
+    border-radius: 4px;
+    padding: 0.1rem 0.45rem;
+    line-height: 1.5;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
+
+  /* ── Tables ────────────────────────────────────────── */
+  .tbl-wrap {
+    overflow-x: auto;
+    margin: 1rem 0 1.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  thead th {
+    font-family: var(--font-head);
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    background: var(--bg-raised);
+    text-align: left;
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody td {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid rgba(42,42,62,0.5);
+    background: var(--bg-surface);
+    vertical-align: top;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--bg-hover); }
+
+  /* ── Ordered / Unordered Lists ─────────────────────── */
+  ul, ol {
+    margin: 0.5rem 0 1.2rem 1.5rem;
+  }
+
+  li { margin-bottom: 0.4rem; }
+  li strong { color: var(--text-bright); }
+
+  /* ── Step Blocks ───────────────────────────────────── */
+  .step {
+    background: var(--bg-raised);
+    border-left: 3px solid var(--cyan);
+    border-radius: 0 6px 6px 0;
+    padding: 1.2rem 1.5rem;
+    margin: 1.2rem 0;
+    position: relative;
+  }
+
+  .step h4 {
+    margin-top: 0;
+    color: var(--cyan);
+    text-shadow: 0 0 8px rgba(0,229,255,0.3);
+  }
+
+  .step p:last-child { margin-bottom: 0; }
+
+  /* ── Port Color Guide ──────────────────────────────── */
+  .port-guide {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .port-card {
+    flex: 1 1 200px;
+    background: var(--bg-raised);
+    border-radius: 6px;
+    padding: 1rem 1.2rem;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+
+  .port-ring {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 3px solid currentColor;
+    flex-shrink: 0;
+    margin-top: 2px;
+    box-shadow: 0 0 8px currentColor;
+  }
+
+  .port-card strong {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-bright);
+    margin-bottom: 0.15rem;
+  }
+
+  .port-card span {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  /* ── Concept Blocks ────────────────────────────────── */
+  .concept {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.2rem 1.5rem;
+    margin: 1rem 0;
+  }
+
+  .concept h4 {
+    margin-top: 0;
+    color: var(--cyan);
+  }
+
+  .concept p:last-child { margin-bottom: 0; }
+
+  /* ── Signal Type Cards ─────────────────────────────── */
+  .signal-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .signal-card {
+    background: var(--bg-raised);
+    border-radius: 6px;
+    padding: 1.2rem 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .signal-card.audio  { border-left: 3px solid var(--amber); }
+  .signal-card.cv     { border-left: 3px solid var(--cyan); }
+  .signal-card.gate   { border-left: 3px solid var(--magenta); }
+
+  .signal-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  .signal-card.audio .signal-dot  { background: var(--amber);  box-shadow: 0 0 10px var(--amber); }
+  .signal-card.cv    .signal-dot  { background: var(--cyan);   box-shadow: 0 0 10px var(--cyan); }
+  .signal-card.gate  .signal-dot  { background: var(--magenta);box-shadow: 0 0 10px var(--magenta); }
+
+  .signal-card strong { color: var(--text-bright); }
+
+  /* ── Keyboard Layout Grid ──────────────────────────── */
+  .key-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 1rem 0 1.5rem;
+  }
+
+  .key-row {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+  }
+
+  .key-row-label {
+    font-family: var(--font-head);
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    min-width: 4.5rem;
+  }
+
+  .key-map {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.82rem;
+    margin-right: 0.6rem;
+  }
+
+  .key-map .arrow {
+    color: var(--text-dim);
+    font-size: 0.7rem;
+  }
+
+  .key-map .note {
+    color: var(--cyan);
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+
+  /* ── Back to Top ───────────────────────────────────── */
+  .back-top {
+    text-align: center;
+    margin: 3rem 0 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .back-top a {
+    font-family: var(--font-head);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    transition: color 0.2s, text-shadow 0.2s;
+  }
+
+  .back-top a:hover {
+    color: var(--cyan);
+    text-shadow: var(--glow-cyan);
+  }
+
+  /* ── Footer ────────────────────────────────────────── */
+  .footer {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    padding: 1rem 0 2rem;
+    letter-spacing: 0.05em;
+    line-height: 2;
+  }
+
+  .footer a {
+    color: var(--cyan);
+    text-decoration: none;
+    transition: text-shadow 0.15s ease;
+  }
+
+  .footer a:hover {
+    text-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+  }
+
+  /* ── Responsive ────────────────────────────────────── */
+  @media (max-width: 640px) {
+    .container { padding: 1rem 1rem 3rem; }
+    .toc { padding: 1rem 1.2rem; }
+    .port-guide { flex-direction: column; }
+    table { font-size: 0.78rem; }
+    thead th, tbody td { padding: 0.5rem 0.7rem; }
+  }
+
+  /* ── Module Color Utilities ────────────────────────── */
+  .c-cyan       { color: var(--cyan); }
+  .c-amber      { color: var(--amber); }
+  .c-magenta    { color: var(--magenta); }
+  .c-purple     { color: var(--purple); }
+  .c-light-cyan { color: var(--light-cyan); }
+  .c-lime       { color: var(--lime); }
+  .c-gold       { color: var(--gold); }
+  .c-white      { color: var(--white); }
+
+  .glow-cyan       { text-shadow: 0 0 10px rgba(0,229,255,0.4); }
+  .glow-amber      { text-shadow: 0 0 10px rgba(255,107,53,0.4); }
+  .glow-purple     { text-shadow: 0 0 10px rgba(168,85,247,0.4); }
+  .glow-light-cyan { text-shadow: 0 0 10px rgba(34,211,238,0.4); }
+  .glow-lime       { text-shadow: 0 0 10px rgba(132,204,22,0.4); }
+  .glow-gold       { text-shadow: 0 0 10px rgba(245,158,11,0.4); }
+
+  .border-cyan       { border-left-color: var(--cyan) !important; }
+  .border-amber      { border-left-color: var(--amber) !important; }
+  .border-purple     { border-left-color: var(--purple) !important; }
+  .border-light-cyan { border-left-color: var(--light-cyan) !important; }
+  .border-lime       { border-left-color: var(--lime) !important; }
+  .border-gold       { border-left-color: var(--gold) !important; }
+  .border-white      { border-left-color: var(--white) !important; }
+
+  .mod-section {
+    background: var(--bg-raised);
+    border-left: 3px solid var(--cyan);
+    border-radius: 0 6px 6px 0;
+    padding: 1.2rem 1.5rem;
+    margin: 1.5rem 0;
+  }
+
+  .mod-section p:last-child { margin-bottom: 0; }
+
+  .mod-section .vis-desc {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    padding-top: 0.8rem;
+    margin-top: 0.8rem;
+  }
+
+  .mod-section .vis-desc strong { color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="container" id="top">
+
+  <!-- ════════ LOGO ════════ -->
+  <div class="logo-wrap">
+    <div class="logo">Patch<span class="glow-letter">Glow</span></div>
+    <div class="logo-sub">User Guide</div>
+  </div>
+
+  <!-- ════════ TABLE OF CONTENTS ════════ -->
+  <nav class="toc">
+    <div class="toc-title">Contents</div>
+    <ol>
+      <li><a href="#welcome">Welcome</a></li>
+      <li><a href="#getting-started">Getting Started</a></li>
+      <li><a href="#first-patch">Your First Patch</a></li>
+      <li><a href="#module-reference">Module Reference</a></li>
+      <li><a href="#signal-types">Signal Types Explained</a></li>
+      <li><a href="#synthesis-concepts">Synthesis Concepts</a></li>
+      <li><a href="#saving-loading">Saving &amp; Loading</a></li>
+      <li><a href="#keyboard-shortcuts">Keyboard Shortcuts</a></li>
+    </ol>
+  </nav>
+
+  <!-- ════════ 1. WELCOME ════════ -->
+  <h2 id="welcome">1. Welcome</h2>
+
+  <p>PatchGlow is a visual modular synthesizer that runs in your browser. It teaches you synthesis by showing you what's happening&thinsp;&mdash;&thinsp;every waveform, every filter sweep, every envelope shape is rendered in real time on each module's display. No experience required. If you can drag a cable and turn a knob, you can make sounds.</p>
+
+  <!-- ════════ 2. GETTING STARTED ════════ -->
+  <h2 id="getting-started">2. Getting Started</h2>
+
+  <ul>
+    <li><strong>Start Audio</strong> &mdash; Click the glowing <strong>START AUDIO</strong> button. Browsers require a user gesture before they'll play sound&thinsp;&mdash;&thinsp;this is that gesture.</li>
+    <li><strong>Add Modules</strong> &mdash; Click the ADD buttons in the toolbar (<strong>OSCILLATOR</strong>, <strong>FILTER</strong>, <strong>ENVELOPE</strong>, etc.). Each module appears in the rack.</li>
+    <li><strong>Connect Cables</strong> &mdash; Click and drag from an output port (<strong>OUT</strong>) to an input port (<strong>IN</strong>). A preview cable follows your cursor. Release on a compatible input to complete the connection.</li>
+    <li><strong>Remove Cables</strong> &mdash; Click a cable to select it (it brightens). Press <kbd>Delete</kbd> or <kbd>Backspace</kbd> to remove it. Press <kbd>Escape</kbd> to deselect.</li>
+    <li><strong>Remove Modules</strong> &mdash; Right-click a module and select "Remove." All connected cables are removed too.</li>
+    <li><strong>Turn Knobs</strong> &mdash; Click and drag vertically (up = increase, down = decrease). Hold <kbd>Shift</kbd> for fine control (10x slower). Double-click to reset to default. Scroll wheel also works.</li>
+    <li><strong>Play Notes</strong> &mdash; Use your computer keyboard&thinsp;&mdash;&thinsp;keys map to a piano octave.</li>
+  </ul>
+
+  <h3>Port Colors</h3>
+  <p>Every port has a colored ring that tells you what kind of signal it carries:</p>
+
+  <div class="port-guide">
+    <div class="port-card">
+      <div class="port-ring" style="color: var(--amber);"></div>
+      <div>
+        <strong>Audio</strong>
+        <span>Amber ring &mdash; the actual sound waveform</span>
+      </div>
+    </div>
+    <div class="port-card">
+      <div class="port-ring" style="color: var(--cyan);"></div>
+      <div>
+        <strong>CV (Control Voltage)</strong>
+        <span>Cyan ring &mdash; a signal that controls a parameter</span>
+      </div>
+    </div>
+    <div class="port-card">
+      <div class="port-ring" style="color: var(--magenta);"></div>
+      <div>
+        <strong>Gate</strong>
+        <span>Magenta ring &mdash; an on/off trigger signal</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ 3. YOUR FIRST PATCH ════════ -->
+  <h2 id="first-patch">3. Your First Patch</h2>
+
+  <p>Follow these five steps to build a complete subtractive synth voice from scratch. By the end, you'll have a playable instrument with keyboard control, volume shaping, filtering, and modulation.</p>
+
+  <div class="step">
+    <h4>Step 1: Oscillator + Output</h4>
+    <p>Add an <strong>Oscillator</strong> and an <strong>Output</strong> module. Connect <strong>Oscillator OUT</strong> &rarr; <strong>Output IN</strong> (drag from the <span class="dot dot-audio"></span>amber OUT port to the <span class="dot dot-audio"></span>amber IN port). You hear a continuous tone.</p>
+    <p>The oscillator's display shows the waveform in the top panel and the frequency spectrum below&thinsp;&mdash;&thinsp;try switching between sine, triangle, sawtooth, and square using the WAVE switch and watch both displays change dramatically.</p>
+  </div>
+
+  <div class="step">
+    <h4>Step 2: Add Keyboard</h4>
+    <p>Add a <strong>Keyboard</strong> module. Connect <strong>Keyboard CV</strong> &rarr; <strong>Oscillator V/OCT</strong> (drag from the <span class="dot dot-cv"></span>cyan CV port to the <span class="dot dot-cv"></span>cyan V/OCT port). Now press keys <kbd>A</kbd> through <kbd>K</kbd> on your computer keyboard.</p>
+    <p>The pitch changes, but the sound never stops&thinsp;&mdash;&thinsp;that's because nothing is controlling <em>when</em> the sound plays. Right now, the oscillator just drones.</p>
+  </div>
+
+  <div class="step">
+    <h4>Step 3: Add Envelope + VCA</h4>
+    <p>Add an <strong>Envelope</strong> and a <strong>VCA</strong> module. Rewire:</p>
+    <ul>
+      <li>Remove the cable from Oscillator OUT &rarr; Output IN (click it, press <kbd>Delete</kbd>)</li>
+      <li>Connect <strong>Oscillator OUT</strong> &rarr; <strong>VCA IN</strong> (<span class="dot dot-audio"></span>amber to <span class="dot dot-audio"></span>amber)</li>
+      <li>Connect <strong>Envelope ENV OUT</strong> &rarr; <strong>VCA CV</strong> (<span class="dot dot-cv"></span>cyan to <span class="dot dot-cv"></span>cyan)</li>
+      <li>Connect <strong>VCA OUT</strong> &rarr; <strong>Output IN</strong> (<span class="dot dot-audio"></span>amber to <span class="dot dot-audio"></span>amber)</li>
+      <li>Connect <strong>Keyboard GATE</strong> &rarr; <strong>Envelope GATE</strong> (<span class="dot dot-gate"></span>magenta to <span class="dot dot-gate"></span>magenta)</li>
+    </ul>
+    <p>Now press a key&thinsp;&mdash;&thinsp;the sound fades in and out! The envelope controls the VCA, which controls the volume. The envelope's display shows the ADSR curve with a glowing dot tracing along it as you play. Try adjusting <strong>Attack</strong> (how fast the sound appears) and <strong>Release</strong> (how long it fades after you let go).</p>
+  </div>
+
+  <div class="step">
+    <h4>Step 4: Add Filter</h4>
+    <p>Add a <strong>Filter</strong> module between the Oscillator and VCA:</p>
+    <ul>
+      <li>Remove the cable from Oscillator OUT &rarr; VCA IN</li>
+      <li>Connect <strong>Oscillator OUT</strong> &rarr; <strong>Filter IN</strong> (<span class="dot dot-audio"></span>amber to <span class="dot dot-audio"></span>amber)</li>
+      <li>Connect <strong>Filter OUT</strong> &rarr; <strong>VCA IN</strong> (<span class="dot dot-audio"></span>amber to <span class="dot dot-audio"></span>amber)</li>
+    </ul>
+    <p>Sweep the <strong>CUTOFF</strong> knob and watch the filter's frequency response curve change in real time. Turn up <strong>RES</strong> (resonance) and hear the filter start to ring at the cutoff frequency. Try switching between lowpass, highpass, and bandpass filter types.</p>
+  </div>
+
+  <div class="step">
+    <h4>Step 5: Add LFO</h4>
+    <p>Add an <strong>LFO</strong> module. Connect <strong>LFO OUT</strong> &rarr; <strong>Filter FREQ CV</strong> (<span class="dot dot-cv"></span>cyan to <span class="dot dot-cv"></span>cyan). The filter cutoff now moves on its own&thinsp;&mdash;&thinsp;you can see the cutoff line sweeping back and forth in the filter's display.</p>
+    <p>You've created <strong>modulation</strong>: one module automatically controlling another. Try adjusting the LFO <strong>RATE</strong> to change the speed, and <strong>DEPTH</strong> to change how far it sweeps.</p>
+  </div>
+
+  <!-- ════════ 4. MODULE REFERENCE ════════ -->
+  <h2 id="module-reference">4. Module Reference</h2>
+
+  <!-- ──── Oscillator ──── -->
+  <div class="mod-head">
+    <div class="mod-icon" style="color: var(--cyan); background: var(--cyan);"></div>
+    <h3 class="c-cyan glow-cyan" id="mod-osc">Oscillator</h3>
+  </div>
+
+  <div class="mod-section border-cyan">
+    <p>Generates a periodic waveform&thinsp;&mdash;&thinsp;the fundamental sound source in any synthesizer.</p>
+    <p><strong>Teaches:</strong> Sound is a repeating waveform. Frequency equals pitch. Different shapes have different harmonic content.</p>
+
+    <h4>Knobs</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>What It Controls</th><th>Range</th></tr></thead>
+        <tbody>
+          <tr><td>FREQ</td><td>Base frequency</td><td>20&ndash;20,000 Hz (exponential)</td></tr>
+          <tr><td>FINE</td><td>Fine-tune in cents</td><td>-100&ndash;100 (&plusmn;1 semitone)</td></tr>
+          <tr><td>WAVE</td><td>Waveform shape</td><td>Sine, Triangle, Sawtooth, Square</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Ports</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Direction</th><th>Connect To</th></tr></thead>
+        <tbody>
+          <tr><td>V/OCT</td><td><span class="badge badge-cv"><span class="dot dot-cv"></span> CV</span></td><td>In</td><td>Keyboard CV, sequencer</td></tr>
+          <tr><td>FM</td><td><span class="badge badge-cv"><span class="dot dot-cv"></span> CV</span></td><td>In</td><td>LFO, another oscillator</td></tr>
+          <tr><td>OUT</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>Out</td><td>Filter IN, VCA IN, Mixer IN, Output IN</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="vis-desc"><strong>Visualization:</strong> Top panel shows the time-domain waveform with a phosphor glow trail. Bottom panel shows the frequency spectrum as vertical bars&thinsp;&mdash;&thinsp;a sine wave shows one peak, a sawtooth shows many harmonics.</div>
+  </div>
+
+  <!-- ──── Filter ──── -->
+  <div class="mod-head">
+    <div class="mod-icon" style="color: var(--amber); background: var(--amber);"></div>
+    <h3 class="c-amber glow-amber" id="mod-filter">Filter</h3>
+  </div>
+
+  <div class="mod-section border-amber">
+    <p>Shapes the harmonic content of a signal by removing frequencies above, below, or around the cutoff point.</p>
+    <p><strong>Teaches:</strong> A filter removes frequencies. Cutoff determines where. Resonance emphasizes frequencies at the cutoff point.</p>
+
+    <h4>Knobs</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>What It Controls</th><th>Range</th></tr></thead>
+        <tbody>
+          <tr><td>CUTOFF</td><td>Cutoff frequency</td><td>20&ndash;20,000 Hz (exponential)</td></tr>
+          <tr><td>RES</td><td>Resonance / Q</td><td>0&ndash;30</td></tr>
+          <tr><td>TYPE</td><td>Filter type</td><td>Lowpass, Highpass, Bandpass</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Ports</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Direction</th><th>Connect To</th></tr></thead>
+        <tbody>
+          <tr><td>IN</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>In</td><td>Oscillator OUT, Mixer OUT</td></tr>
+          <tr><td>FREQ CV</td><td><span class="badge badge-cv"><span class="dot dot-cv"></span> CV</span></td><td>In</td><td>LFO OUT, Envelope ENV OUT</td></tr>
+          <tr><td>OUT</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>Out</td><td>VCA IN, Mixer IN, Output IN</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="vis-desc"><strong>Visualization:</strong> Frequency response curve showing the filter's effect. A vertical line marks the cutoff frequency. As resonance increases, a peak forms at the cutoff.</div>
+  </div>
+
+  <!-- ──── Envelope ──── -->
+  <div class="mod-head">
+    <div class="mod-icon" style="color: var(--purple); background: var(--purple);"></div>
+    <h3 class="c-purple glow-purple" id="mod-env">Envelope</h3>
+  </div>
+
+  <div class="mod-section border-purple">
+    <p>Shapes a control signal over time&thinsp;&mdash;&thinsp;defines how a sound evolves from the moment you press a key to after you release it.</p>
+    <p><strong>Teaches:</strong> An envelope is like a door that opens and closes. Attack = how fast it opens. Decay = initial fall. Sustain = held level. Release = how fast it closes.</p>
+
+    <h4>Knobs</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>What It Controls</th><th>Range</th></tr></thead>
+        <tbody>
+          <tr><td>ATK</td><td>Attack time</td><td>0.001&ndash;5 seconds</td></tr>
+          <tr><td>DEC</td><td>Decay time</td><td>0.001&ndash;5 seconds</td></tr>
+          <tr><td>SUS</td><td>Sustain level</td><td>0&ndash;1</td></tr>
+          <tr><td>REL</td><td>Release time</td><td>0.001&ndash;10 seconds</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Ports</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Direction</th><th>Connect To</th></tr></thead>
+        <tbody>
+          <tr><td>GATE</td><td><span class="badge badge-gate"><span class="dot dot-gate"></span> Gate</span></td><td>In</td><td>Keyboard GATE</td></tr>
+          <tr><td>ENV OUT</td><td><span class="badge badge-cv"><span class="dot dot-cv"></span> CV</span></td><td>Out</td><td>VCA CV, Filter FREQ CV</td></tr>
+          <tr><td>INV OUT</td><td><span class="badge badge-cv"><span class="dot dot-cv"></span> CV</span></td><td>Out</td><td>VCA CV, Filter FREQ CV (inverted)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="vis-desc"><strong>Visualization:</strong> ADSR curve displayed as a continuous shape. A glowing dot traces along the curve in real time as you play notes, showing which phase (A, D, S, or R) is active.</div>
+  </div>
+
+  <!-- ──── LFO ──── -->
+  <div class="mod-head">
+    <div class="mod-icon" style="color: var(--light-cyan); background: var(--light-cyan);"></div>
+    <h3 class="c-light-cyan glow-light-cyan" id="mod-lfo">LFO</h3>
+  </div>
+
+  <div class="mod-section border-light-cyan">
+    <p>A slow oscillator that doesn't make sound&thinsp;&mdash;&thinsp;instead it automatically wiggles other parameters like filter cutoff or volume.</p>
+    <p><strong>Teaches:</strong> Modulation is one thing controlling another. An LFO is an oscillator too slow to hear&thinsp;&mdash;&thinsp;connect it to a parameter and watch it move.</p>
+
+    <h4>Knobs</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>What It Controls</th><th>Range</th></tr></thead>
+        <tbody>
+          <tr><td>RATE</td><td>Speed</td><td>0.01&ndash;50 Hz (exponential)</td></tr>
+          <tr><td>SHAPE</td><td>Waveform</td><td>Sine, Triangle, Sawtooth, Square</td></tr>
+          <tr><td>DEPTH</td><td>Modulation amount</td><td>0&ndash;1</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Ports</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Direction</th><th>Connect To</th></tr></thead>
+        <tbody>
+          <tr><td>OUT</td><td><span class="badge badge-cv"><span class="dot dot-cv"></span> CV</span></td><td>Out</td><td>Filter FREQ CV, Oscillator FM, VCA CV</td></tr>
+          <tr><td>SYNC</td><td><span class="badge badge-gate"><span class="dot dot-gate"></span> Gate</span></td><td>In</td><td>Keyboard GATE (resets phase on rising edge)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="vis-desc"><strong>Visualization:</strong> The LFO waveform cycling in real time, slow enough to watch at typical LFO speeds.</div>
+  </div>
+
+  <!-- ──── VCA ──── -->
+  <div class="mod-head">
+    <div class="mod-icon" style="color: var(--lime); background: var(--lime);"></div>
+    <h3 class="c-lime glow-lime" id="mod-vca">VCA</h3>
+  </div>
+
+  <div class="mod-section border-lime">
+    <p>Multiplies an audio signal by a control voltage&thinsp;&mdash;&thinsp;it's a volume knob controlled by voltage.</p>
+    <p><strong>Teaches:</strong> A VCA is like a volume knob that another module turns for you. When an envelope controls the VCA, it shapes when you hear the sound.</p>
+
+    <h4>Knobs</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>What It Controls</th><th>Range</th></tr></thead>
+        <tbody>
+          <tr><td>LEVEL</td><td>Manual gain</td><td>0&ndash;1</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Ports</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Direction</th><th>Connect To</th></tr></thead>
+        <tbody>
+          <tr><td>IN</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>In</td><td>Oscillator OUT, Filter OUT</td></tr>
+          <tr><td>CV</td><td><span class="badge badge-cv"><span class="dot dot-cv"></span> CV</span></td><td>In</td><td>Envelope ENV OUT, LFO OUT</td></tr>
+          <tr><td>OUT</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>Out</td><td>Mixer IN, Output IN</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="vis-desc"><strong>Visualization:</strong> Three-panel display showing input waveform, control signal (envelope shape), and output waveform. Makes it obvious: input &times; control = output.</div>
+  </div>
+
+  <!-- ──── Mixer ──── -->
+  <div class="mod-head">
+    <div class="mod-icon" style="color: var(--gold); background: var(--gold);"></div>
+    <h3 class="c-gold glow-gold" id="mod-mixer">Mixer</h3>
+  </div>
+
+  <div class="mod-section border-gold">
+    <p>Combines multiple audio signals into one output, with individual level control per channel.</p>
+    <p><strong>Teaches:</strong> Signals add together when mixed. Use it to layer oscillators or combine sources.</p>
+
+    <h4>Knobs</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>What It Controls</th><th>Range</th></tr></thead>
+        <tbody>
+          <tr><td>CH 1</td><td>Channel 1 level</td><td>0&ndash;1</td></tr>
+          <tr><td>CH 2</td><td>Channel 2 level</td><td>0&ndash;1</td></tr>
+          <tr><td>CH 3</td><td>Channel 3 level</td><td>0&ndash;1</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Ports</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Direction</th><th>Connect To</th></tr></thead>
+        <tbody>
+          <tr><td>IN 1</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>In</td><td>Oscillator OUT, VCA OUT</td></tr>
+          <tr><td>IN 2</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>In</td><td>Oscillator OUT, VCA OUT</td></tr>
+          <tr><td>IN 3</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>In</td><td>Oscillator OUT, VCA OUT</td></tr>
+          <tr><td>OUT</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>Out</td><td>Filter IN, VCA IN, Output IN</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="vis-desc"><strong>Visualization:</strong> Vertical level meters for each channel plus the mix output, with a retro VU-meter aesthetic.</div>
+  </div>
+
+  <!-- ──── Keyboard ──── -->
+  <div class="mod-head">
+    <div class="mod-icon" style="color: var(--white); background: var(--white);"></div>
+    <h3 class="c-white" id="mod-keyboard">Keyboard</h3>
+  </div>
+
+  <div class="mod-section border-white">
+    <p>Converts your computer keyboard into pitch (CV) and on/off (gate) signals for the synthesizer.</p>
+    <p><strong>Teaches:</strong> Notes have two parts&thinsp;&mdash;&thinsp;pitch (how high or low) and on/off state (when the sound plays). A keyboard sends both.</p>
+
+    <h4>Knobs</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>What It Controls</th><th>Range</th></tr></thead>
+        <tbody>
+          <tr><td>OCT</td><td>Octave offset</td><td>-2 to +4</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Ports</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Direction</th><th>Connect To</th></tr></thead>
+        <tbody>
+          <tr><td>CV</td><td><span class="badge badge-cv"><span class="dot dot-cv"></span> CV</span></td><td>Out</td><td>Oscillator V/OCT</td></tr>
+          <tr><td>GATE</td><td><span class="badge badge-gate"><span class="dot dot-gate"></span> Gate</span></td><td>Out</td><td>Envelope GATE, LFO SYNC</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="vis-desc"><strong>Visualization:</strong> A piano keyboard display showing which key is pressed, with the note name displayed. Computer keyboard hints (<kbd>A</kbd> through <kbd>K</kbd>) shown on the white keys.</div>
+  </div>
+
+  <!-- ──── Output ──── -->
+  <div class="mod-head">
+    <div class="mod-icon" style="color: var(--white); background: var(--white);"></div>
+    <h3 class="c-white" id="mod-output">Output</h3>
+  </div>
+
+  <div class="mod-section border-white">
+    <p>Routes the final audio signal to your speakers&thinsp;&mdash;&thinsp;the last module in every patch.</p>
+    <p><strong>Teaches:</strong> This is where sound leaves the synth. The oscilloscope shows exactly what waveform is playing.</p>
+
+    <h4>Knobs</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>What It Controls</th><th>Range</th></tr></thead>
+        <tbody>
+          <tr><td>VOLUME</td><td>Master volume</td><td>-60 to 0 dB</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Ports</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Direction</th><th>Connect To</th></tr></thead>
+        <tbody>
+          <tr><td>IN</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>In</td><td>VCA OUT, Mixer OUT, Filter OUT, Oscillator OUT</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="vis-desc"><strong>Visualization:</strong> Large oscilloscope display&thinsp;&mdash;&thinsp;the biggest waveform view in the rack, with bright phosphor trace and glow trail. Frequency spectrum below.</div>
+  </div>
+
+  <!-- ════════ 5. SIGNAL TYPES EXPLAINED ════════ -->
+  <h2 id="signal-types">5. Signal Types Explained</h2>
+
+  <p>Three types of signals flow through PatchGlow, each with its own color:</p>
+
+  <div class="signal-cards">
+    <div class="signal-card audio">
+      <div class="signal-dot"></div>
+      <div>
+        <p><strong>Audio</strong> (Amber <span style="color:var(--amber)">#ff6b35</span>) &mdash; The actual sound waveform. This is what you hear&thinsp;&mdash;&thinsp;a rapidly vibrating signal (typically 20&ndash;20,000 cycles per second). Audio cables pulse with fast-moving particles.</p>
+      </div>
+    </div>
+    <div class="signal-card cv">
+      <div class="signal-dot"></div>
+      <div>
+        <p><strong>CV / Control Voltage</strong> (Cyan <span style="color:var(--cyan)">#00e5ff</span>) &mdash; A slow-moving signal that controls parameters. Think of it as a remote control&thinsp;&mdash;&thinsp;an LFO sending CV to a filter cutoff makes the cutoff knob turn automatically. CV cables pulse with slow, steady particles.</p>
+      </div>
+    </div>
+    <div class="signal-card gate">
+      <div class="signal-dot"></div>
+      <div>
+        <p><strong>Gate</strong> (Magenta <span style="color:var(--magenta)">#ff2ecb</span>) &mdash; An on/off signal, like a light switch. When you press a key, the gate goes high (on). When you release, it goes low (off). Gates trigger envelopes. Gate cables pulse at medium speed.</p>
+      </div>
+    </div>
+  </div>
+
+  <p>Cables are color-coded to match their signal type, and the animation speed differs: audio flows fast, CV flows slowly, gate pulses at a moderate pace.</p>
+
+  <!-- ════════ 6. SYNTHESIS CONCEPTS ════════ -->
+  <h2 id="synthesis-concepts">6. Synthesis Concepts</h2>
+
+  <div class="concept">
+    <h4>What is a waveform?</h4>
+    <p>Sound is vibration&thinsp;&mdash;&thinsp;air molecules pushing back and forth in a repeating pattern. The shape of that pattern is the waveform. In PatchGlow, you can see the waveform on the Oscillator and Output displays. Different shapes (sine, triangle, sawtooth, square) sound different because they contain different combinations of harmonics.</p>
+  </div>
+
+  <div class="concept">
+    <h4>What are harmonics?</h4>
+    <p>A pure tone (sine wave) has just one frequency. But most musical sounds are made of many frequencies stacked on top of each other&thinsp;&mdash;&thinsp;these are harmonics. The Oscillator's spectrum display (bottom panel) shows these as vertical bars. A sawtooth wave has many harmonics; a sine wave has just one.</p>
+  </div>
+
+  <div class="concept">
+    <h4>What does a filter do?</h4>
+    <p>A filter removes some frequencies and lets others pass through. A lowpass filter removes high frequencies (making the sound darker/warmer). A highpass filter removes low frequencies (making it thinner). Watch the Filter's frequency response curve to see exactly which frequencies pass through and which are blocked.</p>
+  </div>
+
+  <div class="concept">
+    <h4>What is an envelope?</h4>
+    <p>An envelope shapes how a value changes over time. The most common type is ADSR: Attack (rise), Decay (initial fall), Sustain (held level), Release (final fade). When you press a key, the envelope traces through these phases&thinsp;&mdash;&thinsp;watch the glowing dot on the Envelope display follow the curve in real time.</p>
+  </div>
+
+  <div class="concept">
+    <h4>What is modulation?</h4>
+    <p>Modulation is one signal controlling another. When you patch an LFO to a filter's cutoff, the LFO's slowly cycling waveform makes the cutoff move up and down automatically&thinsp;&mdash;&thinsp;creating a "wah-wah" or "wobble" effect. This is the core of synthesis: simple modules controlling each other to create complex, evolving sounds.</p>
+  </div>
+
+  <!-- ════════ 7. SAVING AND LOADING ════════ -->
+  <h2 id="saving-loading">7. Saving &amp; Loading</h2>
+
+  <ul>
+    <li><strong>Autosave</strong> &mdash; PatchGlow automatically saves your work to your browser's local storage. If you close the tab and come back, your patch will be right where you left it.</li>
+    <li><strong>Save</strong> &mdash; Click <strong>SAVE</strong> in the toolbar to download your patch as a <code>.json</code> file. You can share it or back it up.</li>
+    <li><strong>Load</strong> &mdash; Click <strong>LOAD</strong> to import a previously saved <code>.json</code> patch file.</li>
+    <li><strong>Reset</strong> &mdash; Click <strong>RESET</strong> to clear everything and start fresh. You'll be asked to confirm.</li>
+    <li><strong>Demo</strong> &mdash; Click <strong>DEMO</strong> to load a reference patch&thinsp;&mdash;&thinsp;a complete subtractive synth voice with Keyboard &rarr; Oscillator &rarr; Filter &rarr; VCA &rarr; Output, plus an Envelope on the VCA and an LFO modulating the filter cutoff. It's a great starting point to explore.</li>
+  </ul>
+
+  <!-- ════════ 8. KEYBOARD SHORTCUTS ════════ -->
+  <h2 id="keyboard-shortcuts">8. Keyboard Shortcuts</h2>
+
+  <p>The keyboard uses a piano-style layout on your computer keyboard:</p>
+
+  <h3>White Keys (Natural Notes)</h3>
+  <div class="key-grid">
+    <div class="key-row">
+      <div class="key-map"><kbd>A</kbd> <span class="arrow">&rarr;</span> <span class="note">C</span></div>
+      <div class="key-map"><kbd>S</kbd> <span class="arrow">&rarr;</span> <span class="note">D</span></div>
+      <div class="key-map"><kbd>D</kbd> <span class="arrow">&rarr;</span> <span class="note">E</span></div>
+      <div class="key-map"><kbd>F</kbd> <span class="arrow">&rarr;</span> <span class="note">F</span></div>
+      <div class="key-map"><kbd>G</kbd> <span class="arrow">&rarr;</span> <span class="note">G</span></div>
+      <div class="key-map"><kbd>H</kbd> <span class="arrow">&rarr;</span> <span class="note">A</span></div>
+      <div class="key-map"><kbd>J</kbd> <span class="arrow">&rarr;</span> <span class="note">B</span></div>
+      <div class="key-map"><kbd>K</kbd> <span class="arrow">&rarr;</span> <span class="note">C+</span></div>
+    </div>
+  </div>
+
+  <h3>Black Keys (Sharps/Flats)</h3>
+  <div class="key-grid">
+    <div class="key-row">
+      <div class="key-map"><kbd>W</kbd> <span class="arrow">&rarr;</span> <span class="note">C#</span></div>
+      <div class="key-map"><kbd>E</kbd> <span class="arrow">&rarr;</span> <span class="note">D#</span></div>
+      <div class="key-map"><kbd>T</kbd> <span class="arrow">&rarr;</span> <span class="note">F#</span></div>
+      <div class="key-map"><kbd>Y</kbd> <span class="arrow">&rarr;</span> <span class="note">G#</span></div>
+      <div class="key-map"><kbd>U</kbd> <span class="arrow">&rarr;</span> <span class="note">A#</span></div>
+    </div>
+  </div>
+
+  <h3>Other Shortcuts</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Input</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td><kbd>Shift</kbd> + knob drag</td><td>Fine control (10x more precise)</td></tr>
+        <tr><td>Double-click knob</td><td>Reset to default value</td></tr>
+        <tr><td>Scroll wheel on knob</td><td>Adjust value</td></tr>
+        <tr><td><kbd>Delete</kbd> / <kbd>Backspace</kbd></td><td>Remove selected cable</td></tr>
+        <tr><td><kbd>Escape</kbd></td><td>Deselect cable</td></tr>
+        <tr><td>Right-click module</td><td>Remove module from rack</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ════════ BACK TO TOP ════════ -->
+  <div class="back-top">
+    <a href="#top">Back to Top</a>
+  </div>
+
+  <div class="footer">
+    PatchGlow is open source &mdash; <a href="https://github.com/kc-cl/patchglow" target="_blank">contribute on GitHub</a><br>
+    Questions? <a href="mailto:info@patchglow.app">info@patchglow.app</a><br>
+    <a href="https://patchglow.app">patchglow.app</a>
+  </div>
+
+</div><!-- /.container -->
+
+</body>
+</html>

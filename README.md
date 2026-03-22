@@ -14,7 +14,7 @@ PatchGlow is designed for anyone curious about how synthesizers work. No prior e
 
 ## Live Demo
 
-**[patchglow.pages.dev](https://patchglow.pages.dev)**
+**[patchglow.app](https://patchglow.app)**
 
 ## Features
 
