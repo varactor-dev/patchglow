@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 // Register all modules before anything renders
 import { registerModule } from '@/engine/moduleRegistry'
@@ -207,8 +208,8 @@ export default function App() {
         <Rack scrollContainerRef={rackAreaRef} />
       </div>
 
-      {/* Mobile tap-to-start overlay */}
-      {isMobile && !audioStarted && (
+      {/* Mobile tap-to-start overlay — portaled to body to escape overflow:hidden */}
+      {isMobile && !audioStarted && createPortal(
         <div className={styles.mobileStartOverlay} onPointerDown={handleStartAudio}>
           <div className={styles.overlayContent}>
             <div className={styles.overlayTitle}>PatchGlow</div>
@@ -217,11 +218,12 @@ export default function App() {
             </button>
             <div className={styles.overlayHint}>Tap anywhere to begin</div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {/* Desktop audio start overlay — hidden when welcome screen is active */}
-      {!isMobile && !audioStarted && !showWelcome && (
+      {!isMobile && !audioStarted && !showWelcome && createPortal(
         <div className={styles.audioOverlay} onPointerDown={handleStartAudio}>
           <div className={styles.overlayContent}>
             <div className={styles.overlayTitle}>PatchGlow</div>
@@ -230,11 +232,12 @@ export default function App() {
             </button>
             <div className={styles.overlayHint}>Click anywhere to begin</div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {/* Welcome screen — first visit only, desktop only */}
-      {!isMobile && showWelcome && (
+      {!isMobile && showWelcome && createPortal(
         <div className={styles.welcomeOverlay}>
           <div className={styles.welcomeCard}>
             <div className={styles.welcomeLogo}>PatchGlow</div>
@@ -281,7 +284,8 @@ export default function App() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {/* About modal */}
