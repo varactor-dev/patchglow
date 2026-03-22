@@ -1,6 +1,7 @@
-import { useRef } from 'react'
+import { useCallback, useRef } from 'react'
 import { useAnimationFrame } from '@/modules/_shared/useAnimationFrame'
 import { clearCanvas } from '@/modules/_shared/drawUtils'
+import AudioEngineManager from '@/engine/AudioEngineManager'
 import type { VisualizationData } from '@/types/module'
 import panelStyles from '@/ui/ModulePanel/ModulePanel.module.css'
 
@@ -21,12 +22,52 @@ const WHITE_H = H
 const BLACK_W = WHITE_W * 0.55
 const BLACK_H = H * 0.62
 
-export default function KeyboardVisualization({ data }: Props) {
+// Hit-test a canvas-space point to find which semitone key was pressed.
+// Black keys are checked first (drawn on top). Returns null if no key hit.
+function getSemitoneAtPoint(x: number, y: number): number | null {
+  // Check black keys first — they overlap white key boundaries
+  for (let i = 0; i < BLACK_NOTES.length; i++) {
+    const semitone = BLACK_NOTES[i]!
+    if (semitone === -1) continue
+    const bx = (i + 1) * WHITE_W - BLACK_W / 2
+    if (x >= bx && x <= bx + BLACK_W && y >= 0 && y <= BLACK_H) {
+      return semitone
+    }
+  }
+  // Check white keys
+  const whiteIndex = Math.floor(x / WHITE_W)
+  if (whiteIndex >= 0 && whiteIndex < WHITE_NOTES.length) {
+    return WHITE_NOTES[whiteIndex]!
+  }
+  return null
+}
+
+export default function KeyboardVisualization({ moduleId, data }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const pressedNote = data.customData?.['pressedNote'] as number | null
   const noteName = (data.customData?.['pressedNoteName'] as string) ?? ''
   const octave = (data.customData?.['octave'] as number) ?? 0
   const gateHigh = ((data.customData?.['gateValue'] as number) ?? 0) > 0.5
+
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    e.preventDefault()
+    const rect = canvas.getBoundingClientRect()
+    // Scale from CSS pixels to canvas pixels
+    const scaleX = W / rect.width
+    const scaleY = H / rect.height
+    const x = (e.clientX - rect.left) * scaleX
+    const y = (e.clientY - rect.top) * scaleY
+    const semitone = getSemitoneAtPoint(x, y)
+    if (semitone === null) return
+    canvas.setPointerCapture(e.pointerId)
+    AudioEngineManager.getInstance().sendAction(moduleId, 'noteOn', semitone)
+  }, [moduleId])
+
+  const handlePointerUp = useCallback(() => {
+    AudioEngineManager.getInstance().sendAction(moduleId, 'noteOff')
+  }, [moduleId])
 
   useAnimationFrame(() => {
     const canvas = canvasRef.current
@@ -94,7 +135,10 @@ export default function KeyboardVisualization({ data }: Props) {
           ref={canvasRef}
           width={W}
           height={H}
-          style={{ display: 'block', width: W, height: H }}
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onLostPointerCapture={handlePointerUp}
+          style={{ display: 'block', width: W, height: H, touchAction: 'none', userSelect: 'none', cursor: 'pointer' }}
         />
       </div>
 

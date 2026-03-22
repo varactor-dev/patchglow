@@ -112,9 +112,11 @@ export const useRackStore = create<RackStore>()(
     addConnection(source, dest) {
       const state = get()
 
-      // Prevent duplicate connections to the same dest port
+      // Prevent exact duplicate connections (same source AND dest)
+      // Multiple different sources can connect to the same dest — signals are summed by Web Audio
       const alreadyConnected = state.connections.some(
-        (c) => c.destModuleId === dest.moduleId && c.destPortId === dest.portId,
+        (c) => c.sourceModuleId === source.moduleId && c.sourcePortId === source.portId &&
+               c.destModuleId === dest.moduleId && c.destPortId === dest.portId,
       )
       if (alreadyConnected) return null
 

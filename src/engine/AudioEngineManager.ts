@@ -138,6 +138,11 @@ class AudioEngineManager {
     }
   }
 
+  // ─── Transient engine actions (for visualization touch events, etc.) ────────
+  sendAction(instanceId: string, action: string, payload?: unknown): void {
+    this.engines.get(instanceId)?.handleAction?.(action, payload)
+  }
+
   // ─── Visualization data ────────────────────────────────────────────────────
   getVisualizationData(instanceId: string): VisualizationData {
     return this.engines.get(instanceId)?.getVisualizationData() ?? {}

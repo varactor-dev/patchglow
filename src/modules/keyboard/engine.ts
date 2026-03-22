@@ -41,33 +41,41 @@ export class KeyboardEngine implements ModuleAudioEngine {
   private pressedNote: number | null = null
   private pressedNoteName = ''
 
+  noteOn(semitone: number): void {
+    const freq = noteToFreq(semitone, this.octave)
+    this.cvSignal!.value = freqToVOct(freq)
+    this.gateSignal!.value = 1
+    this.currentNote = semitone
+    this.pressedNote = semitone
+    this.pressedNoteName = NOTE_NAMES[semitone % 12]!
+  }
+
+  noteOff(): void {
+    this.gateSignal!.value = 0
+    this.currentNote = null
+    this.currentKey = null
+    this.pressedNote = null
+    this.pressedNoteName = ''
+  }
+
   private onKeyDown = (e: KeyboardEvent) => {
     if (e.repeat) return
     const key = e.key.toLowerCase()
     if (!(key in KEY_NOTE_MAP)) return
-
-    const semitone = KEY_NOTE_MAP[key]!
-    const freq = noteToFreq(semitone, this.octave)
-    const voct = freqToVOct(freq)
-
-    this.cvSignal!.value = voct
-    this.gateSignal!.value = 1
-
-    this.currentNote = semitone
     this.currentKey = key
-    this.pressedNote = semitone
-    this.pressedNoteName = NOTE_NAMES[semitone % 12]!
+    this.noteOn(KEY_NOTE_MAP[key]!)
   }
 
   private onKeyUp = (e: KeyboardEvent) => {
     const key = e.key.toLowerCase()
     if (key === this.currentKey) {
-      this.gateSignal!.value = 0
-      this.currentNote = null
-      this.currentKey = null
-      this.pressedNote = null
-      this.pressedNoteName = ''
+      this.noteOff()
     }
+  }
+
+  handleAction(action: string, payload?: unknown): void {
+    if (action === 'noteOn') this.noteOn(payload as number)
+    if (action === 'noteOff') this.noteOff()
   }
 
   initialize(_context: Tone.BaseContext): void {

@@ -63,6 +63,8 @@ export interface ModuleAudioEngine {
   setParameter(parameterId: string, value: number | string): void
   getVisualizationData(): VisualizationData
   dispose(): void
+  // Optional: visualizations can trigger transient engine actions (e.g. note-on/off from touch)
+  handleAction?(action: string, payload?: unknown): void
 }
 
 // ─── Full Module Registration ────────────────────────────────────────────────
