@@ -74,11 +74,11 @@ export default function Port({
     [direction, draggingCable, isEligibleDest, addConnection, moduleId, portId, endCableDrag],
   )
 
-  let ringOpacity = direction === 'output' ? 1 : 0.5
+  let ringOpacity = direction === 'output' ? 0.7 : 0.35
   if (isConnected) ringOpacity = 1
   if (isBeingDragged) ringOpacity = 0.3
   if (isEligibleDest) ringOpacity = 1
-  if (isIneligibleDest) ringOpacity = 0.2
+  if (isIneligibleDest) ringOpacity = 0.15
 
   return (
     <div className={styles.portWrapper}>
@@ -96,10 +96,14 @@ export default function Port({
       >
         {/* Outer ring */}
         <div
-          className={`${styles.ring} ${isEligibleDest ? styles.ringPulse : ''}`}
+          className={`${styles.ring} ${isEligibleDest ? styles.ringPulse : isConnected ? styles.ringConnected : ''}`}
           style={{
             borderColor: color,
-            boxShadow: `0 0 ${isConnected || isEligibleDest ? 8 : 4}px ${color}`,
+            boxShadow: isConnected
+              ? `0 0 14px ${color}, 0 0 4px ${color}`
+              : isEligibleDest
+              ? `0 0 12px ${color}, 0 0 3px ${color}`
+              : `0 0 2px ${color}`,
             opacity: ringOpacity,
           }}
         />

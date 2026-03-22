@@ -85,19 +85,19 @@ export function drawGlowLine(
 
   // Outer glow (wide, dim)
   ctx.strokeStyle = color
-  ctx.globalAlpha = 0.15
-  ctx.lineWidth = thickness * 6
+  ctx.globalAlpha = 0.25
+  ctx.lineWidth = thickness * 8
   ctx.lineJoin = 'round'
   ctx.lineCap = 'round'
   ctx.stroke(path)
 
   // Mid glow
-  ctx.globalAlpha = 0.3
-  ctx.lineWidth = thickness * 2.5
+  ctx.globalAlpha = 0.4
+  ctx.lineWidth = thickness * 3
   ctx.stroke(path)
 
   // Core (bright, sharp)
-  ctx.globalAlpha = 0.9
+  ctx.globalAlpha = 1.0
   ctx.lineWidth = thickness
   ctx.stroke(path)
 
@@ -113,6 +113,7 @@ export function drawWaveform(
   color: string,
   yOffset = 0,       // 0 = use full canvas height; use 0.5 for top half
   yScale = 1.0,      // fraction of canvas height to use
+  thickness = 1.5,   // line thickness — increase for hero displays
 ): void {
   const { width, height } = ctx.canvas
   const centerY = height * yOffset + (height * yScale) / 2
@@ -127,7 +128,7 @@ export function drawWaveform(
     pts.push({ x, y })
   }
 
-  drawGlowLine(ctx, pts, color)
+  drawGlowLine(ctx, pts, color, thickness)
 }
 
 /**
@@ -157,13 +158,16 @@ export function drawSpectrum(
     const x = i * binWidth
 
     // Glow effect: outer dim bar
-    ctx.globalAlpha = 0.12
+    ctx.globalAlpha = 0.25
     ctx.fillStyle = hexColor
-    ctx.fillRect(x, regionTop + regionHeight - barHeight, binWidth * 0.8, barHeight)
+    ctx.fillRect(x, regionTop + regionHeight - barHeight, binWidth * 0.85, barHeight)
 
-    // Bright core
-    ctx.globalAlpha = 0.7
+    // Bright core with shadowBlur glow on peaks
+    ctx.globalAlpha = 0.9
+    ctx.shadowColor = hexColor
+    ctx.shadowBlur = 6
     ctx.fillRect(x, regionTop + regionHeight - barHeight * 0.7, binWidth * 0.5, barHeight * 0.7)
+    ctx.shadowBlur = 0
   }
 
   ctx.restore()

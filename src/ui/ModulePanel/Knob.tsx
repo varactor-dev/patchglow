@@ -126,7 +126,7 @@ export default function Knob({
     }
   }, [isActive, min, max, curve, onChange])
 
-  const glowOpacity = isActive ? 1 : isHovered ? 0.6 : 0.2
+  const glowOpacity = isActive ? 1 : isHovered ? 0.65 : 0.15
 
   return (
     <div className={styles.knobWrapper}>
@@ -148,7 +148,9 @@ export default function Knob({
           className={styles.glowRing}
           style={{
             border: `1px solid ${accentColor}`,
-            boxShadow: `0 0 8px ${accentColor}, inset 0 0 4px rgba(0,0,0,0.5)`,
+            boxShadow: isActive
+              ? `0 0 16px ${accentColor}, 0 0 6px ${accentColor}, inset 0 0 4px rgba(0,0,0,0.5)`
+              : `0 0 8px ${accentColor}, inset 0 0 4px rgba(0,0,0,0.5)`,
             opacity: glowOpacity,
           }}
         />

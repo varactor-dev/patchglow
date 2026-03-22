@@ -9,6 +9,7 @@ import {
   findZeroCrossing,
   mapRange,
 } from '@/modules/_shared/drawUtils'
+import AudioEngineManager from '@/engine/AudioEngineManager'
 import type { VisualizationData } from '@/types/module'
 import panelStyles from '@/ui/ModulePanel/ModulePanel.module.css'
 
@@ -23,7 +24,7 @@ const H_SCOPE = 90    // main oscilloscope — hero display
 const H_SPEC  = 40    // spectrum analyzer
 const W_METER = 12    // dB level meter width
 
-export default function OutputVisualization({ data, accentColor }: Props) {
+export default function OutputVisualization({ moduleId, accentColor }: Props) {
   const scopeRef  = useRef<HTMLCanvasElement>(null)
   const specRef   = useRef<HTMLCanvasElement>(null)
   const meterRef  = useRef<HTMLCanvasElement>(null)
@@ -36,10 +37,11 @@ export default function OutputVisualization({ data, accentColor }: Props) {
     clearWithFade(ctx, 0.22)
     drawGrid(ctx, 4)
 
-    if (data.waveform && data.waveform.length > 0) {
-      const offset = findZeroCrossing(data.waveform)
-      const stable = data.waveform.slice(offset, offset + 512)
-      drawWaveform(ctx, stable.length > 10 ? stable : data.waveform, accentColor)
+    const { waveform } = AudioEngineManager.getInstance().getVisualizationData(moduleId)
+    if (waveform && waveform.length > 0) {
+      const offset = findZeroCrossing(waveform)
+      const stable = waveform.slice(offset, offset + 512)
+      drawWaveform(ctx, stable.length > 10 ? stable : waveform, accentColor, 0, 1.0, 2.0)
     }
   })
 
@@ -51,8 +53,9 @@ export default function OutputVisualization({ data, accentColor }: Props) {
     clearCanvas(ctx)
     drawGrid(ctx, 8, '#141420')
 
-    if (data.spectrum && data.spectrum.length > 0) {
-      drawSpectrum(ctx, data.spectrum.slice(0, data.spectrum.length / 2), accentColor)
+    const { spectrum } = AudioEngineManager.getInstance().getVisualizationData(moduleId)
+    if (spectrum && spectrum.length > 0) {
+      drawSpectrum(ctx, spectrum.slice(0, spectrum.length / 2), accentColor)
     }
   })
 
@@ -63,7 +66,8 @@ export default function OutputVisualization({ data, accentColor }: Props) {
     const ctx = canvas.getContext('2d')!
     clearCanvas(ctx)
 
-    const db = (data.customData?.['dbLevel'] as number) ?? -80
+    const { customData } = AudioEngineManager.getInstance().getVisualizationData(moduleId)
+    const db = (customData?.['dbLevel'] as number) ?? -80
     const normalized = mapRange(db, -60, 0, 0, 1)
     const h = canvas.height
     const barHeight = Math.max(0, normalized * h)

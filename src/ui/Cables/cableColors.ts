@@ -13,5 +13,6 @@ export const FLOW_DURATION: Record<SignalType, number> = {
   gate:  0.7,
 }
 
-// dasharray pattern for flow animation
-export const FLOW_DASHARRAY = '8 16'
+// dasharray pattern for flow animation — short dots with wide gaps = visible "particles"
+// Total pattern = 24px so stroke-dashoffset: -24 animates exactly one full cycle
+export const FLOW_DASHARRAY = '4 20'

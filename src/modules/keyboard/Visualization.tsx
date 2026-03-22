@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useAnimationFrame } from '@/modules/_shared/useAnimationFrame'
 import { clearCanvas } from '@/modules/_shared/drawUtils'
 import AudioEngineManager from '@/engine/AudioEngineManager'
@@ -42,12 +42,10 @@ function getSemitoneAtPoint(x: number, y: number): number | null {
   return null
 }
 
-export default function KeyboardVisualization({ moduleId, data }: Props) {
+export default function KeyboardVisualization({ moduleId }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const pressedNote = data.customData?.['pressedNote'] as number | null
-  const noteName = (data.customData?.['pressedNoteName'] as string) ?? ''
-  const octave = (data.customData?.['octave'] as number) ?? 0
-  const gateHigh = ((data.customData?.['gateValue'] as number) ?? 0) > 0.5
+  const [display, setDisplay] = useState({ noteName: '', octave: 0, gateHigh: false })
+  const displayRef = useRef(display)
 
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
@@ -75,6 +73,20 @@ export default function KeyboardVisualization({ moduleId, data }: Props) {
     const ctx = canvas.getContext('2d')!
     clearCanvas(ctx)
 
+    const { customData } = AudioEngineManager.getInstance().getVisualizationData(moduleId)
+    const pressedNote = customData?.['pressedNote'] as number | null
+    const newNoteName = (customData?.['pressedNoteName'] as string) ?? ''
+    const newOctave = (customData?.['octave'] as number) ?? 0
+    const newGateHigh = ((customData?.['gateValue'] as number) ?? 0) > 0.5
+
+    // Update JSX display state only when values change (avoids re-render every frame)
+    const prev = displayRef.current
+    if (newNoteName !== prev.noteName || newOctave !== prev.octave || newGateHigh !== prev.gateHigh) {
+      const next = { noteName: newNoteName, octave: newOctave, gateHigh: newGateHigh }
+      displayRef.current = next
+      setDisplay(next)
+    }
+
     // Draw white keys
     WHITE_NOTES.forEach((semitone, i) => {
       const x = i * WHITE_W
@@ -85,9 +97,16 @@ export default function KeyboardVisualization({ moduleId, data }: Props) {
 
       if (isPressed) {
         ctx.shadowColor = '#00e5ff'
-        ctx.shadowBlur = 12
+        ctx.shadowBlur = 20
         ctx.fillRect(x + 1, 0, WHITE_W - 2, WHITE_H - 1)
         ctx.shadowBlur = 0
+        // Second pass — extra bloom halo
+        ctx.globalAlpha = 0.35
+        ctx.shadowColor = '#00e5ff'
+        ctx.shadowBlur = 28
+        ctx.fillRect(x + 1, 0, WHITE_W - 2, WHITE_H - 1)
+        ctx.shadowBlur = 0
+        ctx.globalAlpha = 1
       }
 
       // Key border
@@ -107,9 +126,16 @@ export default function KeyboardVisualization({ moduleId, data }: Props) {
 
       if (isPressed) {
         ctx.shadowColor = '#00e5ff'
-        ctx.shadowBlur = 10
+        ctx.shadowBlur = 18
         ctx.fillRect(x, 0, BLACK_W, BLACK_H)
         ctx.shadowBlur = 0
+        // Second pass — extra bloom halo
+        ctx.globalAlpha = 0.35
+        ctx.shadowColor = '#00e5ff'
+        ctx.shadowBlur = 26
+        ctx.fillRect(x, 0, BLACK_W, BLACK_H)
+        ctx.shadowBlur = 0
+        ctx.globalAlpha = 1
       }
 
       ctx.strokeStyle = '#0a0a0f'
@@ -146,14 +172,14 @@ export default function KeyboardVisualization({ moduleId, data }: Props) {
       <div style={{
         fontFamily: 'var(--font-mono)',
         fontSize: '11px',
-        color: gateHigh ? '#00e5ff' : 'var(--text-dim)',
-        textShadow: gateHigh ? '0 0 8px #00e5ff' : 'none',
+        color: display.gateHigh ? '#00e5ff' : 'var(--text-dim)',
+        textShadow: display.gateHigh ? '0 0 8px #00e5ff' : 'none',
         letterSpacing: '0.1em',
         minHeight: '14px',
         textAlign: 'center',
         transition: 'color 80ms ease',
       }}>
-        {noteName ? `${noteName}${octave + 4}` : '—'}
+        {display.noteName ? `${display.noteName}${display.octave + 4}` : '—'}
       </div>
 
       {/* Octave indicator */}
@@ -164,7 +190,7 @@ export default function KeyboardVisualization({ moduleId, data }: Props) {
         letterSpacing: '0.1em',
         textTransform: 'uppercase',
       }}>
-        OCT {octave >= 0 ? '+' : ''}{octave}
+        OCT {display.octave >= 0 ? '+' : ''}{display.octave}
       </div>
     </div>
   )

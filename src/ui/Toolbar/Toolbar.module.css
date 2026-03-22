@@ -123,6 +123,36 @@
   transition: box-shadow 150ms ease, border-color 150ms ease;
 }
 
+.patchButton {
+  padding: 3px 8px;
+  font-family: var(--font-display);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--text-dim);
+  transition: color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.patchButton:hover {
+  color: var(--text-primary);
+  border-color: var(--text-dim);
+}
+
+.demoButton {
+  color: var(--color-cv);
+  border-color: rgba(0, 229, 255, 0.3);
+}
+
+.demoButton:hover {
+  border-color: var(--color-cv);
+  box-shadow: 0 0 6px rgba(0, 229, 255, 0.4);
+}
+
 .spacer {
   flex: 1;
 }

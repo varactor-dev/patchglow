@@ -65,6 +65,9 @@ export interface ModuleAudioEngine {
   dispose(): void
   // Optional: visualizations can trigger transient engine actions (e.g. note-on/off from touch)
   handleAction?(action: string, payload?: unknown): void
+  // Optional: called by AudioEngineManager when a cable is connected/disconnected from a port
+  onPortConnected?(portId: string): void
+  onPortDisconnected?(portId: string): void
 }
 
 // ─── Full Module Registration ────────────────────────────────────────────────

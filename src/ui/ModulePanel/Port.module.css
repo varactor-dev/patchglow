@@ -35,6 +35,15 @@
   50%       { opacity: 0.6; transform: scale(1.08); }
 }
 
+.ringConnected {
+  animation: connectedPulse 2s ease-in-out infinite;
+}
+
+@keyframes connectedPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.72; }
+}
+
 .socket {
   width: 10px;
   height: 10px;

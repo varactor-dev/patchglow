@@ -1,7 +1,6 @@
 import { useCallback, useRef } from 'react'
 import { useRackStore } from '@/store/rackStore'
 import { getModule } from '@/engine/moduleRegistry'
-import AudioEngineManager from '@/engine/AudioEngineManager'
 import ModulePanel, { HP_PX } from '@/ui/ModulePanel/ModulePanel'
 import ModuleLabel from '@/ui/ModulePanel/ModuleLabel'
 import Knob from '@/ui/ModulePanel/Knob'
@@ -73,8 +72,6 @@ export default function Rack() {
           const { definition, VisualizationComponent } = registration
           const { accentColor, parameters, ports } = definition
 
-          const vizData = AudioEngineManager.getInstance().getVisualizationData(mod.instanceId)
-
           const handleRemove = (e: React.MouseEvent) => {
             e.preventDefault()
             removeModule(mod.instanceId)
@@ -96,7 +93,7 @@ export default function Rack() {
                 {/* Visualization */}
                 <VisualizationComponent
                   moduleId={mod.instanceId}
-                  data={vizData}
+                  data={{}}
                   accentColor={accentColor}
                 />
 

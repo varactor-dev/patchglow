@@ -8,14 +8,21 @@
   flex-shrink: 0;
   overflow: hidden;
 
-  /* Subtle brushed-metal vertical grain */
+  /* Brushed-metal grain — vertical stripes + subtle horizontal cross-grain */
   background-image:
     repeating-linear-gradient(
       90deg,
       transparent 0px,
       transparent 3px,
-      rgba(255,255,255,0.006) 3px,
-      rgba(255,255,255,0.006) 4px
+      rgba(255,255,255,0.025) 3px,
+      rgba(255,255,255,0.025) 4px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 7px,
+      rgba(255,255,255,0.012) 7px,
+      rgba(255,255,255,0.012) 8px
     );
 }
 
@@ -91,9 +98,9 @@
   inset: 0;
   background: repeating-linear-gradient(
     transparent 0px,
-    transparent 2px,
-    rgba(0, 0, 0, 0.07) 2px,
-    rgba(0, 0, 0, 0.07) 4px
+    transparent 3px,
+    rgba(0, 0, 0, 0.13) 3px,
+    rgba(0, 0, 0, 0.13) 6px
   );
   pointer-events: none;
   z-index: 1;

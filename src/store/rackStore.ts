@@ -178,8 +178,18 @@ export const useRackStore = create<RackStore>()(
     importPatch(patchJson) {
       try {
         const patch = JSON.parse(patchJson) as { modules: Record<string, RackModule>; connections: Connection[] }
+        const modules = patch.modules ?? {}
+        // Restore module counters so new modules get unique IDs after loading
+        for (const mod of Object.values(modules)) {
+          const match = mod.instanceId.match(/^(.+)-(\d+)$/)
+          if (match) {
+            const type = match[1]
+            const num = parseInt(match[2], 10)
+            moduleCounters[type] = Math.max(moduleCounters[type] ?? 0, num)
+          }
+        }
         set({
-          modules: patch.modules ?? {},
+          modules,
           connections: patch.connections ?? [],
           selectedCableId: null,
           draggingCable: null,

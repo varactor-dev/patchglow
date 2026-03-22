@@ -23,7 +23,7 @@
   --accent-lfo:         #22d3ee;
   --accent-vca:         #84cc16;
   --accent-mixer:       #f59e0b;
-  --accent-output:      #e0e0ec;
+  --accent-output:      #ffffff;
   --accent-keyboard:    #ffffff;
   --accent-sequencer:   #ff2ecb;
 
@@ -40,7 +40,7 @@
   --viz-trace-dim: rgba(255, 255, 255, 0.15);
 
   /* ─── Rack Hardware ─────────────────────────────────────────────────────── */
-  --rack-rail:    #252530;
+  --rack-rail:    #2a2a35;
   --rack-screw:   #3a3a4a;
   --rack-hole:    #0a0a0f;
   --hp-width:     20px;             /* 1HP in pixels */

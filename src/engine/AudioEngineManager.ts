@@ -92,15 +92,16 @@ class AudioEngineManager {
       }
     }
 
-    // Re-sync connections after module changes
-    const { connections } = useRackStore.getState()
-    this.syncConnections(connections)
   }
 
   // ─── Sync connections ──────────────────────────────────────────────────────
   private syncConnections(connections: Connection[]): void {
-    // Disconnect all previously active connections
+    const oldIds = new Set(this.activeConnections.map((c) => c.id))
+    const newIds = new Set(connections.map((c) => c.id))
+
+    // Disconnect only removed connections (avoids collateral damage to other nodes)
     for (const conn of this.activeConnections) {
+      if (newIds.has(conn.id)) continue
       const sourceEngine = this.engines.get(conn.sourceModuleId)
       const destEngine = this.engines.get(conn.destModuleId)
       if (!sourceEngine || !destEngine) continue
@@ -109,11 +110,15 @@ class AudioEngineManager {
         const inputNode = destEngine.getInputNode(conn.destPortId)
         outputNode.disconnect(inputNode as Tone.InputNode)
       } catch { /* node may already be disconnected */ }
+      // Notify engines of disconnection (e.g. oscillator gate bias restore)
+      destEngine.onPortDisconnected?.(conn.destPortId)
+      sourceEngine.onPortDisconnected?.(conn.sourcePortId)
     }
 
-    // Re-establish only the connections currently in the store
-    const established: Connection[] = []
+    // Keep stable connections, add only new ones
+    const established = this.activeConnections.filter((c) => newIds.has(c.id))
     for (const conn of connections) {
+      if (oldIds.has(conn.id)) continue
       const sourceEngine = this.engines.get(conn.sourceModuleId)
       const destEngine = this.engines.get(conn.destModuleId)
       if (!sourceEngine || !destEngine) continue
@@ -125,6 +130,9 @@ class AudioEngineManager {
       } catch (err) {
         console.warn('AudioEngineManager: failed to connect', conn, err)
       }
+      // Notify engines of connection (e.g. oscillator gate bias disconnect)
+      destEngine.onPortConnected?.(conn.destPortId)
+      sourceEngine.onPortConnected?.(conn.sourcePortId)
     }
 
     this.activeConnections = established

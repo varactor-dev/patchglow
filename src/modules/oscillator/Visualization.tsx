@@ -8,6 +8,7 @@ import {
   drawSpectrum,
   findZeroCrossing,
 } from '@/modules/_shared/drawUtils'
+import AudioEngineManager from '@/engine/AudioEngineManager'
 import type { VisualizationData } from '@/types/module'
 import panelStyles from '@/ui/ModulePanel/ModulePanel.module.css'
 
@@ -21,7 +22,7 @@ const W = 220
 const H_TOP = 80    // waveform
 const H_BOT = 50    // spectrum
 
-export default function OscillatorVisualization({ data, accentColor }: Props) {
+export default function OscillatorVisualization({ moduleId, accentColor }: Props) {
   const waveCanvasRef = useRef<HTMLCanvasElement>(null)
   const specCanvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -33,13 +34,14 @@ export default function OscillatorVisualization({ data, accentColor }: Props) {
     clearWithFade(ctx, 0.28)
     drawGrid(ctx, 4)
 
-    if (data.waveform && data.waveform.length > 0) {
+    const { waveform } = AudioEngineManager.getInstance().getVisualizationData(moduleId)
+    if (waveform && waveform.length > 0) {
       // Triggered display: find zero crossing, then show a fixed-length window.
       // Fixed window = same number of samples every frame → stable alignment.
-      const offset = findZeroCrossing(data.waveform)
-      const displayLen = Math.floor(data.waveform.length / 2)
-      const stable = data.waveform.slice(offset, offset + displayLen)
-      drawWaveform(ctx, stable.length > 0 ? stable : data.waveform, accentColor)
+      const offset = findZeroCrossing(waveform)
+      const displayLen = Math.floor(waveform.length / 2)
+      const stable = waveform.slice(offset, offset + displayLen)
+      drawWaveform(ctx, stable.length > 0 ? stable : waveform, accentColor)
     }
   })
 
@@ -51,9 +53,10 @@ export default function OscillatorVisualization({ data, accentColor }: Props) {
     clearCanvas(ctx)
     drawGrid(ctx, 6, '#141420')
 
-    if (data.spectrum && data.spectrum.length > 0) {
+    const { spectrum } = AudioEngineManager.getInstance().getVisualizationData(moduleId)
+    if (spectrum && spectrum.length > 0) {
       // Only use first half (bins above Nyquist are mirrored noise)
-      const half = data.spectrum.slice(0, data.spectrum.length / 2)
+      const half = spectrum.slice(0, spectrum.length / 2)
       drawSpectrum(ctx, half, accentColor)
     }
   })

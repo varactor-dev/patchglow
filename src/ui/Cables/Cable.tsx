@@ -61,7 +61,7 @@ export default function Cable({ id, start, end, signalType, selected }: CablePro
         fill="none"
       />
 
-      {/* Cable body — thick dim background stroke */}
+      {/* Cable body — thick dim background stroke with ambient glow */}
       <path
         d={d}
         stroke={color}
@@ -69,9 +69,10 @@ export default function Cable({ id, start, end, signalType, selected }: CablePro
         strokeOpacity={selected ? 0.5 : 0.25}
         fill="none"
         strokeLinecap="round"
+        style={{ filter: `drop-shadow(0 0 6px ${color})` }}
       />
 
-      {/* Cable core — bright thin stroke */}
+      {/* Cable core — bright thin stroke with strong neon glow */}
       <path
         d={d}
         stroke={color}
@@ -80,22 +81,24 @@ export default function Cable({ id, start, end, signalType, selected }: CablePro
         fill="none"
         strokeLinecap="round"
         style={{
-          filter: `drop-shadow(0 0 ${selected ? 6 : 3}px ${color})`,
+          filter: selected
+            ? `drop-shadow(0 0 12px ${color}) drop-shadow(0 0 4px ${color})`
+            : `drop-shadow(0 0 8px ${color}) drop-shadow(0 0 3px ${color})`,
         }}
       />
 
-      {/* Signal flow animation */}
+      {/* Signal flow animation — white particles glow along colored cable */}
       <path
         d={d}
-        stroke={color}
-        strokeWidth={1.5}
-        strokeOpacity={0.6}
+        stroke="#ffffff"
+        strokeWidth={2}
+        strokeOpacity={0.85}
         fill="none"
         strokeLinecap="round"
         strokeDasharray={FLOW_DASHARRAY}
         style={{
           animation: `cableFlow ${duration}s linear infinite`,
-          filter: `drop-shadow(0 0 4px ${color})`,
+          filter: `drop-shadow(0 0 5px ${color}) drop-shadow(0 0 2px #ffffff)`,
         }}
       />
 

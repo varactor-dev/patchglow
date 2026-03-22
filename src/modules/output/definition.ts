@@ -7,7 +7,7 @@ const outputDefinition: ModuleDefinition = {
   learningSummary: 'This is where sound leaves the synth. The oscilloscope shows exactly what waveform is playing.',
   hp: 12,
   category: 'output',
-  accentColor: '#e0e0ec',
+  accentColor: '#ffffff',
 
   ports: [
     {

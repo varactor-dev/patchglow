@@ -1,13 +1,17 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import AudioEngineManager from '@/engine/AudioEngineManager'
 import { useRackStore } from '@/store/rackStore'
 import { getAllModules } from '@/engine/moduleRegistry'
+import { clearAutosave } from '@/store/persistence'
 import styles from './Toolbar.module.css'
 
 export default function Toolbar() {
   const [audioStarted, setAudioStarted] = useState(false)
   const addModule = useRackStore((s) => s.addModule)
   const modules = useRackStore((s) => s.modules)
+  const exportPatch = useRackStore((s) => s.exportPatch)
+  const importPatch = useRackStore((s) => s.importPatch)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleStartAudio = useCallback(async () => {
     await AudioEngineManager.getInstance().start()
@@ -38,6 +42,53 @@ export default function Toolbar() {
     },
     [addModule, getNextCol],
   )
+
+  const handleSave = useCallback(() => {
+    const json = exportPatch()
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'patchglow-patch.json'
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [exportPatch])
+
+  const handleLoad = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
+
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = (ev) => {
+        const json = ev.target?.result as string
+        importPatch(json)
+      }
+      reader.readAsText(file)
+      // Reset so same file can be loaded again
+      e.target.value = ''
+    },
+    [importPatch],
+  )
+
+  const handleReset = useCallback(() => {
+    if (!window.confirm('Reset rack? This will remove all modules and cables.')) return
+    clearAutosave()
+    importPatch('{"modules":{},"connections":[]}')
+  }, [importPatch])
+
+  const handleDemo = useCallback(async () => {
+    try {
+      const res = await fetch('/patches/subtractive-voice.json')
+      const json = await res.text()
+      importPatch(json)
+    } catch {
+      console.error('Failed to load demo patch')
+    }
+  }, [importPatch])
 
   const availableTypes = getAllModules().map((r) => r.definition)
 
@@ -90,6 +141,26 @@ export default function Toolbar() {
           </button>
         ))}
       </div>
+
+      <div className={styles.divider} />
+
+      {/* Patch management */}
+      <div className={styles.addModuleGroup}>
+        <span className={styles.groupLabel}>PATCH</span>
+        <button className={styles.patchButton} onClick={handleSave}>SAVE</button>
+        <button className={styles.patchButton} onClick={handleLoad}>LOAD</button>
+        <button className={styles.patchButton} onClick={handleReset}>RESET</button>
+        <button className={`${styles.patchButton} ${styles.demoButton}`} onClick={handleDemo}>DEMO</button>
+      </div>
+
+      {/* Hidden file input for load */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
 
       <div className={styles.spacer} />
 
