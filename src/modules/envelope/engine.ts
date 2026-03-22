@@ -37,7 +37,8 @@ export class EnvelopeEngine implements ModuleAudioEngine {
     // Poll gate every 5ms for edge detection
     this.pollInterval = window.setInterval(() => {
       const data = this.gateAnalyser!.getValue() as Float32Array
-      const gateValue = data[0]
+      // Use the most-recent sample (last element) for lower latency detection
+      const gateValue = data[data.length - 1] as number
       const gateHigh = gateValue > 0.5
       if (gateHigh && !this.gateOpen) {
         this.envelope!.triggerAttack()

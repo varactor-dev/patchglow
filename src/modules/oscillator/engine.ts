@@ -53,7 +53,7 @@ export class OscillatorEngine implements ModuleAudioEngine {
 
   getOutputNode(portId: string): Tone.ToneAudioNode {
     if (portId === 'out') {
-      return this.gainNode!
+      return this.gateGain!
     }
     throw new Error(`OscillatorEngine: unknown output port "${portId}"`)
   }
