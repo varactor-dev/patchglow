@@ -221,6 +221,13 @@ export class SequencerEngine implements ModuleAudioEngine {
   }
 
   handleAction(action: string, payload?: unknown): void {
+    if (action === 'contextStarted') {
+      if (!this.useExternalClock && this.internalTimer === null) {
+        this.currentStep = 0
+        this.startInternalClock()
+      }
+      return
+    }
     if (action === 'setStep') {
       const { step, semitone } = payload as { step: number; semitone: number }
       if (step >= 0 && step < 16) {

@@ -90,6 +90,22 @@ export default function App() {
     setAudioStarted()
   }, [setAudioStarted])
 
+  // Document-level listener: start audio on first touch/click anywhere.
+  // Bypasses all DOM/CSS/z-index issues with overlays on iOS WKWebView.
+  useEffect(() => {
+    if (audioStarted || showWelcome) return
+    const start = async () => {
+      try { await AudioEngineManager.getInstance().start() } catch { /* ignore */ }
+      setAudioStarted()
+    }
+    document.addEventListener('touchstart', start, { once: true })
+    document.addEventListener('mousedown', start, { once: true })
+    return () => {
+      document.removeEventListener('touchstart', start)
+      document.removeEventListener('mousedown', start)
+    }
+  }, [audioStarted, showWelcome, setAudioStarted])
+
   // Auto-dismiss toast after 4 seconds
   useEffect(() => {
     if (!toastMessage) return

@@ -56,6 +56,13 @@ export class NoiseEngine implements ModuleAudioEngine {
     return { waveform, spectrum }
   }
 
+  handleAction(action: string): void {
+    if (action === 'contextStarted' && this.noise) {
+      try { this.noise.stop() } catch { /* ignore */ }
+      this.noise.start()
+    }
+  }
+
   dispose(): void {
     this.noise?.stop()
     this.noise?.dispose()

@@ -89,6 +89,13 @@ export class OscillatorEngine implements ModuleAudioEngine {
     return { waveform, spectrum }
   }
 
+  handleAction(action: string): void {
+    if (action === 'contextStarted' && this.osc) {
+      try { this.osc.stop() } catch { /* ignore */ }
+      this.osc.start()
+    }
+  }
+
   dispose(): void {
     this.osc?.stop()
     this.osc?.dispose()

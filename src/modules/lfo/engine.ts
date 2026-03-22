@@ -84,6 +84,13 @@ export class LfoEngine implements ModuleAudioEngine {
     }
   }
 
+  handleAction(action: string): void {
+    if (action === 'contextStarted' && this.lfo) {
+      try { this.lfo.stop() } catch { /* ignore */ }
+      this.lfo.start()
+    }
+  }
+
   dispose(): void {
     if (this.pollInterval !== null) {
       window.clearInterval(this.pollInterval)
