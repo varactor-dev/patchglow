@@ -20,6 +20,8 @@ export default function Rack() {
   const setParameter = useRackStore((s) => s.setParameter)
   const endCableDrag = useRackStore((s) => s.endCableDrag)
   const draggingCable = useRackStore((s) => s.draggingCable)
+  const selectCable = useRackStore((s) => s.selectCable)
+  const selectedCableId = useRackStore((s) => s.selectedCableId)
 
   const rackRef = useRef<HTMLDivElement>(null)
 
@@ -28,8 +30,13 @@ export default function Rack() {
     if (draggingCable) endCableDrag()
   }, [draggingCable, endCableDrag])
 
+  // Deselect cable on background click (replaces SVG onClick since SVG is pointer-events: none)
+  const handleRackClick = useCallback(() => {
+    if (selectedCableId) selectCable(null)
+  }, [selectedCableId, selectCable])
+
   return (
-    <div className={styles.rackOuter} ref={rackRef} onPointerUp={handleMouseUp}>
+    <div className={styles.rackOuter} ref={rackRef} onPointerUp={handleMouseUp} onClick={handleRackClick}>
       {/* Top rail */}
       <div className={styles.rail}>
         {Array.from({ length: RACK_HP }).map((_, i) => (

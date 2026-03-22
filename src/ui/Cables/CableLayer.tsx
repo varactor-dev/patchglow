@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRackStore } from '@/store/rackStore'
 import { isCompatible } from '@/engine/signalTypes'
 import { getModuleDefinition } from '@/engine/moduleRegistry'
@@ -119,11 +119,6 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
     return () => document.removeEventListener('keydown', onKey)
   }, [selectedCableId, removeConnection, selectCable])
 
-  // Deselect cable on background click
-  const handleSvgClick = useCallback(() => {
-    if (selectedCableId) selectCable(null)
-  }, [selectedCableId, selectCable])
-
   const container = containerRef.current
 
   return (
@@ -134,11 +129,10 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
         inset: 0,
         width: '100%',
         height: '100%',
-        pointerEvents: draggingCable ? 'none' : 'auto',
+        pointerEvents: 'none',  // always passthrough — cable <g> elements re-enable individually
         overflow: 'visible',
         zIndex: 10,
       }}
-      onClick={handleSvgClick}
     >
       <CableFlowKeyframes />
 

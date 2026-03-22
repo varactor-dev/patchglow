@@ -52,7 +52,7 @@ export default function Cable({ id, start, end, signalType, selected }: CablePro
   const opacity = selected ? 1 : 0.85
 
   return (
-    <g onClick={handleClick} style={{ cursor: 'pointer' }}>
+    <g onClick={handleClick} style={{ cursor: 'pointer', pointerEvents: 'auto' }}>
       {/* Hit area — invisible wide stroke for easy clicking */}
       <path
         d={d}
