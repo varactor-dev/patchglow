@@ -7,12 +7,13 @@ import ModuleLabel from '@/ui/ModulePanel/ModuleLabel'
 import Knob from '@/ui/ModulePanel/Knob'
 import Port from '@/ui/ModulePanel/Port'
 import Switch from '@/ui/ModulePanel/Switch'
+import CableLayer from '@/ui/Cables/CableLayer'
 import type { ParameterDefinition, PortDefinition } from '@/types/module'
 import panelStyles from '@/ui/ModulePanel/ModulePanel.module.css'
 import styles from './Rack.module.css'
 
-// Number of HP slots in the rack
-const RACK_HP = 84
+// Number of HP slots in the rack (exported so CableLayer can size its SVG)
+export const RACK_HP = 84
 
 export default function Rack() {
   const modules = useRackStore((s) => s.modules)
@@ -25,9 +26,19 @@ export default function Rack() {
 
   const rackRef = useRef<HTMLDivElement>(null)
 
-  // Cancel cable drag if released on empty rack space
-  const handleMouseUp = useCallback(() => {
-    if (draggingCable) endCableDrag()
+  // Cancel cable drag if released on empty rack space.
+  // If the pointer is over an input port, do nothing — CableLayer's document-level
+  // handler fires next and will finalize the connection via elementFromPoint.
+  const handleMouseUp = useCallback((e: React.PointerEvent) => {
+    if (!draggingCable) return
+    let target: Element | null = document.elementFromPoint(e.clientX, e.clientY)
+    while (target && target !== document.body) {
+      if (target.getAttribute('data-direction') === 'input' && target.getAttribute('data-port-id')) {
+        return  // over a port — let CableLayer connect
+      }
+      target = target.parentElement
+    }
+    endCableDrag()
   }, [draggingCable, endCableDrag])
 
   // Deselect cable on background click (replaces SVG onClick since SVG is pointer-events: none)
@@ -148,6 +159,9 @@ export default function Rack() {
           <div key={i} className={styles.railHole} style={{ left: i * HP_PX + HP_PX / 2 - 3 }} />
         ))}
       </div>
+
+      {/* Cable SVG lives inside the scroll container so cables scroll with modules */}
+      <CableLayer containerRef={rackRef} />
     </div>
   )
 }

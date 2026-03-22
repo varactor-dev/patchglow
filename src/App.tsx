@@ -15,13 +15,11 @@ import { useRackStore } from '@/store/rackStore'
 import AudioEngineManager from '@/engine/AudioEngineManager'
 import Toolbar from '@/ui/Toolbar/Toolbar'
 import Rack from '@/ui/Rack/Rack'
-import CableLayer from '@/ui/Cables/CableLayer'
 import styles from './App.module.css'
 
 export default function App() {
   const addModule = useRackStore((s) => s.addModule)
   const addConnection = useRackStore((s) => s.addConnection)
-  const rackAreaRef = useRef<HTMLDivElement>(null)
   const initializedRef = useRef(false)
 
   useEffect(() => {
@@ -48,9 +46,8 @@ export default function App() {
   return (
     <div className={styles.app}>
       <Toolbar />
-      <div className={styles.rackArea} ref={rackAreaRef}>
+      <div className={styles.rackArea}>
         <Rack />
-        <CableLayer containerRef={rackAreaRef} />
       </div>
     </div>
   )

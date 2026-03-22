@@ -2,19 +2,22 @@ import { useEffect, useRef, useState } from 'react'
 import { useRackStore } from '@/store/rackStore'
 import { isCompatible } from '@/engine/signalTypes'
 import { getModuleDefinition } from '@/engine/moduleRegistry'
+import { HP_PX } from '@/ui/ModulePanel/ModulePanel'
 import Cable, { DragCable, CableFlowKeyframes } from './Cable'
 
 interface Point { x: number; y: number }
 
-function getPortCenter(moduleId: string, portId: string, container: Element): Point | null {
+// Coordinates are in scroll-content space (scrollLeft/scrollTop added so cables
+// stay aligned when the rack scrolls horizontally)
+function getPortCenter(moduleId: string, portId: string, container: HTMLElement): Point | null {
   const selector = `[data-module-id="${moduleId}"][data-port-id="${portId}"]`
   const portEl = container.querySelector(selector)
   if (!portEl) return null
   const portRect = portEl.getBoundingClientRect()
   const containerRect = container.getBoundingClientRect()
   return {
-    x: portRect.left + portRect.width / 2 - containerRect.left,
-    y: portRect.top + portRect.height / 2 - containerRect.top,
+    x: portRect.left + portRect.width / 2 - containerRect.left + container.scrollLeft,
+    y: portRect.top + portRect.height / 2 - containerRect.top + container.scrollTop,
   }
 }
 
@@ -35,7 +38,25 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
   draggingCableRef.current = draggingCable
 
   const [cursorPos, setCursorPos] = useState<Point>({ x: 0, y: 0 })
+  // Bump this counter on scroll to force cable position recalculation
+  const [, setScrollTick] = useState(0)
   const svgRef = useRef<SVGSVGElement>(null)
+
+  // Re-render cables when the scroll container scrolls so coordinates stay aligned
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    let rafId = 0
+    const onScroll = () => {
+      cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => setScrollTick((t) => t + 1))
+    }
+    container.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      container.removeEventListener('scroll', onScroll)
+      cancelAnimationFrame(rafId)
+    }
+  }, [containerRef])
 
   // Track cursor/touch during cable drag
   useEffect(() => {
@@ -44,7 +65,11 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
       const container = containerRef.current
       if (!container) return
       const rect = container.getBoundingClientRect()
-      setCursorPos({ x: clientX - rect.left, y: clientY - rect.top })
+      // Convert to content space (same as getPortCenter)
+      setCursorPos({
+        x: clientX - rect.left + container.scrollLeft,
+        y: clientY - rect.top + container.scrollTop,
+      })
     }
     const onPointerMove = (e: PointerEvent) => update(e.clientX, e.clientY)
     const onTouchMove = (e: TouchEvent) => {
@@ -127,7 +152,7 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
       style={{
         position: 'absolute',
         inset: 0,
-        width: '100%',
+        width: 84 * HP_PX,  // full rack content width — must match the scroll container
         height: '100%',
         pointerEvents: 'none',  // always passthrough — cable <g> elements re-enable individually
         overflow: 'visible',
@@ -136,7 +161,8 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
     >
       <CableFlowKeyframes />
 
-      {/* Rendered connections */}
+      {/* Rendered connections — pointer-events disabled during drag so elementFromPoint finds ports */}
+      <g style={{ pointerEvents: draggingCable ? 'none' : undefined }}>
       {container && connections.map((conn) => {
         const start = getPortCenter(conn.sourceModuleId, conn.sourcePortId, container)
         const end = getPortCenter(conn.destModuleId, conn.destPortId, container)
@@ -153,6 +179,7 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
           />
         )
       })}
+      </g>
 
       {/* In-progress drag cable */}
       {container && draggingCable && (() => {
