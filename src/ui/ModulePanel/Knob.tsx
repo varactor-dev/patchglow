@@ -67,20 +67,21 @@ export default function Knob({
   const [isActive, setIsActive] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const normalRef = useRef(valueToNormal(value, min, max, curve))
-  const startYRef = useRef(0)
-  const startNormalRef = useRef(0)
+  const lastYRef = useRef(0)
+  const pointerIdRef = useRef<number | null>(null)
+  const elRef = useRef<HTMLDivElement>(null)
 
   // Sync external value changes
   normalRef.current = valueToNormal(value, min, max, curve)
 
   const angle = MIN_ANGLE + normalRef.current * (MAX_ANGLE - MIN_ANGLE)
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault()
-    const el = e.currentTarget as HTMLElement
-    el.requestPointerLock()
-    startYRef.current = e.clientY
-    startNormalRef.current = normalRef.current
+    const el = e.currentTarget as HTMLDivElement
+    el.setPointerCapture(e.pointerId)
+    pointerIdRef.current = e.pointerId
+    lastYRef.current = e.clientY
     setIsActive(true)
   }, [])
 
@@ -96,27 +97,33 @@ export default function Knob({
   }, [min, max, curve, onChange])
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isActive) return
+    if (!isActive) return
+
+    const handlePointerMove = (e: PointerEvent) => {
+      if (e.pointerId !== pointerIdRef.current) return
       const sensitivity = e.shiftKey ? 0.001 : 0.01
-      const delta = -e.movementY * sensitivity
+      const delta = -(e.clientY - lastYRef.current) * sensitivity
+      lastYRef.current = e.clientY
       const next = Math.max(0, Math.min(1, normalRef.current + delta))
       normalRef.current = next
       onChange(normalToValue(next, min, max, curve))
     }
 
-    const handleMouseUp = () => {
-      if (isActive) {
-        document.exitPointerLock()
-        setIsActive(false)
+    const handlePointerUp = (e: PointerEvent) => {
+      if (e.pointerId !== pointerIdRef.current) return
+      const el = elRef.current
+      if (el && el.hasPointerCapture(e.pointerId)) {
+        el.releasePointerCapture(e.pointerId)
       }
+      pointerIdRef.current = null
+      setIsActive(false)
     }
 
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
+    document.addEventListener('pointermove', handlePointerMove)
+    document.addEventListener('pointerup', handlePointerUp)
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
+      document.removeEventListener('pointermove', handlePointerMove)
+      document.removeEventListener('pointerup', handlePointerUp)
     }
   }, [isActive, min, max, curve, onChange])
 
@@ -125,15 +132,16 @@ export default function Knob({
   return (
     <div className={styles.knobWrapper}>
       <div
+        ref={elRef}
         className={styles.knob}
-        onMouseDown={handleMouseDown}
+        onPointerDown={handlePointerDown}
         onDoubleClick={handleDoubleClick}
         onWheel={handleWheel}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onPointerEnter={() => setIsHovered(true)}
+        onPointerLeave={() => setIsHovered(false)}
         style={{
           boxShadow: `0 0 0 1px rgba(255,255,255,0.08), ${isActive || isHovered ? `0 0 12px ${accentColor}` : 'none'}`,
-          cursor: isActive ? 'none' : 'ns-resize',
+          cursor: 'ns-resize',
         }}
       >
         {/* Glow ring */}

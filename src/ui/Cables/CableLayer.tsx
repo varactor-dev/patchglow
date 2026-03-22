@@ -26,22 +26,40 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
   const draggingCable = useRackStore((s) => s.draggingCable)
   const removeConnection = useRackStore((s) => s.removeConnection)
   const selectCable = useRackStore((s) => s.selectCable)
+  const endCableDrag = useRackStore((s) => s.endCableDrag)
 
   const [cursorPos, setCursorPos] = useState<Point>({ x: 0, y: 0 })
   const svgRef = useRef<SVGSVGElement>(null)
 
-  // Track cursor during cable drag
+  // Track cursor/touch during cable drag
   useEffect(() => {
     if (!draggingCable) return
-    const onMove = (e: MouseEvent) => {
+    const update = (clientX: number, clientY: number) => {
       const container = containerRef.current
       if (!container) return
       const rect = container.getBoundingClientRect()
-      setCursorPos({ x: e.clientX - rect.left, y: e.clientY - rect.top })
+      setCursorPos({ x: clientX - rect.left, y: clientY - rect.top })
     }
-    document.addEventListener('mousemove', onMove)
-    return () => document.removeEventListener('mousemove', onMove)
-  }, [draggingCable, containerRef])
+    const onPointerMove = (e: PointerEvent) => update(e.clientX, e.clientY)
+    const onTouchMove = (e: TouchEvent) => {
+      const t = e.touches[0]
+      if (t) update(t.clientX, t.clientY)
+    }
+    // Cancel drag if touch/pointer ends without landing on a port
+    const onPointerUp = () => endCableDrag()
+    const onTouchEnd = () => endCableDrag()
+
+    document.addEventListener('pointermove', onPointerMove)
+    document.addEventListener('touchmove', onTouchMove, { passive: true })
+    document.addEventListener('pointerup', onPointerUp)
+    document.addEventListener('touchend', onTouchEnd)
+    return () => {
+      document.removeEventListener('pointermove', onPointerMove)
+      document.removeEventListener('touchmove', onTouchMove)
+      document.removeEventListener('pointerup', onPointerUp)
+      document.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [draggingCable, containerRef, endCableDrag])
 
   // Delete selected cable on keyboard
   useEffect(() => {

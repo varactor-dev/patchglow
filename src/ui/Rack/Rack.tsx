@@ -29,7 +29,7 @@ export default function Rack() {
   }, [draggingCable, endCableDrag])
 
   return (
-    <div className={styles.rackOuter} ref={rackRef} onMouseUp={handleMouseUp}>
+    <div className={styles.rackOuter} ref={rackRef} onPointerUp={handleMouseUp}>
       {/* Top rail */}
       <div className={styles.rail}>
         {Array.from({ length: RACK_HP }).map((_, i) => (

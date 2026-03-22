@@ -48,8 +48,8 @@ export default function Port({
 
   const color = SIGNAL_COLORS[signalType]
 
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
       if (direction !== 'output') return
       e.preventDefault()
       e.stopPropagation()
@@ -58,8 +58,8 @@ export default function Port({
     [direction, moduleId, portId, signalType, startCableDrag],
   )
 
-  const handleMouseUp = useCallback(
-    (e: React.MouseEvent) => {
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent) => {
       if (direction !== 'input') return
       if (!draggingCable) return
       if (!isEligibleDest) return
@@ -88,8 +88,8 @@ export default function Port({
         data-module-id={moduleId}
         data-port-id={portId}
         data-direction={direction}
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
         style={{
           cursor: direction === 'output' ? 'crosshair' : isEligibleDest ? 'pointer' : 'default',
         }}
