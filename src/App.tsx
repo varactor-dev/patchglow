@@ -64,7 +64,9 @@ export default function App() {
   const pinchRef = useRef({ dist: 0, zoom: 1 })
 
   const handleStartAudio = useCallback(async () => {
-    await AudioEngineManager.getInstance().start()
+    try {
+      await AudioEngineManager.getInstance().start()
+    } catch { /* ignore — dismiss overlay regardless */ }
     setAudioStarted()
   }, [setAudioStarted])
 

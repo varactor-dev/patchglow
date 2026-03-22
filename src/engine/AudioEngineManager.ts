@@ -57,11 +57,15 @@ class AudioEngineManager {
   // ─── Start audio context (must be called from user gesture) ────────────────
   async start(): Promise<void> {
     if (this.started) return
-    await Tone.start()
-    // Belt-and-suspenders: explicitly resume the raw AudioContext
-    // in case Tone.start() didn't fully resume on iOS WKWebView (Chrome)
+    // Call resume() synchronously — iOS WKWebView requires this within
+    // the user gesture handler, before any await
+    try { (Tone.context.rawContext as AudioContext).resume() } catch { /* ignore */ }
+    try {
+      await Tone.start()
+    } catch { /* ignore — context may already be running */ }
+    // Belt-and-suspenders: explicitly resume again if still not running
     if (Tone.context.rawContext.state !== 'running') {
-      await Tone.context.rawContext.resume()
+      try { await Tone.context.rawContext.resume() } catch { /* ignore */ }
     }
     this.started = true
   }
