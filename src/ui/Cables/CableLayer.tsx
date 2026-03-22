@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRackStore } from '@/store/rackStore'
+import { isCompatible } from '@/engine/signalTypes'
+import { getModuleDefinition } from '@/engine/moduleRegistry'
 import Cable, { DragCable, CableFlowKeyframes } from './Cable'
 
 interface Point { x: number; y: number }
@@ -27,6 +29,10 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
   const removeConnection = useRackStore((s) => s.removeConnection)
   const selectCable = useRackStore((s) => s.selectCable)
   const endCableDrag = useRackStore((s) => s.endCableDrag)
+  const addConnection = useRackStore((s) => s.addConnection)
+  // Keep a ref to draggingCable so async handlers see the latest value
+  const draggingCableRef = useRef(draggingCable)
+  draggingCableRef.current = draggingCable
 
   const [cursorPos, setCursorPos] = useState<Point>({ x: 0, y: 0 })
   const svgRef = useRef<SVGSVGElement>(null)
@@ -45,9 +51,46 @@ export default function CableLayer({ containerRef }: CableLayerProps) {
       const t = e.touches[0]
       if (t) update(t.clientX, t.clientY)
     }
-    // Cancel drag if touch/pointer ends without landing on a port
-    const onPointerUp = () => endCableDrag()
-    const onTouchEnd = () => endCableDrag()
+    // On pointer/touch up: hit-test the element under the finger.
+    // On touch, pointerup fires on the source element, not where the finger lifts,
+    // so we must use elementFromPoint to find the destination port.
+    const tryConnect = (clientX: number, clientY: number) => {
+      const drag = draggingCableRef.current
+      if (!drag) return
+
+      const el = document.elementFromPoint(clientX, clientY)
+      if (el) {
+        // Walk up to find a port element (the ring div is a child of the port div)
+        let target: Element | null = el
+        while (target && target !== document.body) {
+          const moduleId = target.getAttribute('data-module-id')
+          const portId = target.getAttribute('data-port-id')
+          const direction = target.getAttribute('data-direction')
+          if (moduleId && portId && direction === 'input') {
+            const modules = useRackStore.getState().modules
+            const destModType = modules[moduleId]?.type ?? ''
+            const def = getModuleDefinition(destModType)
+            const port = def?.ports.find((p) => p.id === portId)
+            if (port && isCompatible(drag.signalType, port.signalType)) {
+              addConnection(
+                { moduleId: drag.moduleId, portId: drag.portId },
+                { moduleId, portId },
+              )
+            }
+            break
+          }
+          target = target.parentElement
+        }
+      }
+      endCableDrag()
+    }
+
+    const onPointerUp = (e: PointerEvent) => tryConnect(e.clientX, e.clientY)
+    const onTouchEnd = (e: TouchEvent) => {
+      const t = e.changedTouches[0]
+      if (t) tryConnect(t.clientX, t.clientY)
+      else endCableDrag()
+    }
 
     document.addEventListener('pointermove', onPointerMove)
     document.addEventListener('touchmove', onTouchMove, { passive: true })

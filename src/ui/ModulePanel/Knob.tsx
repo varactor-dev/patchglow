@@ -97,7 +97,8 @@ export default function Knob({
   }, [min, max, curve, onChange])
 
   useEffect(() => {
-    if (!isActive) return
+    const el = elRef.current
+    if (!isActive || !el) return
 
     const handlePointerMove = (e: PointerEvent) => {
       if (e.pointerId !== pointerIdRef.current) return
@@ -109,21 +110,19 @@ export default function Knob({
       onChange(normalToValue(next, min, max, curve))
     }
 
-    const handlePointerUp = (e: PointerEvent) => {
-      if (e.pointerId !== pointerIdRef.current) return
-      const el = elRef.current
-      if (el && el.hasPointerCapture(e.pointerId)) {
-        el.releasePointerCapture(e.pointerId)
-      }
+    const stopCapture = () => {
       pointerIdRef.current = null
       setIsActive(false)
     }
 
-    document.addEventListener('pointermove', handlePointerMove)
-    document.addEventListener('pointerup', handlePointerUp)
+    // Listen on the element — with setPointerCapture, iOS delivers events here, not document
+    el.addEventListener('pointermove', handlePointerMove)
+    el.addEventListener('pointerup', stopCapture)
+    el.addEventListener('lostpointercapture', stopCapture)  // safety fallback
     return () => {
-      document.removeEventListener('pointermove', handlePointerMove)
-      document.removeEventListener('pointerup', handlePointerUp)
+      el.removeEventListener('pointermove', handlePointerMove)
+      el.removeEventListener('pointerup', stopCapture)
+      el.removeEventListener('lostpointercapture', stopCapture)
     }
   }, [isActive, min, max, curve, onChange])
 

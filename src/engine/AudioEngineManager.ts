@@ -7,6 +7,7 @@ import type { RackModule, Connection } from '@/types/store'
 class AudioEngineManager {
   private engines = new Map<string, ModuleAudioEngine>()
   private started = false
+  private activeConnections: Connection[] = []
 
   // ─── Singleton ─────────────────────────────────────────────────────────────
   private static instance: AudioEngineManager | null = null
@@ -98,24 +99,35 @@ class AudioEngineManager {
 
   // ─── Sync connections ──────────────────────────────────────────────────────
   private syncConnections(connections: Connection[]): void {
-    // Disconnect everything and reconnect from scratch.
-    // This is simpler than tracking diffs and safe for the number of connections in Phase 1.
-    // In a production engine you'd track diffs, but this is fine for ~20 modules.
-    // Re-establish connections from store
+    // Disconnect all previously active connections
+    for (const conn of this.activeConnections) {
+      const sourceEngine = this.engines.get(conn.sourceModuleId)
+      const destEngine = this.engines.get(conn.destModuleId)
+      if (!sourceEngine || !destEngine) continue
+      try {
+        const outputNode = sourceEngine.getOutputNode(conn.sourcePortId)
+        const inputNode = destEngine.getInputNode(conn.destPortId)
+        outputNode.disconnect(inputNode as Tone.InputNode)
+      } catch { /* node may already be disconnected */ }
+    }
+
+    // Re-establish only the connections currently in the store
+    const established: Connection[] = []
     for (const conn of connections) {
       const sourceEngine = this.engines.get(conn.sourceModuleId)
       const destEngine = this.engines.get(conn.destModuleId)
-
       if (!sourceEngine || !destEngine) continue
-
       try {
         const outputNode = sourceEngine.getOutputNode(conn.sourcePortId)
         const inputNode = destEngine.getInputNode(conn.destPortId)
         outputNode.connect(inputNode as Tone.InputNode)
+        established.push(conn)
       } catch (err) {
         console.warn('AudioEngineManager: failed to connect', conn, err)
       }
     }
+
+    this.activeConnections = established
   }
 
   // ─── Parameter updates ─────────────────────────────────────────────────────
