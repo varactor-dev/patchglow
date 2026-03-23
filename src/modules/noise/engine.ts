@@ -17,7 +17,9 @@ export class NoiseEngine implements ModuleAudioEngine {
     this.gainNode.connect(this.waveformAnalyser)
     this.gainNode.connect(this.fftAnalyser)
 
-    this.noise.start()
+    if (Tone.context.state === 'running') {
+      this.noise.start()
+    }
   }
 
   getOutputNode(portId: string): Tone.ToneAudioNode {
@@ -58,8 +60,7 @@ export class NoiseEngine implements ModuleAudioEngine {
 
   handleAction(action: string): void {
     if (action === 'contextStarted' && this.noise) {
-      try { this.noise.stop() } catch { /* ignore */ }
-      this.noise.start()
+      try { this.noise.start() } catch { /* may already be started */ }
     }
   }
 

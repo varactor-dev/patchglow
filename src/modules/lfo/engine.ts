@@ -30,7 +30,9 @@ export class LfoEngine implements ModuleAudioEngine {
     // LFO output split: one branch to outputGain (CV out), one to waveformAnalyser (visualization)
     this.lfo.connect(this.outputGain)
     this.lfo.connect(this.waveformAnalyser)
-    this.lfo.start()
+    if (Tone.context.state === 'running') {
+      this.lfo.start()
+    }
 
     // Poll syncAnalyser every 5ms for rising edge detection
     this.pollInterval = window.setInterval(() => {
@@ -86,8 +88,7 @@ export class LfoEngine implements ModuleAudioEngine {
 
   handleAction(action: string): void {
     if (action === 'contextStarted' && this.lfo) {
-      try { this.lfo.stop() } catch { /* ignore */ }
-      this.lfo.start()
+      try { this.lfo.start() } catch { /* may already be started */ }
     }
   }
 

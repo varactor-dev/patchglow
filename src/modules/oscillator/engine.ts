@@ -35,7 +35,11 @@ export class OscillatorEngine implements ModuleAudioEngine {
     this.gainNode.connect(this.waveformAnalyser)
     this.gainNode.connect(this.fftAnalyser)
 
-    this.osc.start()
+    // Only start if context is already running (module added after audio started)
+    // Otherwise, contextStarted action will start it (iOS requires this)
+    if (Tone.context.state === 'running') {
+      this.osc.start()
+    }
   }
 
   getOutputNode(portId: string): Tone.ToneAudioNode {
@@ -91,8 +95,7 @@ export class OscillatorEngine implements ModuleAudioEngine {
 
   handleAction(action: string): void {
     if (action === 'contextStarted' && this.osc) {
-      try { this.osc.stop() } catch { /* ignore */ }
-      this.osc.start()
+      try { this.osc.start() } catch { /* may already be started */ }
     }
   }
 

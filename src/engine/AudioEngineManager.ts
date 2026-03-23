@@ -68,9 +68,9 @@ class AudioEngineManager {
       try { await Tone.context.rawContext.resume() } catch { /* ignore */ }
     }
     this.started = true
-    // Restart source nodes that were started while context was suspended (iOS fix)
+    // Start source nodes that were deferred while context was suspended (iOS fix)
     for (const engine of this.engines.values()) {
-      engine.handleAction?.('contextStarted')
+      try { engine.handleAction?.('contextStarted') } catch { /* ignore */ }
     }
   }
 
