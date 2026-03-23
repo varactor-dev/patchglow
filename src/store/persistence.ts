@@ -3,15 +3,35 @@ import { useRackStore } from './rackStore'
 const AUTOSAVE_KEY = 'patchglow-autosave'
 const DEBOUNCE_MS = 500
 
+let unsubscribe: (() => void) | null = null
+let pendingTimer: number | null = null
+
 export function initAutosave(): void {
-  let timer: number | null = null
-  useRackStore.subscribe(() => {
-    if (timer !== null) clearTimeout(timer)
-    timer = window.setTimeout(() => {
-      const json = useRackStore.getState().exportPatch()
-      localStorage.setItem(AUTOSAVE_KEY, json)
+  // Guard against duplicate subscriptions (e.g. HMR)
+  if (unsubscribe) {
+    unsubscribe()
+    unsubscribe = null
+  }
+
+  unsubscribe = useRackStore.subscribe(() => {
+    if (pendingTimer !== null) clearTimeout(pendingTimer)
+    pendingTimer = window.setTimeout(() => {
+      pendingTimer = null
+      flushAutosave()
     }, DEBOUNCE_MS)
   })
+
+  // Flush pending save on tab close to prevent data loss
+  window.addEventListener('beforeunload', flushAutosave)
+}
+
+function flushAutosave(): void {
+  try {
+    const json = useRackStore.getState().exportPatch()
+    localStorage.setItem(AUTOSAVE_KEY, json)
+  } catch {
+    // QuotaExceededError or other storage failure — silently degrade
+  }
 }
 
 export function loadAutosave(): boolean {
@@ -21,6 +41,8 @@ export function loadAutosave(): boolean {
     useRackStore.getState().importPatch(json)
     return true
   } catch {
+    // Corrupted autosave — clear it so we don't retry on every load
+    localStorage.removeItem(AUTOSAVE_KEY)
     return false
   }
 }

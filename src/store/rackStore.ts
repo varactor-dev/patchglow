@@ -130,23 +130,14 @@ export const useRackStore = create<RackStore>()(
 
     // ─── Connection Actions ──────────────────────────────────────────────────
     addConnection(source, dest) {
-      const state = get()
-
-      // Prevent exact duplicate connections (same source AND dest)
-      // Multiple different sources can connect to the same dest — signals are summed by Web Audio
-      const alreadyConnected = state.connections.some(
-        (c) => c.sourceModuleId === source.moduleId && c.sourcePortId === source.portId &&
-               c.destModuleId === dest.moduleId && c.destPortId === dest.portId,
-      )
-      if (alreadyConnected) return null
-
-      // Prevent self-loops
+      // Prevent self-loops (can check before entering set — invariant of the call)
       if (source.moduleId === dest.moduleId) return null
 
-      // Determine signal type from source port definition
+      // Determine signal type from source port definition (read-only lookup, safe outside set)
       let signalType: SignalType = 'audio'
       if (_getModuleDefinition) {
-        const def = _getModuleDefinition(state.modules[source.moduleId]?.type ?? '')
+        const modules = get().modules
+        const def = _getModuleDefinition(modules[source.moduleId]?.type ?? '')
         const port = def?.ports.find((p) => p.id === source.portId)
         if (port) signalType = port.signalType
       }
@@ -161,11 +152,19 @@ export const useRackStore = create<RackStore>()(
         signalType,
       }
 
-      set((state) => ({
-        connections: [...state.connections, connection],
-      }))
+      // Atomic: duplicate check + insert happen inside the same set() callback
+      let added = false
+      set((state) => {
+        const alreadyConnected = state.connections.some(
+          (c) => c.sourceModuleId === source.moduleId && c.sourcePortId === source.portId &&
+                 c.destModuleId === dest.moduleId && c.destPortId === dest.portId,
+        )
+        if (alreadyConnected) return state // no-op, reference identity preserved
+        added = true
+        return { connections: [...state.connections, connection] }
+      })
 
-      return id
+      return added ? id : null
     },
 
     removeConnection(connectionId) {

@@ -95,7 +95,9 @@ class AudioEngineManager {
     // Remove engines for modules that no longer exist
     for (const [instanceId, engine] of this.engines) {
       if (!modules[instanceId]) {
-        engine.dispose()
+        try { engine.dispose() } catch (err) {
+          console.warn(`AudioEngineManager: dispose failed for "${instanceId}"`, err)
+        }
         this.engines.delete(instanceId)
       }
     }

@@ -12,6 +12,7 @@ export class MixerEngine implements ModuleAudioEngine {
   private outputAnalyser: Tone.Analyser | null = null
   private isOff = false
   private isBypassed = false
+  private savedLevels: [number, number, number] = [0.8, 0.8, 0.8]
 
   initialize(_context: Tone.BaseContext): void {
     this.ch1Gain = new Tone.Gain(0.8)
@@ -66,10 +67,21 @@ export class MixerEngine implements ModuleAudioEngine {
     if (action === 'setBypass') {
       this.isBypassed = payload as boolean
       if (this.isBypassed) {
+        // Save current levels before bypass
+        this.savedLevels = [
+          this.ch1Gain?.gain.value ?? 0.8,
+          this.ch2Gain?.gain.value ?? 0.8,
+          this.ch3Gain?.gain.value ?? 0.8,
+        ]
         // Bypass: all channels at full
         if (this.ch1Gain) this.ch1Gain.gain.value = 1
         if (this.ch2Gain) this.ch2Gain.gain.value = 1
         if (this.ch3Gain) this.ch3Gain.gain.value = 1
+      } else {
+        // Restore saved levels
+        if (this.ch1Gain) this.ch1Gain.gain.value = this.savedLevels[0]
+        if (this.ch2Gain) this.ch2Gain.gain.value = this.savedLevels[1]
+        if (this.ch3Gain) this.ch3Gain.gain.value = this.savedLevels[2]
       }
     }
   }
