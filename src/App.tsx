@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 
 // Register all modules before anything renders
@@ -42,9 +42,15 @@ import Rack from '@/ui/Rack/Rack'
 import { computeFitZoom } from '@/ui/utils/layout'
 import styles from './App.module.css'
 
-const isMobile = window.innerWidth < 768
+function useIsMobile() {
+  return useSyncExternalStore(
+    (cb) => { window.addEventListener('resize', cb); return () => window.removeEventListener('resize', cb) },
+    () => window.innerWidth < 768,
+  )
+}
 
 export default function App() {
+  const isMobile = useIsMobile()
   const audioStarted = useRackStore((s) => s.audioStarted)
   const setAudioStarted = useRackStore((s) => s.setAudioStarted)
   const [showAbout, setShowAbout] = useState(false)
@@ -377,7 +383,7 @@ export default function App() {
 
       {/* Toast notification */}
       {toastMessage && (
-        <div className={styles.toast}>{toastMessage}</div>
+        <div className={styles.toast} role="status" aria-live="polite">{toastMessage}</div>
       )}
     </div>
   )

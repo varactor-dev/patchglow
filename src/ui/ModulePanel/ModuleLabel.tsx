@@ -120,6 +120,7 @@ export default function ModuleLabel({
           className={styles.titleBtn}
           style={{ color: helpColor }}
           title="Help"
+          aria-label="Help"
           onPointerDown={stopDrag}
           onClick={onHelpClick}
         >
@@ -135,6 +136,7 @@ export default function ModuleLabel({
               ...(solo ? { filter: `drop-shadow(0 0 4px ${soloColor})` } : {}),
             }}
             title="Solo"
+            aria-label="Solo"
             onPointerDown={stopDrag}
             onClick={onToggleSolo}
           >
@@ -151,6 +153,7 @@ export default function ModuleLabel({
               ...(bypass ? { filter: `drop-shadow(0 0 4px ${bypassColor})` } : {}),
             }}
             title="Bypass"
+            aria-label="Bypass"
             onPointerDown={stopDrag}
             onClick={onToggleBypass}
           >
@@ -166,6 +169,7 @@ export default function ModuleLabel({
             ...(off ? { filter: `drop-shadow(0 0 4px ${offColor})` } : {}),
           }}
           title="Off"
+          aria-label="Off"
           onPointerDown={stopDrag}
           onClick={onToggleOff}
         >

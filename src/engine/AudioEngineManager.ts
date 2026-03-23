@@ -166,7 +166,7 @@ class AudioEngineManager {
         outputNode.connect(inputNode as Tone.InputNode)
         established.push(conn)
       } catch (err) {
-        console.warn('AudioEngineManager: failed to connect', conn, err)
+        console.warn(`AudioEngineManager: failed to connect "${conn.id}"`, err)
       }
       // Notify engines of connection (e.g. oscillator gate bias disconnect)
       destEngine.onPortConnected?.(conn.destPortId)
@@ -206,9 +206,13 @@ class AudioEngineManager {
       try { this.soloSourceNode.disconnect(this.soloGain as unknown as Tone.InputNode) } catch { /* ignore */ }
     }
     if (!moduleId) {
-      // Unsolo: restore master volume
+      // Unsolo: restore master volume and clean up solo gain
       Tone.getDestination().volume.value = this.savedMasterVolume
       this.soloSourceNode = null
+      if (this.soloGain) {
+        this.soloGain.dispose()
+        this.soloGain = null
+      }
       return
     }
     // Solo: connect module output directly to speakers

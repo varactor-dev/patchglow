@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useRackStore } from '@/store/rackStore'
 import { getModule } from '@/engine/moduleRegistry'
 import ModulePanel, { HP_PX } from '@/ui/ModulePanel/ModulePanel'
@@ -64,12 +64,15 @@ export default function Rack({ scrollContainerRef }: RackProps) {
   }, [selectedCableId, selectCable])
 
   // Group modules by row
-  const modulesByRow = new Map<number, typeof modules[string][]>()
-  for (const mod of Object.values(modules)) {
-    const row = mod.position.row
-    if (!modulesByRow.has(row)) modulesByRow.set(row, [])
-    modulesByRow.get(row)!.push(mod)
-  }
+  const modulesByRow = useMemo(() => {
+    const map = new Map<number, typeof modules[string][]>()
+    for (const mod of Object.values(modules)) {
+      const row = mod.position.row
+      if (!map.has(row)) map.set(row, [])
+      map.get(row)!.push(mod)
+    }
+    return map
+  }, [modules])
 
   const renderRail = (key: string) => (
     <div key={key} className={styles.rail}>
