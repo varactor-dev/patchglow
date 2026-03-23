@@ -37,6 +37,7 @@ registerModule(sampleHoldReg)
 import { useRackStore } from '@/store/rackStore'
 import AudioEngineManager from '@/engine/AudioEngineManager'
 import { loadAutosave, initAutosave } from '@/store/persistence'
+import { decodePatchFromUrl, clearPatchHash } from '@/store/patchUrl'
 import Toolbar from '@/ui/Toolbar/Toolbar'
 import Rack from '@/ui/Rack/Rack'
 import { computeFitZoom } from '@/ui/utils/layout'
@@ -113,16 +114,29 @@ export default function App() {
     if (initializedRef.current) return
     initializedRef.current = true
 
-    // 1. Try restoring autosave
-    const restored = loadAutosave()
+    // 1. Check URL hash for shared patch (takes priority over autosave)
+    let restored = false
+    if (window.location.hash.startsWith('#patch=')) {
+      decodePatchFromUrl().then((json) => {
+        if (json) {
+          useRackStore.getState().importPatch(json)
+          clearPatchHash()
+          setToastMessage('Loaded shared patch from link')
+        }
+      }).catch(() => {})
+      restored = true // skip autosave + welcome when URL patch present
+    } else {
+      // 2. Try restoring autosave
+      restored = loadAutosave()
+    }
 
-    // 2. Init audio engine (subscribes to store, syncs modules/connections)
+    // 3. Init audio engine (subscribes to store, syncs modules/connections)
     AudioEngineManager.getInstance().init()
 
-    // 3. Start autosave for future changes
+    // 4. Start autosave for future changes
     initAutosave()
 
-    // 4. If no autosave: show welcome or auto-load demo
+    // 5. If no autosave/URL: show welcome or auto-load demo
     if (!restored) {
       if (isMobile) {
         // Mobile: always load demo, skip welcome
@@ -147,10 +161,19 @@ export default function App() {
     if (fit < 0.95) useRackStore.getState().setZoom(fit)
   }, [])
 
-  // Keyboard shortcuts: Cmd/Ctrl +/- for zoom, Cmd/Ctrl+0 for fit
+  // Keyboard shortcuts: Cmd/Ctrl +/- for zoom, Cmd/Ctrl+0 for fit, Cmd/Ctrl+Z undo, Cmd/Ctrl+Shift+Z redo
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey)) return
+      if (e.key === 'z' || e.key === 'Z') {
+        e.preventDefault()
+        if (e.shiftKey) {
+          useRackStore.getState().redo()
+        } else {
+          useRackStore.getState().undo()
+        }
+        return
+      }
       const { zoom, setZoom } = useRackStore.getState()
       if (e.key === '=' || e.key === '+') {
         e.preventDefault()

@@ -216,6 +216,7 @@ export default function CableLayer({ containerRef, scrollContainerRef, zoom }: C
             dominantFreqHz={sigState.dominantFreqHz}
             waveform={sigState.waveform}
             moduleOff={sourceOff || destOff}
+            destSignalType={conn.destSignalType}
           />
         )
       })}

@@ -151,6 +151,7 @@ interface CableProps {
   dominantFreqHz?: number
   waveform?: Float32Array | null
   moduleOff?: boolean
+  destSignalType?: SignalType
 }
 
 export default function Cable({
@@ -162,6 +163,7 @@ export default function Cable({
   flowPhase = 0,
   waveform = null,
   moduleOff = false,
+  destSignalType,
 }: CableProps) {
   const selectCable = useRackStore((s) => s.selectCable)
   const selectedCableId = useRackStore((s) => s.selectedCableId)
@@ -457,7 +459,24 @@ export default function Cable({
         />
       )}
 
-      {/* Gate fill/drain removed — gate cables use dedicated rendering above */}
+      {/* Cross-type indicator — dashed stripe in dest port color */}
+      {destSignalType && (
+        <path
+          d={d}
+          stroke={CABLE_COLORS[destSignalType]}
+          strokeWidth={1.5}
+          strokeOpacity={0.4 + brightness * 0.4}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray="3 9"
+          strokeDashoffset={-flowPhase * 0.5}
+          style={{
+            filter: brightness > 0.1
+              ? `drop-shadow(0 0 3px ${CABLE_COLORS[destSignalType]})`
+              : 'none',
+          }}
+        />
+      )}
 
       {/* Selection highlight */}
       {selected && (
@@ -487,7 +506,7 @@ export default function Cable({
           />
           <circle
             cx={end.x} cy={end.y} r={sparkRadius}
-            fill={activeColor}
+            fill={destSignalType ? CABLE_COLORS[destSignalType] : activeColor}
             opacity={sparkOpacity}
             style={{ filter: `blur(${sparkBlur}px)` }}
           />

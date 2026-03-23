@@ -4,6 +4,7 @@ import { useRackStore } from '@/store/rackStore'
 import { getAllModules } from '@/engine/moduleRegistry'
 import { clearAutosave } from '@/store/persistence'
 import { computeFitZoom } from '@/ui/utils/layout'
+import { encodePatchToUrl } from '@/store/patchUrl'
 import styles from './Toolbar.module.css'
 
 const PRESETS = [
@@ -98,6 +99,16 @@ export default function Toolbar({ onAbout, onToast }: ToolbarProps) {
     onToast?.('Rack cleared. Click DEMO to reload the demo patch.')
   }, [importPatch, onToast])
 
+  const handleShare = useCallback(async () => {
+    try {
+      const url = await encodePatchToUrl(exportPatch())
+      await navigator.clipboard.writeText(url)
+      onToast?.('Share link copied to clipboard!')
+    } catch {
+      onToast?.('Could not generate share link.')
+    }
+  }, [exportPatch, onToast])
+
   const handleLoadPreset = useCallback(async (filename: string) => {
     try {
       const res = await fetch(`/patches/${filename}`)
@@ -182,6 +193,7 @@ export default function Toolbar({ onAbout, onToast }: ToolbarProps) {
         <button className={styles.patchButton} onClick={handleSave}>SAVE</button>
         <button className={styles.patchButton} onClick={handleLoad}>LOAD</button>
         <button className={styles.patchButton} onClick={handleReset}>RESET</button>
+        <button className={styles.patchButton} onClick={handleShare}>SHARE</button>
         <div className={styles.menuToggleWrap}>
           <button
             className={`${styles.patchButton} ${styles.demoButton}`}
@@ -252,6 +264,7 @@ export default function Toolbar({ onAbout, onToast }: ToolbarProps) {
               <button className={styles.patchButton} onClick={() => { handleSave(); setShowMenu(null) }}>SAVE</button>
               <button className={styles.patchButton} onClick={() => { handleLoad(); setShowMenu(null) }}>LOAD</button>
               <button className={styles.patchButton} onClick={() => { handleReset(); setShowMenu(null) }}>RESET</button>
+              <button className={styles.patchButton} onClick={() => { handleShare(); setShowMenu(null) }}>SHARE</button>
               <div className={styles.dropdownDivider} />
               {PRESETS.map((p) => (
                 <button

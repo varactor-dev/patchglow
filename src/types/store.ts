@@ -20,6 +20,7 @@ export interface Connection {
   destModuleId: string
   destPortId: string
   signalType: SignalType
+  destSignalType?: SignalType
 }
 
 // ─── Dragging Cable State ────────────────────────────────────────────────────
@@ -72,4 +73,10 @@ export interface RackStore {
 
   // Zoom
   setZoom: (zoom: number) => void
+
+  // Undo/redo
+  undo: () => void
+  redo: () => void
+  canUndo: boolean
+  canRedo: boolean
 }

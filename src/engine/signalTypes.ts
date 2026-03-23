@@ -19,8 +19,8 @@ export const SIGNAL_FLOW_SPEED: Record<SignalType, number> = {
   gate:  0.8,  // medium — discrete pulses
 }
 
-export function isCompatible(sourceType: SignalType, destType: SignalType): boolean {
-  // In real Eurorack, all signals are voltage — allow cross-connections with a caveat.
-  // For Phase 1 teaching clarity, require matching types.
-  return sourceType === destType
+export function isCompatible(_sourceType: SignalType, _destType: SignalType): boolean {
+  // In real Eurorack, all signals are voltage — any output can connect to any input.
+  // Cross-type connections are indicated visually on the cable.
+  return true
 }
