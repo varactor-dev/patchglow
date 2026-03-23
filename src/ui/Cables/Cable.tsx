@@ -20,11 +20,19 @@ interface Point { x: number; y: number }
 
 interface BezierCtrl { p0: Point; p1: Point; p2: Point; p3: Point }
 
-function getCableBezier(start: Point, end: Point): BezierCtrl {
+/** Same-row cables sag gently (~10%); cross-row cables droop dramatically (~35%) */
+function computeDroop(start: Point, end: Point): number {
   const dx = end.x - start.x
   const dy = end.y - start.y
   const dist = Math.sqrt(dx * dx + dy * dy)
-  const droop = Math.min(dist * 0.3, 120)
+  const verticalRatio = Math.min(1, Math.abs(dy) / 200)
+  const droopFactor = 0.10 + verticalRatio * 0.25
+  return Math.min(dist * droopFactor, 120)
+}
+
+function getCableBezier(start: Point, end: Point): BezierCtrl {
+  const dx = end.x - start.x
+  const droop = computeDroop(start, end)
   return {
     p0: start,
     p1: { x: start.x + dx * 0.25, y: start.y + droop },
@@ -110,9 +118,7 @@ function getAudioHeatColor(level: number): string {
 
 export function getCablePath(start: Point, end: Point): string {
   const dx = end.x - start.x
-  const dy = end.y - start.y
-  const dist = Math.sqrt(dx * dx + dy * dy)
-  const droop = Math.min(dist * 0.3, 120)
+  const droop = computeDroop(start, end)
 
   const cp1x = start.x + dx * 0.25
   const cp1y = start.y + droop
@@ -127,7 +133,7 @@ function estimatePathLength(start: Point, end: Point): number {
   const dx = end.x - start.x
   const dy = end.y - start.y
   const dist = Math.sqrt(dx * dx + dy * dy)
-  const droop = Math.min(dist * 0.3, 120)
+  const droop = computeDroop(start, end)
   return dist + droop * 0.5
 }
 
@@ -180,6 +186,10 @@ export default function Cable({
     ? (gateHigh ? 1.0 : signalLevel)
     : signalLevel
 
+  // Cross-row cables get a subtle glow boost for visual prominence
+  const crossRowDy = Math.abs(end.y - start.y)
+  const crossRowBoost = Math.min(0.3, crossRowDy / 600)
+
   // Color: audio cables shift hotter with signal, others use fixed color
   const activeColor = signalType === 'audio'
     ? getAudioHeatColor(brightness)
@@ -189,7 +199,7 @@ export default function Cable({
   // ACTIVE: opacity 1.0, width 4px, 12px glow — 8x opacity difference
   const bodyOpacity = selected ? 0.6  : 0.12 + brightness * 0.88
   const coreOpacity = selected ? 1.0  : 0.12 + brightness * 0.88
-  const bodyWidth   = selected ? 5    : 2 + brightness * 2        // 2px → 4px
+  const bodyWidth   = selected ? 5    : 2 + (brightness + crossRowBoost) * 2        // 2px → 4px+
   const coreWidth   = selected ? 2.5  : 1 + brightness * 1        // 1px → 2px
   const flowOpacity = brightness < 0.05 ? 0 : brightness * 0.9    // invisible when idle
   const glowBlur    = brightness < 0.05 ? 0 : Math.round(brightness * 12) // 0 → 12px
@@ -217,7 +227,7 @@ export default function Cable({
 
   // ── Glow field specs ──────────────────────────────────────────────────────
   const glowFieldOpacity = brightness * 0.7
-  const glowFieldBlur = 4 + Math.round(brightness * 8) // 4px → 12px
+  const glowFieldBlur = 4 + Math.round((brightness + crossRowBoost) * 8) // 4px → 12px+
 
   // ── Pulse overlay (gate transitions only) ─────────────────────────────────
   const showPulse = pulseProgress > 0 && pulseProgress < 1 && pulseDirection !== null

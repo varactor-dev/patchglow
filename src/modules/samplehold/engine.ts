@@ -83,12 +83,27 @@ export class SampleHoldEngine implements ModuleAudioEngine {
   }
 
   getVisualizationData(): VisualizationData {
+    // Build staircase waveform from history for cable visualization
+    let waveform: Float32Array | undefined
+    if (this.history.length > 0) {
+      const buf = new Float32Array(128)
+      const samplesPerStep = Math.floor(128 / Math.max(1, this.history.length))
+      let idx = 0
+      for (let i = 0; i < this.history.length; i++) {
+        const val = this.history[i]
+        const end = i === this.history.length - 1 ? 128 : idx + samplesPerStep
+        for (; idx < end; idx++) buf[idx] = val
+      }
+      waveform = buf
+    }
     return {
+      waveform,
       customData: {
         heldValue: this.heldValue,
         inputValue: this.inputValue,
         triggerHigh: this.triggerHigh,
         history: [...this.history],
+        cvLevel: (this.heldValue + 1) / 2,
       },
     }
   }

@@ -167,6 +167,9 @@ export class CableSignalMonitor {
           waveform = this.getCvHistoryWaveform(conn.id, level)
         } else if (data.waveform && data.waveform.length > 0) {
           waveform = data.waveform
+        } else if (level > 0) {
+          // Build CV history for sources without analyser (sequencer, S&H)
+          waveform = this.getCvHistoryWaveform(conn.id, level)
         }
       }
 
@@ -226,6 +229,10 @@ export class CableSignalMonitor {
       // LFO or other CV with waveform: proper unipolar normalization
       if (data.waveform && data.waveform.length > 0) {
         return this.computeInstantaneous(data.waveform)
+      }
+      // Generic CV level (sequencer, sample & hold, etc.)
+      if (data.customData?.cvLevel !== undefined) {
+        return Math.min(1, Math.max(0, data.customData.cvLevel as number))
       }
       return 0
     }

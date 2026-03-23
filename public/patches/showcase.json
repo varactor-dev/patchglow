@@ -81,7 +81,7 @@
     "oscillator-2": {
       "instanceId": "oscillator-2",
       "type": "oscillator",
-      "position": { "row": 1, "col": 18 },
+      "position": { "row": 1, "col": 22 },
       "parameters": {
         "frequency": 110,
         "detune": 7,
@@ -91,7 +91,7 @@
     "filter-2": {
       "instanceId": "filter-2",
       "type": "filter",
-      "position": { "row": 1, "col": 32 },
+      "position": { "row": 1, "col": 38 },
       "parameters": {
         "frequency": 600,
         "resonance": 3,
@@ -101,7 +101,7 @@
     "vca-2": {
       "instanceId": "vca-2",
       "type": "vca",
-      "position": { "row": 1, "col": 44 },
+      "position": { "row": 1, "col": 52 },
       "parameters": {
         "level": 0.45
       }
@@ -109,7 +109,7 @@
     "output-1": {
       "instanceId": "output-1",
       "type": "output",
-      "position": { "row": 1, "col": 60 },
+      "position": { "row": 0, "col": 74 },
       "parameters": {
         "volume": -10
       }

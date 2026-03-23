@@ -249,6 +249,8 @@ export class SequencerEngine implements ModuleAudioEngine {
         gateHigh: this.gateHigh,
         tempo: this.tempo,
         noteNames: this.stepPitches.map((s) => NOTE_NAMES[s % 12]),
+        gateValue: this.gateHigh ? 1 : 0,
+        cvLevel: (this.stepPitches[this.currentStep] ?? 0) / 12,
       },
     }
   }
