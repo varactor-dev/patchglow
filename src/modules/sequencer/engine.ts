@@ -29,6 +29,7 @@ export class SequencerEngine implements ModuleAudioEngine {
   private gateLength = 50 // percent
   private gateHigh = false
   private gateOffTimer: number | null = null
+  private isOff = false
 
   initialize(_context: Tone.BaseContext): void {
     this.cvSignal = new Tone.Signal<'number'>({ value: 0, units: 'number' })
@@ -236,6 +237,13 @@ export class SequencerEngine implements ModuleAudioEngine {
         if (step === this.currentStep) {
           this.updateCV()
         }
+      }
+    }
+    if (action === 'setOff') {
+      this.isOff = payload as boolean
+      if (this.isOff) {
+        if (this.cvSignal) this.cvSignal.value = 0
+        if (this.gateSignal) this.gateSignal.value = 0
       }
     }
   }

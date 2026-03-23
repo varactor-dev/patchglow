@@ -38,6 +38,7 @@ export const useRackStore = create<RackStore>()(
     draggingCable: null,
     audioStarted: false,
     zoom: 1.0,
+    soloModuleId: null,
 
     // ─── Module Actions ──────────────────────────────────────────────────────
     addModule(type, position) {
@@ -108,6 +109,23 @@ export const useRackStore = create<RackStore>()(
           },
         },
       }))
+    },
+
+    setModuleOff(instanceId, off) {
+      set((state) => ({
+        modules: { ...state.modules, [instanceId]: { ...state.modules[instanceId], off } },
+        soloModuleId: off && state.soloModuleId === instanceId ? null : state.soloModuleId,
+      }))
+    },
+
+    setModuleBypass(instanceId, bypass) {
+      set((state) => ({
+        modules: { ...state.modules, [instanceId]: { ...state.modules[instanceId], bypass } },
+      }))
+    },
+
+    setSolo(moduleId) {
+      set({ soloModuleId: moduleId })
     },
 
     // ─── Connection Actions ──────────────────────────────────────────────────

@@ -8,6 +8,7 @@ export class OscillatorEngine implements ModuleAudioEngine {
   private gainNode: Tone.Gain | null = null
   private voctGain: Tone.Gain | null = null
   private fmGain: Tone.Gain | null = null
+  private isOff = false
 
   initialize(_context: Tone.BaseContext): void {
     this.osc = new Tone.Oscillator({
@@ -93,9 +94,13 @@ export class OscillatorEngine implements ModuleAudioEngine {
     return { waveform, spectrum }
   }
 
-  handleAction(action: string): void {
+  handleAction(action: string, payload?: unknown): void {
     if (action === 'contextStarted' && this.osc) {
       try { this.osc.start() } catch { /* may already be started */ }
+    }
+    if (action === 'setOff') {
+      this.isOff = payload as boolean
+      if (this.gainNode) this.gainNode.gain.value = this.isOff ? 0 : 0.8
     }
   }
 

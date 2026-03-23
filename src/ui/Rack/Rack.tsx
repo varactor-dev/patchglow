@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { useRackStore } from '@/store/rackStore'
 import { getModule } from '@/engine/moduleRegistry'
 import ModulePanel, { HP_PX } from '@/ui/ModulePanel/ModulePanel'
@@ -7,6 +7,7 @@ import Knob from '@/ui/ModulePanel/Knob'
 import Port from '@/ui/ModulePanel/Port'
 import Switch from '@/ui/ModulePanel/Switch'
 import CableLayer from '@/ui/Cables/CableLayer'
+import HelpPanel from '@/ui/HelpPanel/HelpPanel'
 import { useDragModule } from './useDragModule'
 import type { ParameterDefinition, PortDefinition } from '@/types/module'
 import panelStyles from '@/ui/ModulePanel/ModulePanel.module.css'
@@ -28,11 +29,17 @@ export default function Rack({ scrollContainerRef }: RackProps) {
   const modules = useRackStore((s) => s.modules)
   const removeModule = useRackStore((s) => s.removeModule)
   const setParameter = useRackStore((s) => s.setParameter)
+  const setModuleOff = useRackStore((s) => s.setModuleOff)
+  const setModuleBypass = useRackStore((s) => s.setModuleBypass)
+  const setSolo = useRackStore((s) => s.setSolo)
+  const soloModuleId = useRackStore((s) => s.soloModuleId)
   const endCableDrag = useRackStore((s) => s.endCableDrag)
   const draggingCable = useRackStore((s) => s.draggingCable)
   const selectCable = useRackStore((s) => s.selectCable)
   const selectedCableId = useRackStore((s) => s.selectedCableId)
   const zoom = useRackStore((s) => s.zoom)
+
+  const [helpModule, setHelpModule] = useState<string | null>(null)
 
   const rackRef = useRef<HTMLDivElement>(null)
   const { dragState, handleDragStart } = useDragModule(zoom, rackRef)
@@ -113,6 +120,13 @@ export default function Rack({ scrollContainerRef }: RackProps) {
                 const { accentColor, parameters, ports } = definition
                 const isDragging = dragState?.instanceId === mod.instanceId
 
+                const isOff = mod.off ?? false
+                const isBypassed = mod.bypass ?? false
+                const isSoloed = soloModuleId === mod.instanceId
+                const soloActive = soloModuleId !== null
+                const hasAudioOut = definition.ports.some(p => p.direction === 'output' && p.signalType === 'audio')
+                const isSource = definition.category === 'source'
+
                 const handleRemove = (e: React.MouseEvent) => {
                   e.preventDefault()
                   removeModule(mod.instanceId)
@@ -130,27 +144,70 @@ export default function Rack({ scrollContainerRef }: RackProps) {
                         zIndex: 100,
                         pointerEvents: 'none' as const,
                       } : {}),
+                      ...(soloActive && !isSoloed ? { opacity: 0.7 } : {}),
                     }}
                   >
                     <ModulePanel
                       hp={definition.hp}
                       accentColor={accentColor}
                       onContextMenu={handleRemove}
+                      bypass={isBypassed && !isOff}
                     >
+                      {isSoloed && (
+                        <div style={{
+                          position: 'absolute',
+                          inset: 0,
+                          pointerEvents: 'none',
+                          zIndex: 5,
+                          boxShadow: '0 0 12px #fbbf24, inset 0 0 6px #fbbf2440',
+                          borderRadius: 2,
+                        }} />
+                      )}
+
+                      {isBypassed && !isOff && (
+                        <div style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'rgba(245, 158, 11, 0.08)',
+                          pointerEvents: 'none',
+                          zIndex: 4,
+                          borderRadius: 2,
+                        }} />
+                      )}
+
                       <ModuleLabel
                         name={definition.name}
                         accentColor={accentColor}
                         onPointerDown={(e) => handleDragStart(mod.instanceId, e)}
+                        off={isOff}
+                        bypass={isBypassed}
+                        solo={isSoloed}
+                        showSolo={hasAudioOut}
+                        showBypass={!isSource}
+                        onToggleOff={() => setModuleOff(mod.instanceId, !isOff)}
+                        onToggleBypass={() => setModuleBypass(mod.instanceId, !isBypassed)}
+                        onToggleSolo={() => setSolo(isSoloed ? null : mod.instanceId)}
+                        onHelpClick={() => setHelpModule(mod.type)}
                       />
 
-                      <VisualizationComponent
-                        moduleId={mod.instanceId}
-                        data={{}}
-                        accentColor={accentColor}
-                      />
+                      <div style={{
+                        opacity: isOff ? 0.3 : 1,
+                        transition: 'opacity 0.2s',
+                      }}>
+                        <VisualizationComponent
+                          moduleId={mod.instanceId}
+                          data={{}}
+                          accentColor={accentColor}
+                          off={isOff}
+                          bypass={isBypassed}
+                        />
+                      </div>
 
                       {parameters.length > 0 && (
-                        <div className={panelStyles.controlsRow}>
+                        <div className={panelStyles.controlsRow} style={{
+                          opacity: isOff ? 0.3 : isBypassed ? 0.4 : 1,
+                          transition: 'opacity 0.2s',
+                        }}>
                           {parameters.map((param: ParameterDefinition) => {
                             if (param.type === 'select' && param.options) {
                               return (
@@ -182,7 +239,10 @@ export default function Rack({ scrollContainerRef }: RackProps) {
                         </div>
                       )}
 
-                      <div className={panelStyles.portsRow}>
+                      <div className={panelStyles.portsRow} style={{
+                        opacity: isOff ? 0.3 : 1,
+                        transition: 'opacity 0.2s',
+                      }}>
                         {ports.map((port: PortDefinition) => (
                           <Port
                             key={port.id}
@@ -223,6 +283,8 @@ export default function Rack({ scrollContainerRef }: RackProps) {
         {/* Cable SVG lives inside the scroll container so cables scroll with modules */}
         <CableLayer containerRef={rackRef} scrollContainerRef={scrollContainerRef} zoom={zoom} />
       </div>
+
+      {helpModule && <HelpPanel moduleType={helpModule} onClose={() => setHelpModule(null)} />}
     </div>
   )
 }

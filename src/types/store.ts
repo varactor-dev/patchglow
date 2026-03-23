@@ -7,6 +7,8 @@ export interface RackModule {
   type: string
   position: { row: number; col: number }
   parameters: Record<string, number | string>
+  off?: boolean
+  bypass?: boolean
 }
 
 // ─── Connection ───────────────────────────────────────────────────────────────
@@ -38,12 +40,16 @@ export interface RackStore {
   draggingCable: DraggingCable | null
   audioStarted: boolean
   zoom: number
+  soloModuleId: string | null
 
   // Module actions
   addModule: (type: string, position: { row: number; col: number }) => string
   removeModule: (instanceId: string) => void
   moveModule: (instanceId: string, position: { row: number; col: number }) => void
   setParameter: (instanceId: string, parameterId: string, value: number | string) => void
+  setModuleOff: (instanceId: string, off: boolean) => void
+  setModuleBypass: (instanceId: string, bypass: boolean) => void
+  setSolo: (moduleId: string | null) => void
 
   // Connection actions
   addConnection: (

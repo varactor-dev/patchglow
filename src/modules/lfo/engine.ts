@@ -9,6 +9,8 @@ export class LfoEngine implements ModuleAudioEngine {
   private syncAnalyser: Tone.Analyser | null = null
   private pollInterval: number | null = null
   private syncWasHigh = false
+  private isOff = false
+  private isBypassed = false
 
   initialize(_context: Tone.BaseContext): void {
     this.lfo = new Tone.LFO({
@@ -86,9 +88,18 @@ export class LfoEngine implements ModuleAudioEngine {
     }
   }
 
-  handleAction(action: string): void {
+  handleAction(action: string, payload?: unknown): void {
     if (action === 'contextStarted' && this.lfo) {
       try { this.lfo.start() } catch { /* may already be started */ }
+    }
+    if (action === 'setOff') {
+      this.isOff = payload as boolean
+      if (this.outputGain) this.outputGain.gain.value = this.isOff ? 0 : 1
+    }
+    if (action === 'setBypass') {
+      this.isBypassed = payload as boolean
+      // Bypass = no modulation (output 0, center value)
+      if (this.outputGain) this.outputGain.gain.value = this.isBypassed ? 0 : 1
     }
   }
 

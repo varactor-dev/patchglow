@@ -6,6 +6,7 @@ export class OutputEngine implements ModuleAudioEngine {
   private waveformAnalyser: Tone.Analyser | null = null
   private fftAnalyser: Tone.Analyser | null = null
   private inputGain: Tone.Gain | null = null
+  private isOff = false
 
   initialize(_context: Tone.BaseContext): void {
     this.inputGain = new Tone.Gain(1)
@@ -35,6 +36,13 @@ export class OutputEngine implements ModuleAudioEngine {
     if (!this.volume) return
     if (parameterId === 'volume') {
       this.volume.volume.value = Number(value)
+    }
+  }
+
+  handleAction(action: string, payload?: unknown): void {
+    if (action === 'setOff') {
+      this.isOff = payload as boolean
+      if (this.volume) this.volume.mute = this.isOff
     }
   }
 

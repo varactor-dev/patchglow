@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { useAnimationFrame } from '@/modules/_shared/useAnimationFrame'
-import { clearCanvas, drawGlowLine } from '@/modules/_shared/drawUtils'
+import { clearCanvas, drawGlowLine, drawOffOverlay, drawBypassOverlay } from '@/modules/_shared/drawUtils'
 import AudioEngineManager from '@/engine/AudioEngineManager'
 import type { VisualizationData } from '@/types/module'
 import panelStyles from '@/ui/ModulePanel/ModulePanel.module.css'
@@ -9,18 +9,26 @@ interface Props {
   moduleId: string
   data: VisualizationData
   accentColor: string
+  off?: boolean
+  bypass?: boolean
 }
 
 const W = 160
 const H = 90
 
-export default function EnvelopeVisualization({ moduleId, accentColor }: Props) {
+export default function EnvelopeVisualization({ moduleId, accentColor, off, bypass }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useAnimationFrame(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
+
+    if (off) {
+      drawOffOverlay(ctx, canvas.width, canvas.height)
+      return
+    }
+
     clearCanvas(ctx)
 
     const { customData } = AudioEngineManager.getInstance().getVisualizationData(moduleId)
@@ -94,6 +102,10 @@ export default function EnvelopeVisualization({ moduleId, accentColor }: Props) 
     ctx.globalAlpha = 0.9
     ctx.fill()
     ctx.restore()
+
+    if (bypass) {
+      drawBypassOverlay(ctx, canvas.width, canvas.height, accentColor)
+    }
   })
 
   return (

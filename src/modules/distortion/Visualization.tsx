@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { useAnimationFrame } from '@/modules/_shared/useAnimationFrame'
-import { clearCanvas, drawGrid, drawGlowLine, drawWaveform } from '@/modules/_shared/drawUtils'
+import { clearCanvas, drawGrid, drawGlowLine, drawWaveform, drawOffOverlay, drawBypassOverlay } from '@/modules/_shared/drawUtils'
 import AudioEngineManager from '@/engine/AudioEngineManager'
 import type { VisualizationData } from '@/types/module'
 import panelStyles from '@/ui/ModulePanel/ModulePanel.module.css'
@@ -9,13 +9,15 @@ interface Props {
   moduleId: string
   data: VisualizationData
   accentColor: string
+  off?: boolean
+  bypass?: boolean
 }
 
 const W = 160
 const H_TOP = 50  // transfer curve
 const H_BOT = 50  // before/after waveform
 
-export default function DistortionVisualization({ moduleId, accentColor }: Props) {
+export default function DistortionVisualization({ moduleId, accentColor, off, bypass }: Props) {
   const curveCanvasRef = useRef<HTMLCanvasElement>(null)
   const waveCanvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -24,6 +26,12 @@ export default function DistortionVisualization({ moduleId, accentColor }: Props
     const canvas = curveCanvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
+
+    if (off) {
+      drawOffOverlay(ctx, canvas.width, canvas.height)
+      return
+    }
+
     clearCanvas(ctx)
     drawGrid(ctx, 4)
 
@@ -60,7 +68,7 @@ export default function DistortionVisualization({ moduleId, accentColor }: Props
       points.push({ x, y })
     }
 
-    drawGlowLine(ctx, points, accentColor, 1.5)
+    drawGlowLine(ctx, points, accentColor, 2.5)
 
     // Draw linear reference line (clean = diagonal)
     ctx.save()
@@ -73,6 +81,10 @@ export default function DistortionVisualization({ moduleId, accentColor }: Props
     ctx.lineTo(margin + drawW, margin)
     ctx.stroke()
     ctx.restore()
+
+    if (bypass) {
+      drawBypassOverlay(ctx, canvas.width, canvas.height, accentColor)
+    }
   })
 
   // Bottom: before/after waveform overlay
@@ -80,6 +92,12 @@ export default function DistortionVisualization({ moduleId, accentColor }: Props
     const canvas = waveCanvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
+
+    if (off) {
+      drawOffOverlay(ctx, canvas.width, canvas.height)
+      return
+    }
+
     clearCanvas(ctx)
     drawGrid(ctx, 4, '#141420')
 
@@ -89,12 +107,16 @@ export default function DistortionVisualization({ moduleId, accentColor }: Props
 
     // Input waveform (dim)
     if (inputWaveform && inputWaveform.length > 0) {
-      drawWaveform(ctx, new Float32Array(inputWaveform), '#666666', 0, 1, 1.0, 0.4)
+      drawWaveform(ctx, new Float32Array(inputWaveform), '#555566', 0, 1, 1.0, 0.35)
     }
 
     // Output waveform (bright)
     if (waveform && waveform.length > 0) {
-      drawWaveform(ctx, waveform, accentColor, 0, 1, 1.5, 0.9)
+      drawWaveform(ctx, waveform, accentColor, 0, 1, 2.0, 0.9)
+    }
+
+    if (bypass) {
+      drawBypassOverlay(ctx, canvas.width, canvas.height, accentColor)
     }
   })
 

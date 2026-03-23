@@ -73,16 +73,24 @@
 }
 
 .title {
+  display: flex;
+  align-items: center;
+  padding: 2px 0;
+  user-select: none;
+}
+
+.titleText {
+  flex: 1;
   font-family: var(--font-display);
   font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  text-align: center;
-  padding: 2px 0;
-  user-select: none;
   cursor: grab;
   touch-action: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Viz screen — the CRT-style display */
@@ -127,4 +135,36 @@
   gap: 4px;
   padding-top: 4px;
   border-top: 1px solid var(--border-subtle);
+}
+
+/* ── Title-bar indicator buttons ── */
+
+.btnGroup {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.titleBtn {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.25;
+  transition: opacity 0.15s ease, filter 0.15s ease;
+}
+
+.titleBtn:hover {
+  opacity: 0.8;
+}
+
+.titleBtnActive {
+  opacity: 1;
 }

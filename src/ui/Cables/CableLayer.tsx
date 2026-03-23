@@ -32,6 +32,7 @@ interface CableLayerProps {
 
 export default function CableLayer({ containerRef, scrollContainerRef, zoom }: CableLayerProps) {
   const connections = useRackStore((s) => s.connections)
+  const modules = useRackStore((s) => s.modules)
   const selectedCableId = useRackStore((s) => s.selectedCableId)
   const draggingCable = useRackStore((s) => s.draggingCable)
   const removeConnection = useRackStore((s) => s.removeConnection)
@@ -196,6 +197,8 @@ export default function CableLayer({ containerRef, scrollContainerRef, zoom }: C
         const end = getPortCenter(conn.destModuleId, conn.destPortId, container, zoom)
         if (!start || !end) return null
 
+        const sourceOff = modules[conn.sourceModuleId]?.off ?? false
+        const destOff = modules[conn.destModuleId]?.off ?? false
         const sigState = monitorRef.current!.getSignalState(conn.id)
         return (
           <Cable
@@ -212,6 +215,7 @@ export default function CableLayer({ containerRef, scrollContainerRef, zoom }: C
             flowPhase={sigState.flowPhase}
             dominantFreqHz={sigState.dominantFreqHz}
             waveform={sigState.waveform}
+            moduleOff={sourceOff || destOff}
           />
         )
       })}

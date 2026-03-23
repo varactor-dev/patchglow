@@ -11,6 +11,8 @@ export class EnvelopeEngine implements ModuleAudioEngine {
   private gateAnalyser: Tone.Analyser | null = null
   private gateOpen = false
   private pollInterval: number | null = null
+  private isOff = false
+  private isBypassed = false
 
   initialize(_context: Tone.BaseContext): void {
     this.envelope = new Tone.Envelope({ attack: 0.01, decay: 0.2, sustain: 0.7, release: 0.5 })
@@ -77,6 +79,18 @@ export class EnvelopeEngine implements ModuleAudioEngine {
       case 'release':
         this.envelope.release = v
         break
+    }
+  }
+
+  handleAction(action: string, payload?: unknown): void {
+    if (action === 'setOff') {
+      this.isOff = payload as boolean
+      if (this.outputGain) this.outputGain.gain.value = this.isOff ? 0 : 1
+    }
+    if (action === 'setBypass') {
+      this.isBypassed = payload as boolean
+      // Bypass = constant 1.0 output (fully open, skip gate polling)
+      if (this.outputGain) this.outputGain.gain.value = this.isBypassed ? 0 : 1
     }
   }
 

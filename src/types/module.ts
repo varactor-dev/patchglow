@@ -75,5 +75,5 @@ export interface ModuleAudioEngine {
 export interface ModuleRegistration {
   definition: ModuleDefinition
   createEngine: () => ModuleAudioEngine
-  VisualizationComponent: React.FC<{ moduleId: string; data: VisualizationData; accentColor: string }>
+  VisualizationComponent: React.FC<{ moduleId: string; data: VisualizationData; accentColor: string; off?: boolean; bypass?: boolean }>
 }

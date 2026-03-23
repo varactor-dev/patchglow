@@ -1,96 +1,181 @@
 import { useRef } from 'react'
 import { useAnimationFrame } from '@/modules/_shared/useAnimationFrame'
-import { clearWithFade, drawGrid, drawWaveform } from '@/modules/_shared/drawUtils'
+import { clearCanvas, drawGrid, drawOffOverlay, drawBypassOverlay } from '@/modules/_shared/drawUtils'
 import AudioEngineManager from '@/engine/AudioEngineManager'
 import type { VisualizationData } from '@/types/module'
 import panelStyles from '@/ui/ModulePanel/ModulePanel.module.css'
+
+function lerpColor(a: string, b: string, t: number): string {
+  const p = (c: string, i: number) => parseInt(c.slice(i, i + 2), 16)
+  const r = Math.round(p(a, 1) + (p(b, 1) - p(a, 1)) * t)
+  const g = Math.round(p(a, 3) + (p(b, 3) - p(a, 3)) * t)
+  const bl = Math.round(p(a, 5) + (p(b, 5) - p(a, 5)) * t)
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${bl.toString(16).padStart(2, '0')}`
+}
+
+function computeCoolAccent(hex: string): string {
+  const p = (i: number) => parseInt(hex.slice(i, i + 2), 16)
+  const r = Math.max(0, p(1) - 20)
+  const g = p(3)
+  const b = Math.min(255, p(5) + 40)
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+}
 
 interface Props {
   moduleId: string
   data: VisualizationData
   accentColor: string
+  off?: boolean
+  bypass?: boolean
 }
 
 const W = 200
 const H = 90
 
-export default function DelayVisualization({ moduleId, accentColor }: Props) {
+export default function DelayVisualization({ moduleId, accentColor, off, bypass }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const scrollRef = useRef(0)
 
   useAnimationFrame(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
-    clearWithFade(ctx, 0.3)
+
+    if (off) {
+      drawOffOverlay(ctx, canvas.width, canvas.height)
+      return
+    }
+
+    clearCanvas(ctx)
     drawGrid(ctx, 4)
 
     const data = AudioEngineManager.getInstance().getVisualizationData(moduleId)
-    const { waveform, customData } = data
+    const { customData } = data
 
-    if (!waveform || waveform.length === 0) return
-
-    const inputWaveform = customData?.inputWaveform as number[] | undefined
     const feedback = (customData?.feedback as number) ?? 0.4
+    const delayTime = (customData?.delayTime as number) ?? 0.3
+    const wet = (customData?.wet as number) ?? 0.5
+    const rmsHistory = (customData?.inputRmsHistory as number[]) ?? []
 
-    // Draw echo traces — cascading copies with decreasing opacity
-    const echoCount = 4
-    for (let echo = echoCount; echo >= 0; echo--) {
-      const alpha = Math.pow(feedback, echo)
-      const xOffset = echo * (W / (echoCount + 2))
-      const sliceW = W - xOffset
+    // Timeline: W pixels represents ~2 seconds
+    const timelineSeconds = 2.0
+    const pxPerSecond = W / timelineSeconds
 
-      if (echo === 0 && inputWaveform) {
-        // Input: dim white trace
-        const inputData = new Float32Array(inputWaveform)
-        ctx.save()
-        ctx.globalAlpha = 0.3
-        drawWaveform(ctx, inputData, '#ffffff', 0, 1, 1.0, 0.3)
-        ctx.restore()
-      } else {
-        // Echo traces with offset and fading
-        const sliceSamples = Math.floor(waveform.length * (sliceW / W))
-        if (sliceSamples <= 0) continue
-        const slice = waveform.slice(0, sliceSamples)
+    // Advance scroll phase
+    scrollRef.current = (scrollRef.current + 1 / 60 * pxPerSecond) % (delayTime * pxPerSecond * 10 + W)
 
-        // Render at offset position via temporary canvas translation
-        ctx.save()
-        ctx.translate(xOffset, 0)
+    // Draw vertical dotted time markers at delay intervals
+    ctx.save()
+    ctx.strokeStyle = accentColor
+    ctx.globalAlpha = 0.12
+    ctx.lineWidth = 1
+    ctx.setLineDash([2, 4])
+    for (let t = delayTime; t < timelineSeconds; t += delayTime) {
+      const x = t * pxPerSecond
+      ctx.beginPath()
+      ctx.moveTo(x, 0)
+      ctx.lineTo(x, H)
+      ctx.stroke()
+    }
+    ctx.setLineDash([])
+    ctx.restore()
 
-        const pts: { x: number; y: number }[] = []
-        const step = slice.length / sliceW
-        const centerY = H / 2
-        const amplitude = H / 2 * 0.8
+    // Get current input RMS (last entry in history)
+    const currentRms = rmsHistory.length > 0 ? rmsHistory[rmsHistory.length - 1] : 0
 
-        for (let x = 0; x < sliceW; x++) {
-          const i = Math.floor(x * step)
-          const y = centerY - (slice[i] ?? 0) * amplitude
-          pts.push({ x, y })
-        }
+    // Compute cool accent for echo color shift
+    const coolAccent = computeCoolAccent(accentColor)
 
-        if (pts.length >= 2) {
-          // Glow line with echo-appropriate opacity
-          const path = new Path2D()
-          path.moveTo(pts[0].x, pts[0].y)
-          for (let i = 1; i < pts.length; i++) {
-            path.lineTo(pts[i].x, pts[i].y)
-          }
+    // Draw dry signal bar at left edge
+    const barWidth = 6
+    const dryBrightness = Math.min(1, currentRms * 6) // boosted for visibility
+    if (dryBrightness > 0.02) {
+      const barHeight = H * 0.7 * dryBrightness
+      const barX = 4
+      const barY = (H - barHeight) / 2
 
-          // Outer glow
-          ctx.strokeStyle = accentColor
-          ctx.globalAlpha = 0.15 * alpha
-          ctx.lineWidth = 6
-          ctx.lineJoin = 'round'
-          ctx.lineCap = 'round'
-          ctx.stroke(path)
+      // Glow
+      ctx.save()
+      ctx.fillStyle = '#ffffff'
+      ctx.globalAlpha = 0.3 * dryBrightness
+      ctx.shadowColor = accentColor
+      ctx.shadowBlur = 10
+      ctx.fillRect(barX - 1, barY, barWidth + 2, barHeight)
+      ctx.shadowBlur = 0
+      ctx.restore()
 
-          // Core
-          ctx.globalAlpha = 0.8 * alpha
-          ctx.lineWidth = 1.2
-          ctx.stroke(path)
-        }
+      // Core
+      ctx.save()
+      ctx.fillStyle = accentColor
+      ctx.globalAlpha = 0.9 * dryBrightness
+      ctx.fillRect(barX, barY, barWidth, barHeight)
+      ctx.restore()
+    }
 
-        ctx.restore()
-      }
+    // Draw echo bars at delay intervals
+    const maxEchoes = Math.min(8, Math.ceil(Math.log(0.02) / Math.log(Math.max(0.01, feedback))))
+    for (let n = 1; n <= maxEchoes; n++) {
+      const echoAlpha = Math.pow(feedback, n)
+      if (echoAlpha < 0.02) break
+
+      const echoX = n * delayTime * pxPerSecond
+      if (echoX > W - barWidth) break
+
+      // Look back in history for the RMS at this echo's time offset
+      const framesBack = Math.round(n * delayTime * 60)
+      const histIdx = rmsHistory.length - 1 - framesBack
+      const echoRms = histIdx >= 0 ? (rmsHistory[histIdx] ?? 0) : 0
+
+      // Brighter echoes: first echo at 70% brightness, subsequent dim by feedback
+      const echoBrightness = 0.7 * Math.pow(feedback, n - 1) * wet
+      const barHeight = H * 0.7 * Math.min(1, echoRms * 4) * Math.min(1, echoBrightness * 2)
+      const barY = (H - barHeight) / 2
+
+      if (echoBrightness < 0.01 || barHeight < 1) continue
+
+      // Color cooling shift: later echoes shift toward cooler shade
+      const coolT = (n - 1) / Math.max(1, maxEchoes - 1)
+      const echoColor = lerpColor(accentColor, coolAccent, coolT * 0.6)
+
+      // Outer glow — wide soft halo
+      ctx.save()
+      ctx.fillStyle = echoColor
+      ctx.globalAlpha = 0.25 * echoBrightness
+      ctx.shadowColor = echoColor
+      ctx.shadowBlur = 12
+      ctx.fillRect(echoX - 3, barY - 2, barWidth + 6, barHeight + 4)
+      ctx.shadowBlur = 0
+      ctx.restore()
+
+      // Inner glow
+      ctx.save()
+      ctx.fillStyle = echoColor
+      ctx.globalAlpha = 0.5 * echoBrightness
+      ctx.shadowColor = echoColor
+      ctx.shadowBlur = 6
+      ctx.fillRect(echoX - 1, barY, barWidth + 2, barHeight)
+      ctx.shadowBlur = 0
+      ctx.restore()
+
+      // Core bar
+      ctx.save()
+      ctx.fillStyle = echoColor
+      ctx.globalAlpha = 0.9 * echoBrightness
+      ctx.fillRect(echoX, barY, barWidth, barHeight)
+      ctx.restore()
+    }
+
+    // Draw "DRY" label at left
+    ctx.save()
+    ctx.fillStyle = '#ffffff'
+    ctx.globalAlpha = 0.3
+    ctx.font = '7px "JetBrains Mono", monospace'
+    ctx.textAlign = 'center'
+    ctx.fillText('DRY', 7, H - 4)
+    ctx.restore()
+
+    if (bypass) {
+      drawBypassOverlay(ctx, canvas.width, canvas.height, accentColor)
     }
   })
 

@@ -4,6 +4,8 @@ import {
   clearCanvas,
   drawGrid,
   drawWaveform,
+  drawOffOverlay,
+  drawBypassOverlay,
 } from '@/modules/_shared/drawUtils'
 import AudioEngineManager from '@/engine/AudioEngineManager'
 import type { VisualizationData } from '@/types/module'
@@ -13,18 +15,25 @@ interface Props {
   moduleId: string
   data: VisualizationData
   accentColor: string
+  off?: boolean
+  bypass?: boolean
 }
 
 const W = 160
 const H = 120
 
-export default function VcaVisualization({ moduleId, accentColor }: Props) {
+export default function VcaVisualization({ moduleId, accentColor, off, bypass }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useAnimationFrame(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
+
+    if (off) {
+      drawOffOverlay(ctx, canvas.width, canvas.height)
+      return
+    }
 
     clearCanvas(ctx)
     drawGrid(ctx, 3)
@@ -59,6 +68,10 @@ export default function VcaVisualization({ moduleId, accentColor }: Props) {
     ctx.moveTo(0, canvas.height * 0.667)
     ctx.lineTo(canvas.width, canvas.height * 0.667)
     ctx.stroke()
+
+    if (bypass) {
+      drawBypassOverlay(ctx, canvas.width, canvas.height, accentColor)
+    }
   })
 
   return (

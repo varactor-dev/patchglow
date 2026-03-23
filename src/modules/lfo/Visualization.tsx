@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { useAnimationFrame } from '@/modules/_shared/useAnimationFrame'
-import { clearWithFade, drawGrid, drawWaveform } from '@/modules/_shared/drawUtils'
+import { clearWithFade, drawGrid, drawWaveform, drawOffOverlay, drawBypassOverlay } from '@/modules/_shared/drawUtils'
 import AudioEngineManager from '@/engine/AudioEngineManager'
 import type { VisualizationData } from '@/types/module'
 import panelStyles from '@/ui/ModulePanel/ModulePanel.module.css'
@@ -9,18 +9,25 @@ interface Props {
   moduleId: string
   data: VisualizationData
   accentColor: string
+  off?: boolean
+  bypass?: boolean
 }
 
 const W = 170
 const H = 80
 
-export default function LfoVisualization({ moduleId, accentColor }: Props) {
+export default function LfoVisualization({ moduleId, accentColor, off, bypass }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useAnimationFrame(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
+
+    if (off) {
+      drawOffOverlay(ctx, canvas.width, canvas.height)
+      return
+    }
 
     // Phosphor trail fade
     clearWithFade(ctx, 0.15)
@@ -60,6 +67,10 @@ export default function LfoVisualization({ moduleId, accentColor }: Props) {
     ctx.lineTo(playheadX, canvas.height)
     ctx.stroke()
     ctx.restore()
+
+    if (bypass) {
+      drawBypassOverlay(ctx, canvas.width, canvas.height, accentColor)
+    }
   })
 
   return (

@@ -10,6 +10,9 @@ export class VcaEngine implements ModuleAudioEngine {
   // When a CV cable connects, internalBias is disconnected so CV signal takes full control.
   private cvInputGain: Tone.Gain | null = null
   private internalBias: Tone.Signal<'number'> | null = null
+  private bypassGain: Tone.Gain | null = null
+  private isOff = false
+  private isBypassed = false
   private waveformAnalyser: Tone.Analyser | null = null
   private inputAnalyser: Tone.Analyser | null = null
   private cvAnalyser: Tone.Analyser | null = null
@@ -38,6 +41,11 @@ export class VcaEngine implements ModuleAudioEngine {
     // Input analyser taps from inputGain (before VCA processing)
     this.inputGain.connect(this.inputAnalyser)
 
+    // Bypass path: inputGain → bypassGain → outputGain
+    this.bypassGain = new Tone.Gain(0)
+    this.inputGain.connect(this.bypassGain)
+    this.bypassGain.connect(this.outputGain)
+
     // Main audio chain: inputGain → cvGain → levelGain → outputGain → waveformAnalyser
     this.inputGain.connect(this.cvGain)
     this.cvGain.connect(this.levelGain)
@@ -59,6 +67,19 @@ export class VcaEngine implements ModuleAudioEngine {
   setParameter(parameterId: string, value: number | string): void {
     if (parameterId === 'level') {
       if (this.levelGain) this.levelGain.gain.value = Number(value)
+    }
+  }
+
+  handleAction(action: string, payload?: unknown): void {
+    if (action === 'setOff') {
+      this.isOff = payload as boolean
+      if (this.outputGain) this.outputGain.gain.value = this.isOff ? 0 : 1
+    }
+    if (action === 'setBypass') {
+      this.isBypassed = payload as boolean
+      if (this.bypassGain) this.bypassGain.gain.value = this.isBypassed ? 1 : 0
+      // Mute the CV-controlled processing path when bypassed
+      if (this.levelGain) this.levelGain.gain.value = this.isBypassed ? 0 : 1
     }
   }
 
@@ -95,6 +116,7 @@ export class VcaEngine implements ModuleAudioEngine {
     this.outputGain?.dispose()
     this.cvInputGain?.dispose()
     this.internalBias?.dispose()
+    this.bypassGain?.dispose()
     this.waveformAnalyser?.dispose()
     this.inputAnalyser?.dispose()
     this.cvAnalyser?.dispose()
@@ -104,6 +126,7 @@ export class VcaEngine implements ModuleAudioEngine {
     this.outputGain = null
     this.cvInputGain = null
     this.internalBias = null
+    this.bypassGain = null
     this.waveformAnalyser = null
     this.inputAnalyser = null
     this.cvAnalyser = null

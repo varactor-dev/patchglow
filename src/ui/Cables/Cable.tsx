@@ -3,8 +3,6 @@ import { useRackStore } from '@/store/rackStore'
 import {
   CABLE_COLORS,
   FLOW_DASHARRAY,
-  FLOW_DASHARRAY_IDLE,
-  FLOW_DASHARRAY_ACTIVE,
   PULSE_SEGMENT_RATIO,
   PULSE_COLOR_ATTACK,
   FLOW_HOT_COLOR,
@@ -81,7 +79,7 @@ function computeWaveformPath(
     const pt = bezierPoint(t, bz)
     const norm = bezierNormal(t, bz)
 
-    const rawIdx = (((i / N) * wLen + scrollOffset) % wLen + wLen) % wLen
+    const rawIdx = (((i / N) * wLen - scrollOffset) % wLen + wLen) % wLen
     const idx0 = Math.floor(rawIdx)
     const idx1 = (idx0 + 1) % wLen
     const frac = rawIdx - idx0
@@ -152,6 +150,7 @@ interface CableProps {
   flowPhase?: number
   dominantFreqHz?: number
   waveform?: Float32Array | null
+  moduleOff?: boolean
 }
 
 export default function Cable({
@@ -162,6 +161,7 @@ export default function Cable({
   pulseDirection = null,
   flowPhase = 0,
   waveform = null,
+  moduleOff = false,
 }: CableProps) {
   const selectCable = useRackStore((s) => s.selectCable)
   const selectedCableId = useRackStore((s) => s.selectedCableId)
@@ -181,10 +181,109 @@ export default function Cable({
     [id, selectedCableId, selectCable],
   )
 
-  // ── Dynamic brightness — DRAMATIC range ───────────────────────────────────
-  const brightness = signalType === 'gate'
-    ? (gateHigh ? 1.0 : signalLevel)
-    : signalLevel
+  // ── Ghost state for OFF modules ──────────────────────────────────────────
+  // When either end's module is OFF, cable goes ghost: nearly invisible, no effects
+  if (moduleOff) {
+    return (
+      <g onClick={handleClick} style={{ cursor: 'pointer', pointerEvents: 'auto' }}>
+        <path d={d} stroke="transparent" strokeWidth={12} fill="none" />
+        <path
+          d={d}
+          stroke={baseColor}
+          strokeWidth={2}
+          strokeOpacity={0.08}
+          fill="none"
+          strokeLinecap="round"
+        />
+      </g>
+    )
+  }
+
+  // ── Gate cables: binary rendering — sharp on/off, no glow ────────────────
+  if (signalType === 'gate') {
+    const showPulse = pulseProgress > 0 && pulseProgress < 1 && pulseDirection !== null
+    const pulsePathLen = estimatePathLength(start, end)
+
+    // GATE LOW: nearly invisible thin line
+    if (!gateHigh && !showPulse) {
+      return (
+        <g onClick={handleClick} style={{ cursor: 'pointer', pointerEvents: 'auto' }}>
+          <path d={d} stroke="transparent" strokeWidth={12} fill="none" />
+          <path d={d} stroke={baseColor} strokeWidth={2} strokeOpacity={0.08} fill="none" strokeLinecap="round" />
+          {selected && (
+            <path d={d} stroke={baseColor} strokeWidth={6} strokeOpacity={0.2} fill="none" strokeLinecap="round" />
+          )}
+        </g>
+      )
+    }
+
+    // GATE HIGH + ATTACK PULSE: fuse-burning effect
+    // Dark unlit fuse ahead → white-hot fire front → bright magenta fill behind
+    if (showPulse && pulseDirection === 'attack') {
+      return (
+        <g onClick={handleClick} style={{ cursor: 'pointer', pointerEvents: 'auto' }}>
+          <path d={d} stroke="transparent" strokeWidth={12} fill="none" />
+          {/* Layer 1: Dark unlit fuse — full cable at low opacity */}
+          <path d={d} stroke={baseColor} strokeWidth={2} strokeOpacity={0.12}
+            fill="none" strokeLinecap="round" />
+          {/* Layer 2: Lit portion behind the pulse — bright fill */}
+          <path
+            d={d} stroke={baseColor} strokeWidth={4} strokeOpacity={1.0}
+            fill="none" strokeLinecap="round"
+            strokeDasharray={`${pulseProgress * pulsePathLen} ${pulsePathLen}`}
+            style={{ filter: `drop-shadow(0 0 8px ${baseColor})` }}
+          />
+          {/* Layer 3: White-hot pulse front — 10px stroke, 16px blur */}
+          <path
+            d={d} stroke="#ffffff" strokeWidth={10} strokeOpacity={1.0}
+            fill="none" strokeLinecap="round"
+            strokeDasharray={`8 ${pulsePathLen}`}
+            strokeDashoffset={pulsePathLen * (1 - pulseProgress)}
+            style={{ filter: `drop-shadow(0 0 16px #ffffff) drop-shadow(0 0 6px ${baseColor})` }}
+          />
+          {/* Destination spark on arrival */}
+          {pulseProgress > 0.85 && (
+            <circle cx={end.x} cy={end.y} r={8} fill="#ffffff"
+              opacity={Math.min(1, (pulseProgress - 0.85) * 6)}
+              style={{ filter: `blur(4px) drop-shadow(0 0 8px ${baseColor})` }} />
+          )}
+        </g>
+      )
+    }
+
+    // GATE HIGH SUSTAINED: solid bright magenta, no dashes
+    if (gateHigh && !showPulse) {
+      return (
+        <g onClick={handleClick} style={{ cursor: 'pointer', pointerEvents: 'auto' }}>
+          <path d={d} stroke="transparent" strokeWidth={12} fill="none" />
+          <path
+            d={d} stroke={baseColor} strokeWidth={4} strokeOpacity={1.0}
+            fill="none" strokeLinecap="round"
+            style={{ filter: `drop-shadow(0 0 8px ${baseColor})` }}
+          />
+          {/* Endpoint sparks */}
+          <circle cx={start.x} cy={start.y} r={4} fill={baseColor} opacity={0.6}
+            style={{ filter: 'blur(2px)' }} />
+          <circle cx={end.x} cy={end.y} r={4} fill={baseColor} opacity={0.6}
+            style={{ filter: 'blur(2px)' }} />
+          {selected && (
+            <path d={d} stroke={baseColor} strokeWidth={6} strokeOpacity={0.2} fill="none" strokeLinecap="round" />
+          )}
+        </g>
+      )
+    }
+
+    // GATE RELEASE: instant snap to dark
+    return (
+      <g onClick={handleClick} style={{ cursor: 'pointer', pointerEvents: 'auto' }}>
+        <path d={d} stroke="transparent" strokeWidth={12} fill="none" />
+        <path d={d} stroke={baseColor} strokeWidth={2} strokeOpacity={0.08} fill="none" strokeLinecap="round" />
+      </g>
+    )
+  }
+
+  // ── Dynamic brightness — audio/cv cables only (gate returned early above) ─
+  const brightness = signalLevel
 
   // Cross-row cables get a subtle glow boost for visual prominence
   const crossRowDy = Math.abs(end.y - start.y)
@@ -204,10 +303,7 @@ export default function Cable({
   const flowOpacity = brightness < 0.05 ? 0 : brightness * 0.9    // invisible when idle
   const glowBlur    = brightness < 0.05 ? 0 : Math.round(brightness * 12) // 0 → 12px
 
-  // Gate cables: switch dash pattern based on state
-  const flowDasharray = signalType === 'gate'
-    ? (gateHigh ? FLOW_DASHARRAY_ACTIVE : FLOW_DASHARRAY_IDLE)
-    : FLOW_DASHARRAY
+  const flowDasharray = FLOW_DASHARRAY
 
   // Glow halo with alpha scaling
   const glowHex = Math.round(brightness * 255).toString(16).padStart(2, '0')
@@ -220,10 +316,7 @@ export default function Cable({
       ? `drop-shadow(0 0 ${glowBlur + 2}px ${baseColor}${glowHex}) drop-shadow(0 0 ${Math.round(glowBlur * 0.4)}px ${baseColor})`
       : 'none'
 
-  // Smooth transitions
-  const transition = signalType === 'gate'
-    ? 'stroke-opacity 0.08s ease-out, filter 0.08s ease-out, stroke-width 0.08s ease-out'
-    : 'stroke-opacity 0.15s linear, filter 0.15s linear, stroke-width 0.15s linear'
+  const transition = 'stroke-opacity 0.15s linear, filter 0.15s linear, stroke-width 0.15s linear'
 
   // ── Glow field specs ──────────────────────────────────────────────────────
   const glowFieldOpacity = brightness * 0.7
@@ -364,21 +457,7 @@ export default function Cable({
         />
       )}
 
-      {/* Gate fill/drain — cable fills from source on attack, drains on release */}
-      {signalType === 'gate' && showPulse && (
-        <path
-          d={d}
-          stroke={activeColor}
-          strokeWidth={bodyWidth}
-          strokeOpacity={0.9}
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={`${(pulseDirection === 'attack' ? pulseProgress : 1 - pulseProgress) * pulsePathLen} ${pulsePathLen}`}
-          style={{
-            filter: `drop-shadow(0 0 8px ${baseColor})`,
-          }}
-        />
-      )}
+      {/* Gate fill/drain removed — gate cables use dedicated rendering above */}
 
       {/* Selection highlight */}
       {selected && (

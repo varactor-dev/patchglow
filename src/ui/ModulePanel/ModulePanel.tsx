@@ -6,6 +6,7 @@ interface ModulePanelProps {
   accentColor: string
   children: ReactNode
   onContextMenu?: (e: React.MouseEvent) => void
+  bypass?: boolean
 }
 
 const HP_PX = 20  // 1HP = 20px
@@ -13,13 +14,20 @@ const PANEL_HEIGHT = 380  // 3U rack height in px
 
 export { HP_PX, PANEL_HEIGHT }
 
-export default function ModulePanel({ hp, accentColor, children, onContextMenu }: ModulePanelProps) {
+export default function ModulePanel({ hp, accentColor, children, onContextMenu, bypass }: ModulePanelProps) {
   const width = hp * HP_PX
 
   return (
     <div
       className={styles.panel}
-      style={{ width, minHeight: PANEL_HEIGHT }}
+      style={{
+        width,
+        minHeight: PANEL_HEIGHT,
+        ...(bypass ? {
+          borderLeft: `1px dashed ${accentColor}66`,
+          borderRight: `1px dashed ${accentColor}66`,
+        } : {}),
+      }}
       onContextMenu={onContextMenu}
     >
       {/* Top rail screws */}

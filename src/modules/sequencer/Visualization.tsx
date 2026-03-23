@@ -1,6 +1,6 @@
 import { useRef, useCallback } from 'react'
 import { useAnimationFrame } from '@/modules/_shared/useAnimationFrame'
-import { clearCanvas } from '@/modules/_shared/drawUtils'
+import { clearCanvas, drawOffOverlay, drawBypassOverlay } from '@/modules/_shared/drawUtils'
 import AudioEngineManager from '@/engine/AudioEngineManager'
 import type { VisualizationData } from '@/types/module'
 import panelStyles from '@/ui/ModulePanel/ModulePanel.module.css'
@@ -9,6 +9,8 @@ interface Props {
   moduleId: string
   data: VisualizationData
   accentColor: string
+  off?: boolean
+  bypass?: boolean
 }
 
 const W = 300
@@ -19,7 +21,7 @@ const GRID_H = H - GATE_BAR_H - GRID_TOP - 4 // space for gate bar + padding
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C']
 
-export default function SequencerVisualization({ moduleId, accentColor }: Props) {
+export default function SequencerVisualization({ moduleId, accentColor, off, bypass }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const draggingRef = useRef<{ step: number; startY: number; startSemitone: number } | null>(null)
 
@@ -27,6 +29,12 @@ export default function SequencerVisualization({ moduleId, accentColor }: Props)
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
+
+    if (off) {
+      drawOffOverlay(ctx, canvas.width, canvas.height)
+      return
+    }
+
     clearCanvas(ctx)
 
     const data = AudioEngineManager.getInstance().getVisualizationData(moduleId)
@@ -115,6 +123,10 @@ export default function SequencerVisualization({ moduleId, accentColor }: Props)
     // Step position indicator line at top
     ctx.fillStyle = accentColor
     ctx.fillRect(activeX + 2, 0, cellW - 4, 2)
+
+    if (bypass) {
+      drawBypassOverlay(ctx, canvas.width, canvas.height, accentColor)
+    }
   })
 
   const getStepFromX = useCallback((clientX: number) => {

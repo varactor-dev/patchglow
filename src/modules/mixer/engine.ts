@@ -10,6 +10,8 @@ export class MixerEngine implements ModuleAudioEngine {
   private ch2Analyser: Tone.Analyser | null = null
   private ch3Analyser: Tone.Analyser | null = null
   private outputAnalyser: Tone.Analyser | null = null
+  private isOff = false
+  private isBypassed = false
 
   initialize(_context: Tone.BaseContext): void {
     this.ch1Gain = new Tone.Gain(0.8)
@@ -53,6 +55,22 @@ export class MixerEngine implements ModuleAudioEngine {
       case 'level1': this.ch1Gain!.gain.value = Number(value); break
       case 'level2': this.ch2Gain!.gain.value = Number(value); break
       case 'level3': this.ch3Gain!.gain.value = Number(value); break
+    }
+  }
+
+  handleAction(action: string, payload?: unknown): void {
+    if (action === 'setOff') {
+      this.isOff = payload as boolean
+      if (this.outputGain) this.outputGain.gain.value = this.isOff ? 0 : 1
+    }
+    if (action === 'setBypass') {
+      this.isBypassed = payload as boolean
+      if (this.isBypassed) {
+        // Bypass: all channels at full
+        if (this.ch1Gain) this.ch1Gain.gain.value = 1
+        if (this.ch2Gain) this.ch2Gain.gain.value = 1
+        if (this.ch3Gain) this.ch3Gain.gain.value = 1
+      }
     }
   }
 

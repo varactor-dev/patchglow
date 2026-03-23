@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAnimationFrame } from '@/modules/_shared/useAnimationFrame'
-import { clearCanvas } from '@/modules/_shared/drawUtils'
+import { clearCanvas, drawOffOverlay, drawBypassOverlay } from '@/modules/_shared/drawUtils'
 import AudioEngineManager from '@/engine/AudioEngineManager'
 import { useRackStore } from '@/store/rackStore'
 import type { VisualizationData } from '@/types/module'
@@ -11,6 +11,8 @@ interface Props {
   moduleId: string
   data: VisualizationData
   accentColor: string
+  off?: boolean
+  bypass?: boolean
 }
 
 // One octave of keys: C D E F G A B C
@@ -46,7 +48,7 @@ function getSemitoneAtPoint(x: number, y: number): number | null {
 
 const isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches
 
-export default function KeyboardVisualization({ moduleId }: Props) {
+export default function KeyboardVisualization({ moduleId, accentColor, off, bypass }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [display, setDisplay] = useState({ noteName: '', octave: 0, gateHigh: false })
   const displayRef = useRef(display)
@@ -87,6 +89,12 @@ export default function KeyboardVisualization({ moduleId }: Props) {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
+
+    if (off) {
+      drawOffOverlay(ctx, canvas.width, canvas.height)
+      return
+    }
+
     clearCanvas(ctx)
 
     const { customData } = AudioEngineManager.getInstance().getVisualizationData(moduleId)
@@ -183,6 +191,10 @@ export default function KeyboardVisualization({ moduleId }: Props) {
       ctx.textAlign = 'center'
       ctx.fillText(HINT_KEYS[i] ?? '', x, WHITE_H - 6)
     })
+
+    if (bypass) {
+      drawBypassOverlay(ctx, canvas.width, canvas.height, accentColor)
+    }
   })
 
   return (

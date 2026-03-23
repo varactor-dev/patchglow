@@ -41,7 +41,10 @@ export class DistortionEngine implements ModuleAudioEngine {
   private outputGain: Tone.Gain | null = null
   private inputAnalyser: Tone.Analyser | null = null
   private outputAnalyser: Tone.Analyser | null = null
+  private bypassGain: Tone.Gain | null = null
 
+  private isOff = false
+  private isBypassed = false
   private drive = 0.3
   private mode: 'soft' | 'hard' | 'fold' = 'soft'
   private mix = 1.0
@@ -68,6 +71,12 @@ export class DistortionEngine implements ModuleAudioEngine {
     this.dryGain.connect(this.outputGain)
 
     this.outputGain.connect(this.outputAnalyser)
+
+    // Bypass path: inputGain → bypassGain → outputGain
+    this.bypassGain = new Tone.Gain(0)
+    this.inputGain.connect(this.bypassGain)
+    this.bypassGain.connect(this.outputGain)
+
     this.updateMix()
   }
 
@@ -119,6 +128,20 @@ export class DistortionEngine implements ModuleAudioEngine {
     }
   }
 
+  handleAction(action: string, payload?: unknown): void {
+    if (action === 'setOff') {
+      this.isOff = payload as boolean
+      if (this.outputGain) this.outputGain.gain.value = this.isOff ? 0 : 1
+    }
+    if (action === 'setBypass') {
+      this.isBypassed = payload as boolean
+      if (this.bypassGain) this.bypassGain.gain.value = this.isBypassed ? 1 : 0
+      // Mute wet+dry processing when bypassed
+      if (this.wetGain) this.wetGain.gain.value = this.isBypassed ? 0 : this.mix
+      if (this.dryGain) this.dryGain.gain.value = this.isBypassed ? 0 : (1 - this.mix)
+    }
+  }
+
   getVisualizationData(): VisualizationData {
     if (!this.inputAnalyser || !this.outputAnalyser) return {}
 
@@ -141,6 +164,7 @@ export class DistortionEngine implements ModuleAudioEngine {
     this.dryGain?.dispose()
     this.wetGain?.dispose()
     this.outputGain?.dispose()
+    this.bypassGain?.dispose()
     this.inputAnalyser?.dispose()
     this.outputAnalyser?.dispose()
     this.shaper = null
@@ -148,6 +172,7 @@ export class DistortionEngine implements ModuleAudioEngine {
     this.dryGain = null
     this.wetGain = null
     this.outputGain = null
+    this.bypassGain = null
     this.inputAnalyser = null
     this.outputAnalyser = null
   }

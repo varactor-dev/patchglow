@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { useAnimationFrame } from '@/modules/_shared/useAnimationFrame'
-import { clearCanvas, drawGrid, drawGlowLine } from '@/modules/_shared/drawUtils'
+import { clearCanvas, drawGrid, drawGlowLine, drawOffOverlay, drawBypassOverlay } from '@/modules/_shared/drawUtils'
 import AudioEngineManager from '@/engine/AudioEngineManager'
 import type { VisualizationData } from '@/types/module'
 
@@ -8,9 +8,11 @@ interface Props {
   moduleId: string
   data: VisualizationData
   accentColor: string
+  off?: boolean
+  bypass?: boolean
 }
 
-export default function FilterVisualization({ moduleId, accentColor }: Props) {
+export default function FilterVisualization({ moduleId, accentColor, off, bypass }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useAnimationFrame(() => {
@@ -18,6 +20,11 @@ export default function FilterVisualization({ moduleId, accentColor }: Props) {
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
+
+    if (off) {
+      drawOffOverlay(ctx, canvas.width, canvas.height)
+      return
+    }
 
     clearCanvas(ctx)
     drawGrid(ctx, 4, '#1a1a28')
@@ -95,6 +102,10 @@ export default function FilterVisualization({ moduleId, accentColor }: Props) {
     ctx.lineTo(xCutoff, H)
     ctx.stroke()
     ctx.restore()
+
+    if (bypass) {
+      drawBypassOverlay(ctx, canvas.width, canvas.height, accentColor)
+    }
   })
 
   return (

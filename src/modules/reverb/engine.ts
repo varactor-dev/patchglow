@@ -7,6 +7,10 @@ export class ReverbEngine implements ModuleAudioEngine {
   private outputGain: Tone.Gain | null = null
   private dampFilter: Tone.Filter | null = null
   private outputAnalyser: Tone.Analyser | null = null
+  private processGain: Tone.Gain | null = null
+  private bypassGain: Tone.Gain | null = null
+  private isOff = false
+  private isBypassed = false
   private decayValue = 2.5
   private dampingValue = 0.5
 
@@ -24,11 +28,19 @@ export class ReverbEngine implements ModuleAudioEngine {
     })
     this.outputAnalyser = new Tone.Analyser('waveform', 512)
 
-    // Chain: inputGain → reverb → dampFilter → outputGain → analyser
+    this.processGain = new Tone.Gain(1)
+    this.bypassGain = new Tone.Gain(0)
+
+    // Chain: inputGain → reverb → dampFilter → processGain → outputGain → analyser
     this.inputGain.connect(this.reverb)
     this.reverb.connect(this.dampFilter)
-    this.dampFilter.connect(this.outputGain)
+    this.dampFilter.connect(this.processGain)
+    this.processGain.connect(this.outputGain)
     this.outputGain.connect(this.outputAnalyser)
+
+    // Bypass path: inputGain → bypassGain → outputGain
+    this.inputGain.connect(this.bypassGain)
+    this.bypassGain.connect(this.outputGain)
 
     // Generate impulse response (async but Tone handles queueing)
     this.reverb.generate()
@@ -71,6 +83,18 @@ export class ReverbEngine implements ModuleAudioEngine {
     }
   }
 
+  handleAction(action: string, payload?: unknown): void {
+    if (action === 'setOff') {
+      this.isOff = payload as boolean
+      if (this.outputGain) this.outputGain.gain.value = this.isOff ? 0 : 1
+    }
+    if (action === 'setBypass') {
+      this.isBypassed = payload as boolean
+      if (this.processGain) this.processGain.gain.value = this.isBypassed ? 0 : 1
+      if (this.bypassGain) this.bypassGain.gain.value = this.isBypassed ? 1 : 0
+    }
+  }
+
   getVisualizationData(): VisualizationData {
     if (!this.outputAnalyser) return {}
 
@@ -90,11 +114,15 @@ export class ReverbEngine implements ModuleAudioEngine {
     this.inputGain?.dispose()
     this.outputGain?.dispose()
     this.dampFilter?.dispose()
+    this.processGain?.dispose()
+    this.bypassGain?.dispose()
     this.outputAnalyser?.dispose()
     this.reverb = null
     this.inputGain = null
     this.outputGain = null
     this.dampFilter = null
+    this.processGain = null
+    this.bypassGain = null
     this.outputAnalyser = null
   }
 }

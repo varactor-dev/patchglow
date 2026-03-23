@@ -19,6 +19,7 @@ export class SampleHoldEngine implements ModuleAudioEngine {
   private heldValue = 0
   private inputValue = 0
   private history: number[] = []
+  private isOff = false
 
   initialize(_context: Tone.BaseContext): void {
     this.outputSignal = new Tone.Signal<'number'>({ value: 0, units: 'number' })
@@ -80,6 +81,15 @@ export class SampleHoldEngine implements ModuleAudioEngine {
 
   setParameter(_parameterId: string, _value: number | string): void {
     // No parameters
+  }
+
+  handleAction(action: string, payload?: unknown): void {
+    if (action === 'setOff') {
+      this.isOff = payload as boolean
+      if (this.isOff && this.outputSignal) {
+        this.outputSignal.value = 0
+      }
+    }
   }
 
   getVisualizationData(): VisualizationData {

@@ -31,6 +31,7 @@ export class KeyboardEngine implements ModuleAudioEngine {
   // For visualization
   private pressedNote: number | null = null
   private pressedNoteName = ''
+  private isOff = false
 
   noteOn(semitone: number): void {
     const midiNote = 60 + semitone + this.octave * 12
@@ -109,6 +110,13 @@ export class KeyboardEngine implements ModuleAudioEngine {
   handleAction(action: string, payload?: unknown): void {
     if (action === 'noteOn') this.noteOn(payload as number)
     if (action === 'noteOff') this.noteOff()
+    if (action === 'setOff') {
+      this.isOff = payload as boolean
+      if (this.isOff) {
+        if (this.cvSignal) this.cvSignal.value = 0
+        if (this.gateSignal) this.gateSignal.value = 0
+      }
+    }
   }
 
   initialize(_context: Tone.BaseContext): void {

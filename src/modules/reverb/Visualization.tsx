@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { useAnimationFrame } from '@/modules/_shared/useAnimationFrame'
-import { clearCanvas, drawGrid } from '@/modules/_shared/drawUtils'
+import { clearCanvas, drawGrid, drawOffOverlay, drawBypassOverlay } from '@/modules/_shared/drawUtils'
 import AudioEngineManager from '@/engine/AudioEngineManager'
 import type { VisualizationData } from '@/types/module'
 import panelStyles from '@/ui/ModulePanel/ModulePanel.module.css'
@@ -9,18 +9,26 @@ interface Props {
   moduleId: string
   data: VisualizationData
   accentColor: string
+  off?: boolean
+  bypass?: boolean
 }
 
 const W = 160
 const H = 80
 
-export default function ReverbVisualization({ moduleId, accentColor }: Props) {
+export default function ReverbVisualization({ moduleId, accentColor, off, bypass }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useAnimationFrame(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
+
+    if (off) {
+      drawOffOverlay(ctx, canvas.width, canvas.height)
+      return
+    }
+
     clearCanvas(ctx)
     drawGrid(ctx, 4)
 
@@ -41,14 +49,14 @@ export default function ReverbVisualization({ moduleId, accentColor }: Props) {
 
     // Draw decay envelope shape
     const spikeX = 15
-    const spikeTop = 10
+    const spikeTop = 6
     const baseY = H - 10
 
-    // Tail length scaled to decay (2.5s → about 80% width, 15s → full width)
-    const tailEndX = Math.min(W - 5, spikeX + (decay / 15) * (W - spikeX - 5))
+    // Tail length scaled to decay (2.5s → about full width, 15s → full width)
+    const tailEndX = Math.min(W - 5, spikeX + (decay / 10) * (W - spikeX - 5))
 
-    // Draw dissolving tail as particles
-    const particleCount = Math.floor(120 * (decay / 5))
+    // Draw dissolving tail as particles — more and fuzzier
+    const particleCount = Math.floor(180 * (decay / 5))
     const seed = Date.now() * 0.001
     ctx.save()
 
@@ -62,31 +70,31 @@ export default function ReverbVisualization({ moduleId, accentColor }: Props) {
       // Damping darkens the tail end — reduce alpha further for high damping
       const dampFactor = 1 - damping * t * 0.7
 
-      // Pseudo-random scatter using sin
-      const scatter = Math.sin(i * 127.1 + seed * (1 + i * 0.1)) * envValue * (baseY - spikeTop) * 0.4
+      // Pseudo-random scatter using sin — wider spread
+      const scatter = Math.sin(i * 127.1 + seed * (1 + i * 0.1)) * envValue * (baseY - spikeTop) * 0.55
       const y = baseY - envValue * (baseY - spikeTop) * 0.5 + scatter
 
       const alpha = envValue * dampFactor * (0.5 + rms * 2)
-      const size = 1.5 + envValue * 2
+      const size = 2 + envValue * 2.5
 
       ctx.globalAlpha = Math.max(0, Math.min(1, alpha))
       ctx.fillStyle = accentColor
       ctx.shadowColor = accentColor
-      ctx.shadowBlur = size * 2
+      ctx.shadowBlur = size * 3
       ctx.fillRect(x - size / 2, y - size / 2, size, size)
     }
 
     ctx.shadowBlur = 0
 
-    // Draw spike (initial impulse)
+    // Draw spike (initial impulse) — wider base
     ctx.globalAlpha = 0.5 + rms * 2
     ctx.fillStyle = accentColor
     ctx.shadowColor = accentColor
     ctx.shadowBlur = 8
     ctx.beginPath()
-    ctx.moveTo(spikeX - 3, baseY)
+    ctx.moveTo(spikeX - 5, baseY)
     ctx.lineTo(spikeX, spikeTop)
-    ctx.lineTo(spikeX + 3, baseY)
+    ctx.lineTo(spikeX + 5, baseY)
     ctx.fill()
     ctx.shadowBlur = 0
 
@@ -106,6 +114,10 @@ export default function ReverbVisualization({ moduleId, accentColor }: Props) {
     ctx.stroke()
 
     ctx.restore()
+
+    if (bypass) {
+      drawBypassOverlay(ctx, canvas.width, canvas.height, accentColor)
+    }
   })
 
   return (

@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { useAnimationFrame } from '@/modules/_shared/useAnimationFrame'
-import { clearCanvas } from '@/modules/_shared/drawUtils'
+import { clearCanvas, drawOffOverlay, drawBypassOverlay } from '@/modules/_shared/drawUtils'
 import AudioEngineManager from '@/engine/AudioEngineManager'
 import type { VisualizationData } from '@/types/module'
 import panelStyles from '@/ui/ModulePanel/ModulePanel.module.css'
@@ -9,6 +9,8 @@ interface Props {
   moduleId: string
   data: VisualizationData
   accentColor: string
+  off?: boolean
+  bypass?: boolean
 }
 
 const W = 120
@@ -20,13 +22,18 @@ function calcRms(data: Float32Array): number {
   return Math.sqrt(sum / data.length)
 }
 
-export default function MixerVisualization({ moduleId, accentColor }: Props) {
+export default function MixerVisualization({ moduleId, accentColor, off, bypass }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useAnimationFrame(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
+
+    if (off) {
+      drawOffOverlay(ctx, canvas.width, canvas.height)
+      return
+    }
 
     clearCanvas(ctx)
 
@@ -57,6 +64,19 @@ export default function MixerVisualization({ moduleId, accentColor }: Props) {
       const barH = bar.rms * maxH
       const y = canvas.height * 0.08 + (maxH - barH)
 
+      // Separator line before MIX bar
+      if (i === 3) {
+        ctx.save()
+        ctx.globalAlpha = 0.15
+        ctx.strokeStyle = '#ffffff'
+        ctx.lineWidth = 1
+        ctx.beginPath()
+        ctx.moveTo(x - gap / 2, canvas.height * 0.08)
+        ctx.lineTo(x - gap / 2, canvas.height * 0.9)
+        ctx.stroke()
+        ctx.restore()
+      }
+
       // Background track (dim)
       ctx.globalAlpha = 0.15
       ctx.fillStyle = bar.color
@@ -70,15 +90,25 @@ export default function MixerVisualization({ moduleId, accentColor }: Props) {
       ctx.fillRect(x, y, barWidth, barH)
       ctx.shadowBlur = 0
 
-      // Label at bottom
-      ctx.globalAlpha = 0.5
-      ctx.fillStyle = bar.color
-      ctx.font = '7px monospace'
+      // Label at bottom — MIX label is distinct
+      if (bar.label === 'MIX') {
+        ctx.globalAlpha = 0.7
+        ctx.fillStyle = '#ffffff'
+        ctx.font = 'bold 8px monospace'
+      } else {
+        ctx.globalAlpha = 0.5
+        ctx.fillStyle = bar.color
+        ctx.font = '7px monospace'
+      }
       ctx.textAlign = 'center'
       ctx.fillText(bar.label, x + barWidth / 2, canvas.height * 0.97)
     })
 
     ctx.globalAlpha = 1
+
+    if (bypass) {
+      drawBypassOverlay(ctx, canvas.width, canvas.height, accentColor)
+    }
   })
 
   return (

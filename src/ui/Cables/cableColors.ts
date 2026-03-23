@@ -27,8 +27,11 @@ export const PULSE_DURATION_MS = 150
 export const PULSE_SEGMENT_RATIO = 0.15       // 15% of cable length
 export const PULSE_COLOR_ATTACK = '#ff80e5'   // white-hot magenta for gate attack pulse
 
-// Gate release fade duration (after pulse completes)
-export const GATE_FADE_MS = 200
+// Gate release: instant off (no fade)
+export const GATE_FADE_MS = 0
+
+// Gate-specific pulse duration (faster than general pulse)
+export const GATE_PULSE_DURATION_MS = 120
 
 // Audio cable color temperature — shifts hotter with signal level
 export const AUDIO_COLOR_COLD = '#cc5500'   // deep amber (idle/low signal)

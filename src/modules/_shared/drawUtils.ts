@@ -198,3 +198,54 @@ export function findZeroCrossing(data: Float32Array, startSearch = 0): number {
   }
   return 0
 }
+
+/**
+ * Draw a full-canvas OFF overlay: dark fill with dim red "OFF" text.
+ */
+export function drawOffOverlay(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+  ctx.fillStyle = '#0a0a0f'
+  ctx.fillRect(0, 0, w, h)
+  ctx.fillStyle = '#ef444440'
+  ctx.font = '10px "JetBrains Mono", monospace'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('OFF', w / 2, h / 2)
+}
+
+/**
+ * Draw a BYPASS overlay with hazard stripes + large text.
+ */
+export function drawBypassOverlay(ctx: CanvasRenderingContext2D, w: number, h: number, accentColor: string): void {
+  // Draw diagonal hazard stripes at 45 degrees
+  ctx.save()
+  ctx.strokeStyle = accentColor
+  ctx.globalAlpha = 0.15
+  ctx.lineWidth = 8
+  const spacing = 16
+  // Draw diagonal lines covering the entire canvas
+  for (let x = -h; x < w + h; x += spacing) {
+    ctx.beginPath()
+    ctx.moveTo(x, 0)
+    ctx.lineTo(x + h, h)
+    ctx.stroke()
+  }
+  ctx.restore()
+
+  // Draw "BYPASS" text in large Orbitron with manual letter-spacing
+  ctx.save()
+  const text = 'BYPASS'
+  const letterSpacing = 3  // extra pixels between letters
+  ctx.font = '14px "Orbitron", sans-serif'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillStyle = accentColor
+  ctx.globalAlpha = 0.5
+  const measured = ctx.measureText(text)
+  const totalExtra = letterSpacing * (text.length - 1)
+  let xPos = (w - measured.width - totalExtra) / 2
+  for (const char of text) {
+    ctx.fillText(char, xPos + ctx.measureText(char).width / 2, h / 2)
+    xPos += ctx.measureText(char).width + letterSpacing
+  }
+  ctx.restore()
+}

@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { useAnimationFrame } from '@/modules/_shared/useAnimationFrame'
-import { clearCanvas, drawGrid } from '@/modules/_shared/drawUtils'
+import { clearCanvas, drawGrid, drawOffOverlay, drawBypassOverlay } from '@/modules/_shared/drawUtils'
 import AudioEngineManager from '@/engine/AudioEngineManager'
 import type { VisualizationData } from '@/types/module'
 import panelStyles from '@/ui/ModulePanel/ModulePanel.module.css'
@@ -9,12 +9,14 @@ interface Props {
   moduleId: string
   data: VisualizationData
   accentColor: string
+  off?: boolean
+  bypass?: boolean
 }
 
 const W = 120
 const H = 80
 
-export default function SampleHoldVisualization({ moduleId, accentColor }: Props) {
+export default function SampleHoldVisualization({ moduleId, accentColor, off, bypass }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const prevHistoryLenRef = useRef(0)
   const flashRef = useRef(0)
@@ -23,6 +25,12 @@ export default function SampleHoldVisualization({ moduleId, accentColor }: Props
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
+
+    if (off) {
+      drawOffOverlay(ctx, canvas.width, canvas.height)
+      return
+    }
+
     clearCanvas(ctx)
     drawGrid(ctx, 4)
 
@@ -134,6 +142,10 @@ export default function SampleHoldVisualization({ moduleId, accentColor }: Props
     ctx.globalAlpha = triggerHigh ? 0.8 : 0.15
     ctx.fillStyle = triggerHigh ? accentColor : '#444'
     ctx.fillRect(W - 10, 4, 6, 4)
+
+    if (bypass) {
+      drawBypassOverlay(ctx, canvas.width, canvas.height, accentColor)
+    }
   })
 
   return (

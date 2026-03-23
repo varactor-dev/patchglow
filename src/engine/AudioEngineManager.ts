@@ -8,6 +8,9 @@ class AudioEngineManager {
   private engines = new Map<string, ModuleAudioEngine>()
   private started = false
   private activeConnections: Connection[] = []
+  private soloGain: Tone.Gain | null = null
+  private soloSourceNode: Tone.ToneAudioNode | null = null
+  private savedMasterVolume = -12
 
   // ─── Singleton ─────────────────────────────────────────────────────────────
   private static instance: AudioEngineManager | null = null
@@ -49,8 +52,21 @@ class AudioEngineManager {
               this.updateParameter(id, paramId, value)
             }
           }
+          // Detect off/bypass changes
+          if (mod.off !== prevMod.off) {
+            this.engines.get(id)?.handleAction?.('setOff', mod.off ?? false)
+          }
+          if (mod.bypass !== prevMod.bypass) {
+            this.engines.get(id)?.handleAction?.('setBypass', mod.bypass ?? false)
+          }
         }
       },
+    )
+
+    // Subscribe to solo changes
+    useRackStore.subscribe(
+      (state) => state.soloModuleId,
+      (soloId) => this.setSolo(soloId),
     )
   }
 
@@ -100,6 +116,10 @@ class AudioEngineManager {
         for (const [paramId, value] of Object.entries(mod.parameters)) {
           engine.setParameter(paramId, value)
         }
+
+        // Apply initial off/bypass state (for engines created from imported patches)
+        if (mod.off) engine.handleAction?.('setOff', true)
+        if (mod.bypass) engine.handleAction?.('setBypass', true)
 
         this.engines.set(instanceId, engine)
       }
@@ -175,6 +195,33 @@ class AudioEngineManager {
   // ─── Visualization data ────────────────────────────────────────────────────
   getVisualizationData(instanceId: string): VisualizationData {
     return this.engines.get(instanceId)?.getVisualizationData() ?? {}
+  }
+
+  // ─── Solo routing ──────────────────────────────────────────────────────────
+  private setSolo(moduleId: string | null): void {
+    // Clean up previous solo
+    if (this.soloSourceNode && this.soloGain) {
+      try { this.soloSourceNode.disconnect(this.soloGain as unknown as Tone.InputNode) } catch { /* ignore */ }
+    }
+    if (!moduleId) {
+      // Unsolo: restore master volume
+      Tone.getDestination().volume.value = this.savedMasterVolume
+      this.soloSourceNode = null
+      return
+    }
+    // Solo: connect module output directly to speakers
+    if (!this.soloGain) {
+      this.soloGain = new Tone.Gain(1).toDestination()
+    }
+    const engine = this.engines.get(moduleId)
+    if (!engine) return
+    try {
+      const outputNode = engine.getOutputNode('out')
+      outputNode.connect(this.soloGain as unknown as Tone.InputNode)
+      this.soloSourceNode = outputNode
+      this.savedMasterVolume = Tone.getDestination().volume.value
+      Tone.getDestination().volume.value = -Infinity // mute normal output
+    } catch { /* module may not have 'out' port */ }
   }
 
   // ─── Master volume ─────────────────────────────────────────────────────────

@@ -8,7 +8,13 @@ export class DelayEngine implements ModuleAudioEngine {
   private timeCvGain: Tone.Gain | null = null
   private inputAnalyser: Tone.Analyser | null = null
   private outputAnalyser: Tone.Analyser | null = null
+  private processGain: Tone.Gain | null = null
+  private bypassGain: Tone.Gain | null = null
+  private isOff = false
+  private isBypassed = false
   private feedbackValue = 0.4
+  private inputRmsHistory: number[] = []
+  private rmsHistoryMaxLen = 120  // ~2 seconds at 60fps
 
   initialize(_context: Tone.BaseContext): void {
     this.delay = new Tone.FeedbackDelay({
@@ -26,11 +32,19 @@ export class DelayEngine implements ModuleAudioEngine {
     this.timeCvGain = new Tone.Gain(0.5) // ±1 CV → ±0.5s modulation
     this.timeCvGain.connect(this.delay.delayTime)
 
-    // Chain: inputGain → inputAnalyser, inputGain → delay → outputGain → outputAnalyser
+    this.processGain = new Tone.Gain(1)
+    this.bypassGain = new Tone.Gain(0)
+
+    // Chain: inputGain → inputAnalyser, inputGain → delay → processGain → outputGain → outputAnalyser
     this.inputGain.connect(this.inputAnalyser)
     this.inputGain.connect(this.delay)
-    this.delay.connect(this.outputGain)
+    this.delay.connect(this.processGain)
+    this.processGain.connect(this.outputGain)
     this.outputGain.connect(this.outputAnalyser)
+
+    // Bypass path: inputGain → bypassGain → outputGain
+    this.inputGain.connect(this.bypassGain)
+    this.bypassGain.connect(this.outputGain)
   }
 
   getOutputNode(portId: string): Tone.ToneAudioNode {
@@ -61,18 +75,43 @@ export class DelayEngine implements ModuleAudioEngine {
     }
   }
 
+  handleAction(action: string, payload?: unknown): void {
+    if (action === 'setOff') {
+      this.isOff = payload as boolean
+      if (this.outputGain) this.outputGain.gain.value = this.isOff ? 0 : 1
+    }
+    if (action === 'setBypass') {
+      this.isBypassed = payload as boolean
+      if (this.processGain) this.processGain.gain.value = this.isBypassed ? 0 : 1
+      if (this.bypassGain) this.bypassGain.gain.value = this.isBypassed ? 1 : 0
+    }
+  }
+
   getVisualizationData(): VisualizationData {
     if (!this.inputAnalyser || !this.outputAnalyser) return {}
 
     const inputWaveform = this.inputAnalyser.getValue() as Float32Array
     const outputWaveform = this.outputAnalyser.getValue() as Float32Array
 
+    // Compute input RMS for timeline visualization
+    let sum = 0
+    for (let i = 0; i < inputWaveform.length; i++) {
+      sum += inputWaveform[i] * inputWaveform[i]
+    }
+    const inputRms = Math.sqrt(sum / inputWaveform.length)
+    this.inputRmsHistory.push(inputRms)
+    if (this.inputRmsHistory.length > this.rmsHistoryMaxLen) {
+      this.inputRmsHistory.shift()
+    }
+
     return {
       waveform: outputWaveform,
       customData: {
         inputWaveform: Array.from(inputWaveform),
+        inputRmsHistory: this.inputRmsHistory,
         feedback: this.feedbackValue,
         delayTime: this.delay?.delayTime.value ?? 0.3,
+        wet: this.delay?.wet.value ?? 0.5,
       },
     }
   }
@@ -82,12 +121,16 @@ export class DelayEngine implements ModuleAudioEngine {
     this.inputGain?.dispose()
     this.outputGain?.dispose()
     this.timeCvGain?.dispose()
+    this.processGain?.dispose()
+    this.bypassGain?.dispose()
     this.inputAnalyser?.dispose()
     this.outputAnalyser?.dispose()
     this.delay = null
     this.inputGain = null
     this.outputGain = null
     this.timeCvGain = null
+    this.processGain = null
+    this.bypassGain = null
     this.inputAnalyser = null
     this.outputAnalyser = null
   }

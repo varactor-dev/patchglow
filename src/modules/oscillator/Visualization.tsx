@@ -7,6 +7,8 @@ import {
   drawWaveform,
   drawSpectrum,
   findZeroCrossing,
+  drawOffOverlay,
+  drawBypassOverlay,
 } from '@/modules/_shared/drawUtils'
 import AudioEngineManager from '@/engine/AudioEngineManager'
 import type { VisualizationData } from '@/types/module'
@@ -16,13 +18,15 @@ interface Props {
   moduleId: string
   data: VisualizationData
   accentColor: string
+  off?: boolean
+  bypass?: boolean
 }
 
 const W = 220
 const H_TOP = 80    // waveform
 const H_BOT = 50    // spectrum
 
-export default function OscillatorVisualization({ moduleId, accentColor }: Props) {
+export default function OscillatorVisualization({ moduleId, accentColor, off, bypass }: Props) {
   const waveCanvasRef = useRef<HTMLCanvasElement>(null)
   const specCanvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -31,6 +35,12 @@ export default function OscillatorVisualization({ moduleId, accentColor }: Props
     const canvas = waveCanvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
+
+    if (off) {
+      drawOffOverlay(ctx, canvas.width, canvas.height)
+      return
+    }
+
     clearWithFade(ctx, 0.28)
     drawGrid(ctx, 4)
 
@@ -43,6 +53,10 @@ export default function OscillatorVisualization({ moduleId, accentColor }: Props
       const stable = waveform.slice(offset, offset + displayLen)
       drawWaveform(ctx, stable.length > 0 ? stable : waveform, accentColor)
     }
+
+    if (bypass) {
+      drawBypassOverlay(ctx, canvas.width, canvas.height, accentColor)
+    }
   })
 
   // Bottom: FFT spectrum
@@ -50,6 +64,12 @@ export default function OscillatorVisualization({ moduleId, accentColor }: Props
     const canvas = specCanvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
+
+    if (off) {
+      drawOffOverlay(ctx, canvas.width, canvas.height)
+      return
+    }
+
     clearCanvas(ctx)
     drawGrid(ctx, 6, '#141420')
 
@@ -58,6 +78,10 @@ export default function OscillatorVisualization({ moduleId, accentColor }: Props
       // Only use first half (bins above Nyquist are mirrored noise)
       const half = spectrum.slice(0, spectrum.length / 2)
       drawSpectrum(ctx, half, accentColor)
+    }
+
+    if (bypass) {
+      drawBypassOverlay(ctx, canvas.width, canvas.height, accentColor)
     }
   })
 

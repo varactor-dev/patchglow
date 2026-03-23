@@ -1,0 +1,35 @@
+.tooltip {
+  position: fixed;
+  z-index: 10000;
+  background: #1a1a24;
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #e0e0ec;
+  max-width: 240px;
+  padding: 8px 10px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  line-height: 1.4;
+}
+
+/* Triangle pointer — default: pointing DOWN (tooltip is above anchor) */
+.tooltip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+}
+
+.above::after {
+  bottom: -6px;
+  border-top: 6px solid var(--accent-color);
+}
+
+.below::after {
+  top: -6px;
+  border-bottom: 6px solid var(--accent-color);
+}

@@ -6,6 +6,7 @@ export class NoiseEngine implements ModuleAudioEngine {
   private gainNode: Tone.Gain | null = null
   private waveformAnalyser: Tone.Analyser | null = null
   private fftAnalyser: Tone.Analyser | null = null
+  private isOff = false
 
   initialize(_context: Tone.BaseContext): void {
     this.noise = new Tone.Noise('white')
@@ -58,9 +59,13 @@ export class NoiseEngine implements ModuleAudioEngine {
     return { waveform, spectrum }
   }
 
-  handleAction(action: string): void {
+  handleAction(action: string, payload?: unknown): void {
     if (action === 'contextStarted' && this.noise) {
       try { this.noise.start() } catch { /* may already be started */ }
+    }
+    if (action === 'setOff') {
+      this.isOff = payload as boolean
+      if (this.gainNode) this.gainNode.gain.value = this.isOff ? 0 : 0.8
     }
   }
 

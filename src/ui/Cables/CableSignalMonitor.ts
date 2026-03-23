@@ -1,9 +1,9 @@
 import AudioEngineManager from '@/engine/AudioEngineManager'
 import {
   PULSE_DURATION_MS,
+  GATE_PULSE_DURATION_MS,
   FLOW_BASE_SPEED,
   GATE_IDLE_FLOW_SPEED,
-  GATE_FADE_MS,
 } from './cableColors'
 import type { VisualizationData } from '@/types/module'
 import type { Connection } from '@/types/store'
@@ -114,14 +114,15 @@ export class CableSignalMonitor {
         }
       }
 
-      // Compute pulse progress
+      // Compute pulse progress (gate cables use faster pulse)
       let pulseProgress = 0
       let pulseDirection: 'attack' | 'release' | null = null
       const startTime = this.pulseStartTime.get(conn.id)
       const dir = this.pulseDirections.get(conn.id)
       if (startTime !== undefined && dir) {
         const elapsed = now - startTime
-        pulseProgress = Math.min(1, elapsed / PULSE_DURATION_MS)
+        const duration = conn.signalType === 'gate' ? GATE_PULSE_DURATION_MS : PULSE_DURATION_MS
+        pulseProgress = Math.min(1, elapsed / duration)
         pulseDirection = dir
         if (pulseProgress >= 1) {
           this.pulseStartTime.delete(conn.id)
@@ -131,31 +132,9 @@ export class CableSignalMonitor {
         }
       }
 
-      // Gate cable: override level with fade logic
+      // Gate cable: binary level — instant on/off, no fade
       if (conn.signalType === 'gate') {
-        if (rawGateHigh) {
-          level = 1.0
-          this.gateFadeStart.delete(conn.id)
-        } else {
-          // Gate is low
-          if (this.pulseStartTime.has(conn.id)) {
-            // Release pulse still traveling — hold bright
-            level = 1.0
-          } else {
-            // Pulse done (or no pulse) — fade over GATE_FADE_MS
-            let fadeStart = this.gateFadeStart.get(conn.id)
-            if (fadeStart === undefined) {
-              fadeStart = now
-              this.gateFadeStart.set(conn.id, fadeStart)
-            }
-            const fadeElapsed = now - fadeStart
-            if (fadeElapsed < GATE_FADE_MS) {
-              level = 1.0 - fadeElapsed / GATE_FADE_MS
-            } else {
-              level = 0
-            }
-          }
-        }
+        level = rawGateHigh ? 1.0 : 0
       }
 
       // Waveform data for cable visualization
