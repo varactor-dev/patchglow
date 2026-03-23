@@ -1,5 +1,6 @@
 import * as Tone from 'tone'
 import type { ModuleAudioEngine, VisualizationData } from '@/types/module'
+import { type BypassRouting, createBypassRouting, setBypassState, disposeBypassRouting } from '@/modules/_shared/bypassRouting'
 
 export class ReverbEngine implements ModuleAudioEngine {
   private reverb: Tone.Reverb | null = null
@@ -7,8 +8,7 @@ export class ReverbEngine implements ModuleAudioEngine {
   private outputGain: Tone.Gain | null = null
   private dampFilter: Tone.Filter | null = null
   private outputAnalyser: Tone.Analyser | null = null
-  private processGain: Tone.Gain | null = null
-  private bypassGain: Tone.Gain | null = null
+  private bypass: BypassRouting | null = null
   private isOff = false
   private isBypassed = false
   private decayValue = 2.5
@@ -28,19 +28,13 @@ export class ReverbEngine implements ModuleAudioEngine {
     })
     this.outputAnalyser = new Tone.Analyser('waveform', 512)
 
-    this.processGain = new Tone.Gain(1)
-    this.bypassGain = new Tone.Gain(0)
+    this.bypass = createBypassRouting(this.inputGain, this.outputGain)
 
     // Chain: inputGain → reverb → dampFilter → processGain → outputGain → analyser
     this.inputGain.connect(this.reverb)
     this.reverb.connect(this.dampFilter)
-    this.dampFilter.connect(this.processGain)
-    this.processGain.connect(this.outputGain)
+    this.dampFilter.connect(this.bypass.processGain)
     this.outputGain.connect(this.outputAnalyser)
-
-    // Bypass path: inputGain → bypassGain → outputGain
-    this.inputGain.connect(this.bypassGain)
-    this.bypassGain.connect(this.outputGain)
 
     // Generate impulse response (async but Tone handles queueing)
     this.reverb.generate()
@@ -90,8 +84,7 @@ export class ReverbEngine implements ModuleAudioEngine {
     }
     if (action === 'setBypass') {
       this.isBypassed = payload as boolean
-      if (this.processGain) this.processGain.gain.value = this.isBypassed ? 0 : 1
-      if (this.bypassGain) this.bypassGain.gain.value = this.isBypassed ? 1 : 0
+      if (this.bypass) setBypassState(this.bypass, this.isBypassed)
     }
   }
 
@@ -114,15 +107,13 @@ export class ReverbEngine implements ModuleAudioEngine {
     this.inputGain?.dispose()
     this.outputGain?.dispose()
     this.dampFilter?.dispose()
-    this.processGain?.dispose()
-    this.bypassGain?.dispose()
+    if (this.bypass) disposeBypassRouting(this.bypass)
     this.outputAnalyser?.dispose()
     this.reverb = null
     this.inputGain = null
     this.outputGain = null
     this.dampFilter = null
-    this.processGain = null
-    this.bypassGain = null
+    this.bypass = null
     this.outputAnalyser = null
   }
 }

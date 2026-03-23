@@ -1,5 +1,6 @@
 import * as Tone from 'tone'
 import type { ModuleAudioEngine, VisualizationData } from '@/types/module'
+import { normalizeFFT } from '@/modules/_shared/drawUtils'
 
 export class OscillatorEngine implements ModuleAudioEngine {
   private osc: Tone.Oscillator | null = null
@@ -85,13 +86,7 @@ export class OscillatorEngine implements ModuleAudioEngine {
     const waveform = this.waveformAnalyser.getValue() as Float32Array
     const fft = this.fftAnalyser.getValue() as Float32Array
 
-    // Convert fft from dB (-Infinity..0) to 0..255 for drawSpectrum
-    const spectrum = new Float32Array(fft.length)
-    for (let i = 0; i < fft.length; i++) {
-      spectrum[i] = Math.max(0, ((fft[i] as number) + 120) / 120 * 255)
-    }
-
-    return { waveform, spectrum }
+    return { waveform, spectrum: normalizeFFT(fft) }
   }
 
   handleAction(action: string, payload?: unknown): void {

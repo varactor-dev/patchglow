@@ -1,5 +1,6 @@
 import * as Tone from 'tone'
 import type { ModuleAudioEngine, VisualizationData } from '@/types/module'
+import { normalizeFFT } from '@/modules/_shared/drawUtils'
 
 export class NoiseEngine implements ModuleAudioEngine {
   private noise: Tone.Noise | null = null
@@ -50,13 +51,7 @@ export class NoiseEngine implements ModuleAudioEngine {
     const waveform = this.waveformAnalyser.getValue() as Float32Array
     const fft = this.fftAnalyser.getValue() as Float32Array
 
-    // Convert fft from dB to 0..255
-    const spectrum = new Float32Array(fft.length)
-    for (let i = 0; i < fft.length; i++) {
-      spectrum[i] = Math.max(0, ((fft[i] as number) + 120) / 120 * 255)
-    }
-
-    return { waveform, spectrum }
+    return { waveform, spectrum: normalizeFFT(fft) }
   }
 
   handleAction(action: string, payload?: unknown): void {
@@ -67,6 +62,8 @@ export class NoiseEngine implements ModuleAudioEngine {
       this.isOff = payload as boolean
       if (this.gainNode) this.gainNode.gain.value = this.isOff ? 0 : 0.8
     }
+    // Noise is a source module — bypass is not exposed in UI but handled defensively
+    if (action === 'setBypass') { /* no-op for source modules */ }
   }
 
   dispose(): void {

@@ -191,7 +191,7 @@ export const useRackStore = create<RackStore>()(
     // ─── Patch Management ────────────────────────────────────────────────────
     exportPatch() {
       const { modules, connections } = get()
-      return JSON.stringify({ modules, connections }, null, 2)
+      return JSON.stringify({ version: 1, modules, connections }, null, 2)
     },
 
     setAudioStarted() {
@@ -204,9 +204,11 @@ export const useRackStore = create<RackStore>()(
 
     importPatch(patchJson) {
       try {
-        const patch = JSON.parse(patchJson) as { modules: Record<string, RackModule>; connections: Connection[] }
+        const patch = JSON.parse(patchJson) as { version?: number; modules: Record<string, RackModule>; connections: Connection[] }
+        // Accept version 1 or unversioned (pre-versioning) patches
         const modules = patch.modules ?? {}
-        // Restore module counters so new modules get unique IDs after loading
+        // Reset and restore module counters so new modules get unique IDs after loading
+        for (const key of Object.keys(moduleCounters)) delete moduleCounters[key]
         for (const mod of Object.values(modules)) {
           const match = mod.instanceId.match(/^(.+)-(\d+)$/)
           if (match) {

@@ -249,3 +249,18 @@ export function drawBypassOverlay(ctx: CanvasRenderingContext2D, w: number, h: n
   }
   ctx.restore()
 }
+
+/**
+ * Convert FFT dB values (typically -Infinity..0) to 0..255 range for drawSpectrum.
+ * Uses a 120dB dynamic range floor — values below -120dB map to 0.
+ */
+const FFT_DB_FLOOR = 120
+const FFT_OUTPUT_RANGE = 255
+
+export function normalizeFFT(fft: Float32Array): Float32Array {
+  const spectrum = new Float32Array(fft.length)
+  for (let i = 0; i < fft.length; i++) {
+    spectrum[i] = Math.max(0, ((fft[i] as number) + FFT_DB_FLOOR) / FFT_DB_FLOOR * FFT_OUTPUT_RANGE)
+  }
+  return spectrum
+}

@@ -1,5 +1,6 @@
 import * as Tone from 'tone'
 import type { ModuleAudioEngine, VisualizationData } from '@/types/module'
+import { GatePoller } from '@/modules/_shared/GatePoller'
 
 export class EnvelopeEngine implements ModuleAudioEngine {
   private envelope: Tone.Envelope | null = null
@@ -7,10 +8,8 @@ export class EnvelopeEngine implements ModuleAudioEngine {
   private negateGain: Tone.Gain | null = null
   private invertOutputGain: Tone.Gain | null = null
   private dcOffset: Tone.Signal<'number'> | null = null
-  private gateInputGain: Tone.Gain | null = null
-  private gateAnalyser: Tone.Analyser | null = null
+  private gatePoller: GatePoller | null = null
   private gateOpen = false
-  private pollInterval: number | null = null
   private isOff = false
   private isBypassed = false
 
@@ -20,8 +19,6 @@ export class EnvelopeEngine implements ModuleAudioEngine {
     this.negateGain = new Tone.Gain(-1)
     this.invertOutputGain = new Tone.Gain(1)
     this.dcOffset = new Tone.Signal({ value: 1, units: 'number' })
-    this.gateInputGain = new Tone.Gain(1)
-    this.gateAnalyser = new Tone.Analyser('waveform', 32)
 
     // Normal output: envelope → outputGain
     this.envelope.connect(this.outputGain)
@@ -33,23 +30,11 @@ export class EnvelopeEngine implements ModuleAudioEngine {
     this.negateGain.connect(this.invertOutputGain)
     this.dcOffset.connect(this.invertOutputGain as unknown as Tone.InputNode)
 
-    // Gate: inputGain → analyser (for polling)
-    this.gateInputGain.connect(this.gateAnalyser)
-
-    // Poll gate every 5ms for edge detection
-    this.pollInterval = window.setInterval(() => {
-      const data = this.gateAnalyser!.getValue() as Float32Array
-      // Use the most-recent sample (last element) for lower latency detection
-      const gateValue = data[data.length - 1] as number
-      const gateHigh = gateValue > 0.5
-      if (gateHigh && !this.gateOpen) {
-        this.envelope!.triggerAttack()
-        this.gateOpen = true
-      } else if (!gateHigh && this.gateOpen) {
-        this.envelope!.triggerRelease()
-        this.gateOpen = false
-      }
-    }, 5)
+    // Gate polling for edge detection
+    this.gatePoller = new GatePoller(
+      () => { this.envelope!.triggerAttack(); this.gateOpen = true },
+      () => { this.envelope!.triggerRelease(); this.gateOpen = false },
+    )
   }
 
   getOutputNode(portId: string): Tone.ToneAudioNode {
@@ -59,7 +44,7 @@ export class EnvelopeEngine implements ModuleAudioEngine {
   }
 
   getInputNode(portId: string): Tone.ToneAudioNode {
-    if (portId === 'gate') return this.gateInputGain!
+    if (portId === 'gate') return this.gatePoller!.getInputNode()
     throw new Error(`EnvelopeEngine: unknown input port "${portId}"`)
   }
 
@@ -108,25 +93,18 @@ export class EnvelopeEngine implements ModuleAudioEngine {
   }
 
   dispose(): void {
-    if (this.pollInterval !== null) {
-      window.clearInterval(this.pollInterval)
-      this.pollInterval = null
-    }
-
+    this.gatePoller?.dispose()
     this.envelope?.dispose()
     this.outputGain?.dispose()
     this.negateGain?.dispose()
     this.invertOutputGain?.dispose()
     this.dcOffset?.dispose()
-    this.gateInputGain?.dispose()
-    this.gateAnalyser?.dispose()
 
+    this.gatePoller = null
     this.envelope = null
     this.outputGain = null
     this.negateGain = null
     this.invertOutputGain = null
     this.dcOffset = null
-    this.gateInputGain = null
-    this.gateAnalyser = null
   }
 }

@@ -1,5 +1,6 @@
 import * as Tone from 'tone'
 import type { ModuleAudioEngine, VisualizationData } from '@/types/module'
+import { GatePoller } from '@/modules/_shared/GatePoller'
 
 const HISTORY_SIZE = 32
 
@@ -11,15 +12,15 @@ export class SampleHoldEngine implements ModuleAudioEngine {
   private signalAnalyser: Tone.Analyser | null = null
 
   // Trigger input
-  private triggerInputGain: Tone.Gain | null = null
-  private triggerAnalyser: Tone.Analyser | null = null
-  private triggerHigh = false
+  private triggerPoller: GatePoller | null = null
 
-  private pollInterval: number | null = null
   private heldValue = 0
   private inputValue = 0
   private history: number[] = []
   private isOff = false
+
+  // Read signal input on a shared interval with the trigger poller
+  private inputPollInterval: number | null = null
 
   initialize(_context: Tone.BaseContext): void {
     this.outputSignal = new Tone.Signal<'number'>({ value: 0, units: 'number' })
@@ -29,43 +30,26 @@ export class SampleHoldEngine implements ModuleAudioEngine {
     this.signalAnalyser = new Tone.Analyser('waveform', 32)
     this.signalInputGain.connect(this.signalAnalyser)
 
-    // Trigger input
-    this.triggerInputGain = new Tone.Gain(1)
-    this.triggerAnalyser = new Tone.Analyser('waveform', 32)
-    this.triggerInputGain.connect(this.triggerAnalyser)
+    // Trigger input via GatePoller — on rising edge, sample the current input
+    this.triggerPoller = new GatePoller(() => {
+      this.heldValue = this.inputValue
+      if (this.outputSignal) {
+        this.outputSignal.value = this.heldValue
+      }
+      this.history.push(this.heldValue)
+      if (this.history.length > HISTORY_SIZE) {
+        this.history.shift()
+      }
+    })
 
-    // Poll trigger for rising edge
-    this.pollInterval = window.setInterval(() => {
-      this.pollTrigger()
-      this.readInput()
-    }, 5)
+    // Poll signal input at the same 5ms rate
+    this.inputPollInterval = window.setInterval(() => this.readInput(), 5)
   }
 
   private readInput(): void {
     if (!this.signalAnalyser) return
     const data = this.signalAnalyser.getValue() as Float32Array
     this.inputValue = data[data.length - 1] as number
-  }
-
-  private pollTrigger(): void {
-    if (!this.triggerAnalyser) return
-    const data = this.triggerAnalyser.getValue() as Float32Array
-    const value = data[data.length - 1] as number
-    const high = value > 0.5
-
-    if (high && !this.triggerHigh) {
-      // Rising edge — sample the input
-      this.heldValue = this.inputValue
-      if (this.outputSignal) {
-        this.outputSignal.value = this.heldValue
-      }
-      // Record in history
-      this.history.push(this.heldValue)
-      if (this.history.length > HISTORY_SIZE) {
-        this.history.shift()
-      }
-    }
-    this.triggerHigh = high
   }
 
   getOutputNode(portId: string): Tone.ToneAudioNode {
@@ -75,7 +59,7 @@ export class SampleHoldEngine implements ModuleAudioEngine {
 
   getInputNode(portId: string): Tone.ToneAudioNode {
     if (portId === 'signal-in') return this.signalInputGain!
-    if (portId === 'trigger') return this.triggerInputGain!
+    if (portId === 'trigger') return this.triggerPoller!.getInputNode()
     throw new Error(`SampleHoldEngine: unknown input port "${portId}"`)
   }
 
@@ -111,7 +95,7 @@ export class SampleHoldEngine implements ModuleAudioEngine {
       customData: {
         heldValue: this.heldValue,
         inputValue: this.inputValue,
-        triggerHigh: this.triggerHigh,
+        triggerHigh: this.triggerPoller?.isHigh() ?? false,
         history: [...this.history],
         cvLevel: (this.heldValue + 1) / 2,
       },
@@ -119,19 +103,17 @@ export class SampleHoldEngine implements ModuleAudioEngine {
   }
 
   dispose(): void {
-    if (this.pollInterval !== null) {
-      window.clearInterval(this.pollInterval)
-      this.pollInterval = null
+    if (this.inputPollInterval !== null) {
+      window.clearInterval(this.inputPollInterval)
+      this.inputPollInterval = null
     }
+    this.triggerPoller?.dispose()
     this.outputSignal?.dispose()
     this.signalInputGain?.dispose()
     this.signalAnalyser?.dispose()
-    this.triggerInputGain?.dispose()
-    this.triggerAnalyser?.dispose()
+    this.triggerPoller = null
     this.outputSignal = null
     this.signalInputGain = null
     this.signalAnalyser = null
-    this.triggerInputGain = null
-    this.triggerAnalyser = null
   }
 }

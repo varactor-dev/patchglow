@@ -1,14 +1,12 @@
 import * as Tone from 'tone'
 import type { ModuleAudioEngine, VisualizationData } from '@/types/module'
+import { GatePoller } from '@/modules/_shared/GatePoller'
 
 export class LfoEngine implements ModuleAudioEngine {
   private lfo: Tone.LFO | null = null
   private outputGain: Tone.Gain | null = null
   private waveformAnalyser: Tone.Analyser | null = null
-  private syncInputGain: Tone.Gain | null = null
-  private syncAnalyser: Tone.Analyser | null = null
-  private pollInterval: number | null = null
-  private syncWasHigh = false
+  private syncPoller: GatePoller | null = null
   private isOff = false
   private isBypassed = false
 
@@ -24,11 +22,6 @@ export class LfoEngine implements ModuleAudioEngine {
     this.outputGain = new Tone.Gain(1)
     this.waveformAnalyser = new Tone.Analyser('waveform', 256)
 
-    // SYNC input chain: incoming gate → syncInputGain → syncAnalyser (polled for rising edge)
-    this.syncInputGain = new Tone.Gain(1)
-    this.syncAnalyser = new Tone.Analyser('waveform', 32)
-    this.syncInputGain.connect(this.syncAnalyser)
-
     // LFO output split: one branch to outputGain (CV out), one to waveformAnalyser (visualization)
     this.lfo.connect(this.outputGain)
     this.lfo.connect(this.waveformAnalyser)
@@ -36,16 +29,8 @@ export class LfoEngine implements ModuleAudioEngine {
       this.lfo.start()
     }
 
-    // Poll syncAnalyser every 5ms for rising edge detection
-    this.pollInterval = window.setInterval(() => {
-      const data = this.syncAnalyser!.getValue() as Float32Array
-      const syncHigh = data[0] > 0.5
-      if (syncHigh && !this.syncWasHigh) {
-        // Rising edge: reset LFO phase to start of cycle
-        this.lfo!.phase = 0
-      }
-      this.syncWasHigh = syncHigh
-    }, 5)
+    // Sync input: rising edge resets LFO phase
+    this.syncPoller = new GatePoller(() => { this.lfo!.phase = 0 })
   }
 
   getOutputNode(portId: string): Tone.ToneAudioNode {
@@ -57,7 +42,7 @@ export class LfoEngine implements ModuleAudioEngine {
 
   getInputNode(portId: string): Tone.ToneAudioNode {
     if (portId === 'sync') {
-      return this.syncInputGain!
+      return this.syncPoller!.getInputNode()
     }
     throw new Error(`LfoEngine: unknown input port "${portId}"`)
   }
@@ -104,23 +89,15 @@ export class LfoEngine implements ModuleAudioEngine {
   }
 
   dispose(): void {
-    if (this.pollInterval !== null) {
-      window.clearInterval(this.pollInterval)
-      this.pollInterval = null
-    }
-
+    this.syncPoller?.dispose()
     this.lfo?.stop()
     this.lfo?.dispose()
     this.outputGain?.dispose()
     this.waveformAnalyser?.dispose()
-    this.syncInputGain?.dispose()
-    this.syncAnalyser?.dispose()
 
+    this.syncPoller = null
     this.lfo = null
     this.outputGain = null
     this.waveformAnalyser = null
-    this.syncInputGain = null
-    this.syncAnalyser = null
-    this.syncWasHigh = false
   }
 }

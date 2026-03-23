@@ -1,5 +1,7 @@
 import * as Tone from 'tone'
 import type { ModuleAudioEngine, VisualizationData } from '@/types/module'
+import { normalizeFFT } from '@/modules/_shared/drawUtils'
+import { type BypassRouting, createBypassRouting, setBypassState, disposeBypassRouting } from '@/modules/_shared/bypassRouting'
 
 export class FilterEngine implements ModuleAudioEngine {
   private inputGain: Tone.Gain | null = null
@@ -11,8 +13,7 @@ export class FilterEngine implements ModuleAudioEngine {
   private cvAnalyser: Tone.Analyser | null = null
   private isOff = false
   private isBypassed = false
-  private bypassGain: Tone.Gain | null = null
-  private processGain: Tone.Gain | null = null
+  private bypass: BypassRouting | null = null
 
   initialize(_context: Tone.BaseContext): void {
     this.inputGain = new Tone.Gain(1)
@@ -30,19 +31,13 @@ export class FilterEngine implements ModuleAudioEngine {
     this.cvAnalyser = new Tone.Analyser('waveform', 32)
     this.cutoffCvGain.connect(this.cvAnalyser)
 
-    this.processGain = new Tone.Gain(1)
-    this.bypassGain = new Tone.Gain(0)
+    this.bypass = createBypassRouting(this.inputGain, this.outputGain)
 
     // Chain: inputGain → filter → analysers → processGain → outputGain
     this.inputGain.connect(this.filter)
     this.filter.connect(this.waveformAnalyser)
     this.filter.connect(this.fftAnalyser)
-    this.filter.connect(this.processGain)
-    this.processGain.connect(this.outputGain)
-
-    // Bypass path: inputGain → bypassGain → outputGain
-    this.inputGain.connect(this.bypassGain)
-    this.bypassGain.connect(this.outputGain)
+    this.filter.connect(this.bypass.processGain)
   }
 
   getInputNode(portId: string): Tone.ToneAudioNode {
@@ -83,8 +78,7 @@ export class FilterEngine implements ModuleAudioEngine {
     }
     if (action === 'setBypass') {
       this.isBypassed = payload as boolean
-      if (this.processGain) this.processGain.gain.value = this.isBypassed ? 0 : 1
-      if (this.bypassGain) this.bypassGain.gain.value = this.isBypassed ? 1 : 0
+      if (this.bypass) setBypassState(this.bypass, this.isBypassed)
     }
   }
 
@@ -94,11 +88,7 @@ export class FilterEngine implements ModuleAudioEngine {
     const waveform = this.waveformAnalyser.getValue() as Float32Array
     const fft = this.fftAnalyser.getValue() as Float32Array
 
-    // Convert fft from dB to 0..255 for drawSpectrum
-    const spectrum = new Float32Array(fft.length)
-    for (let i = 0; i < fft.length; i++) {
-      spectrum[i] = Math.max(0, ((fft[i] as number) + 120) / 120 * 255)
-    }
+    const spectrum = normalizeFFT(fft)
 
     // Compute effective cutoff including CV modulation
     const baseCutoff = Number(this.filter.frequency.value)
@@ -127,8 +117,7 @@ export class FilterEngine implements ModuleAudioEngine {
     this.waveformAnalyser?.dispose()
     this.fftAnalyser?.dispose()
     this.outputGain?.dispose()
-    this.processGain?.dispose()
-    this.bypassGain?.dispose()
+    if (this.bypass) disposeBypassRouting(this.bypass)
     this.cvAnalyser?.dispose()
     this.inputGain = null
     this.filter = null
@@ -136,8 +125,7 @@ export class FilterEngine implements ModuleAudioEngine {
     this.waveformAnalyser = null
     this.fftAnalyser = null
     this.outputGain = null
-    this.processGain = null
-    this.bypassGain = null
+    this.bypass = null
     this.cvAnalyser = null
   }
 }

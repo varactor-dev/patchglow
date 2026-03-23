@@ -1,5 +1,6 @@
 import * as Tone from 'tone'
 import type { ModuleAudioEngine, VisualizationData } from '@/types/module'
+import { type BypassRouting, createBypassRouting, setBypassState, disposeBypassRouting } from '@/modules/_shared/bypassRouting'
 
 export class DelayEngine implements ModuleAudioEngine {
   private delay: Tone.FeedbackDelay | null = null
@@ -8,8 +9,7 @@ export class DelayEngine implements ModuleAudioEngine {
   private timeCvGain: Tone.Gain | null = null
   private inputAnalyser: Tone.Analyser | null = null
   private outputAnalyser: Tone.Analyser | null = null
-  private processGain: Tone.Gain | null = null
-  private bypassGain: Tone.Gain | null = null
+  private bypass: BypassRouting | null = null
   private isOff = false
   private isBypassed = false
   private feedbackValue = 0.4
@@ -32,19 +32,13 @@ export class DelayEngine implements ModuleAudioEngine {
     this.timeCvGain = new Tone.Gain(0.5) // ±1 CV → ±0.5s modulation
     this.timeCvGain.connect(this.delay.delayTime)
 
-    this.processGain = new Tone.Gain(1)
-    this.bypassGain = new Tone.Gain(0)
+    this.bypass = createBypassRouting(this.inputGain, this.outputGain)
 
     // Chain: inputGain → inputAnalyser, inputGain → delay → processGain → outputGain → outputAnalyser
     this.inputGain.connect(this.inputAnalyser)
     this.inputGain.connect(this.delay)
-    this.delay.connect(this.processGain)
-    this.processGain.connect(this.outputGain)
+    this.delay.connect(this.bypass.processGain)
     this.outputGain.connect(this.outputAnalyser)
-
-    // Bypass path: inputGain → bypassGain → outputGain
-    this.inputGain.connect(this.bypassGain)
-    this.bypassGain.connect(this.outputGain)
   }
 
   getOutputNode(portId: string): Tone.ToneAudioNode {
@@ -82,8 +76,7 @@ export class DelayEngine implements ModuleAudioEngine {
     }
     if (action === 'setBypass') {
       this.isBypassed = payload as boolean
-      if (this.processGain) this.processGain.gain.value = this.isBypassed ? 0 : 1
-      if (this.bypassGain) this.bypassGain.gain.value = this.isBypassed ? 1 : 0
+      if (this.bypass) setBypassState(this.bypass, this.isBypassed)
     }
   }
 
@@ -121,16 +114,14 @@ export class DelayEngine implements ModuleAudioEngine {
     this.inputGain?.dispose()
     this.outputGain?.dispose()
     this.timeCvGain?.dispose()
-    this.processGain?.dispose()
-    this.bypassGain?.dispose()
+    if (this.bypass) disposeBypassRouting(this.bypass)
     this.inputAnalyser?.dispose()
     this.outputAnalyser?.dispose()
     this.delay = null
     this.inputGain = null
     this.outputGain = null
     this.timeCvGain = null
-    this.processGain = null
-    this.bypassGain = null
+    this.bypass = null
     this.inputAnalyser = null
     this.outputAnalyser = null
   }

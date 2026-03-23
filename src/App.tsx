@@ -38,21 +38,11 @@ import { useRackStore } from '@/store/rackStore'
 import AudioEngineManager from '@/engine/AudioEngineManager'
 import { loadAutosave, initAutosave } from '@/store/persistence'
 import Toolbar from '@/ui/Toolbar/Toolbar'
-import Rack, { RACK_HP, NUM_ROWS, ROW_HEIGHT, RAIL_HEIGHT } from '@/ui/Rack/Rack'
-import { HP_PX } from '@/ui/ModulePanel/ModulePanel'
+import Rack from '@/ui/Rack/Rack'
+import { computeFitZoom } from '@/ui/utils/layout'
 import styles from './App.module.css'
 
 const isMobile = window.innerWidth < 768
-
-function computeFitZoom(): number {
-  const contentH = NUM_ROWS * (ROW_HEIGHT + RAIL_HEIGHT) + RAIL_HEIGHT
-  const contentW = RACK_HP * HP_PX
-  const vh = window.innerHeight - 44 // minus toolbar
-  const vw = window.innerWidth
-  const fitH = (vh - 16) / contentH  // 16px for padding (8px each side)
-  const fitW = (vw - 16) / contentW
-  return Math.max(0.4, Math.min(1.0, Math.min(fitH, fitW)))
-}
 
 export default function App() {
   const audioStarted = useRackStore((s) => s.audioStarted)

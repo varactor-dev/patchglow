@@ -3,8 +3,7 @@ import AudioEngineManager from '@/engine/AudioEngineManager'
 import { useRackStore } from '@/store/rackStore'
 import { getAllModules } from '@/engine/moduleRegistry'
 import { clearAutosave } from '@/store/persistence'
-import { RACK_HP, NUM_ROWS, ROW_HEIGHT, RAIL_HEIGHT } from '@/ui/Rack/Rack'
-import { HP_PX } from '@/ui/ModulePanel/ModulePanel'
+import { computeFitZoom } from '@/ui/utils/layout'
 import styles from './Toolbar.module.css'
 
 const PRESETS = [
@@ -14,16 +13,6 @@ const PRESETS = [
   { name: 'Ambient Pad', file: 'ambient-pad.json' },
   { name: 'Basic Voice', file: 'basic-voice.json' },
 ]
-
-function computeFitZoom(): number {
-  const contentH = NUM_ROWS * (ROW_HEIGHT + RAIL_HEIGHT) + RAIL_HEIGHT
-  const contentW = RACK_HP * HP_PX
-  const vh = window.innerHeight - 44
-  const vw = window.innerWidth
-  const fitH = (vh - 16) / contentH
-  const fitW = (vw - 16) / contentW
-  return Math.max(0.4, Math.min(1.0, Math.min(fitH, fitW)))
-}
 
 interface ToolbarProps {
   onAbout?: () => void

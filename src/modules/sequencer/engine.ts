@@ -1,5 +1,6 @@
 import * as Tone from 'tone'
 import type { ModuleAudioEngine, VisualizationData } from '@/types/module'
+import { GatePoller } from '@/modules/_shared/GatePoller'
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
@@ -8,13 +9,8 @@ export class SequencerEngine implements ModuleAudioEngine {
   private gateSignal: Tone.Signal<'number'> | null = null
 
   // Clock & reset input polling
-  private clockInputGain: Tone.Gain | null = null
-  private clockAnalyser: Tone.Analyser | null = null
-  private resetInputGain: Tone.Gain | null = null
-  private resetAnalyser: Tone.Analyser | null = null
-  private clockHigh = false
-  private resetHigh = false
-  private pollInterval: number | null = null
+  private clockPoller: GatePoller | null = null
+  private resetPoller: GatePoller | null = null
 
   // Internal clock
   private internalTimer: number | null = null
@@ -35,21 +31,16 @@ export class SequencerEngine implements ModuleAudioEngine {
     this.cvSignal = new Tone.Signal<'number'>({ value: 0, units: 'number' })
     this.gateSignal = new Tone.Signal<'number'>({ value: 0, units: 'number' })
 
-    // Clock input
-    this.clockInputGain = new Tone.Gain(1)
-    this.clockAnalyser = new Tone.Analyser('waveform', 32)
-    this.clockInputGain.connect(this.clockAnalyser)
+    // Clock input — rising edge advances step when using external clock
+    this.clockPoller = new GatePoller(() => {
+      if (this.useExternalClock) this.advanceStep()
+    })
 
-    // Reset input
-    this.resetInputGain = new Tone.Gain(1)
-    this.resetAnalyser = new Tone.Analyser('waveform', 32)
-    this.resetInputGain.connect(this.resetAnalyser)
-
-    // Poll clock & reset inputs for edge detection
-    this.pollInterval = window.setInterval(() => {
-      this.pollReset()
-      this.pollClock()
-    }, 5)
+    // Reset input — rising edge resets to step 0
+    this.resetPoller = new GatePoller(() => {
+      this.currentStep = 0
+      this.updateCV()
+    })
 
     // Defer internal clock until audio context is running
     // (avoids piling up scheduled gate values while context is suspended on iOS)
@@ -91,33 +82,6 @@ export class SequencerEngine implements ModuleAudioEngine {
     }
     this.stateChangeHandler = onStateChange
     Tone.context.rawContext.addEventListener('statechange', onStateChange)
-  }
-
-  private pollClock(): void {
-    if (!this.clockAnalyser) return
-    const data = this.clockAnalyser.getValue() as Float32Array
-    const value = data[data.length - 1] as number
-    const high = value > 0.5
-    if (high && !this.clockHigh) {
-      // Rising edge — advance step (external clock)
-      if (this.useExternalClock) {
-        this.advanceStep()
-      }
-    }
-    this.clockHigh = high
-  }
-
-  private pollReset(): void {
-    if (!this.resetAnalyser) return
-    const data = this.resetAnalyser.getValue() as Float32Array
-    const value = data[data.length - 1] as number
-    const high = value > 0.5
-    if (high && !this.resetHigh) {
-      // Rising edge — reset to step 0
-      this.currentStep = 0
-      this.updateCV()
-    }
-    this.resetHigh = high
   }
 
   private advanceStep(): void {
@@ -186,8 +150,8 @@ export class SequencerEngine implements ModuleAudioEngine {
   }
 
   getInputNode(portId: string): Tone.ToneAudioNode {
-    if (portId === 'clock-in') return this.clockInputGain!
-    if (portId === 'reset') return this.resetInputGain!
+    if (portId === 'clock-in') return this.clockPoller!.getInputNode()
+    if (portId === 'reset') return this.resetPoller!.getInputNode()
     throw new Error(`SequencerEngine: unknown input port "${portId}"`)
   }
 
@@ -269,25 +233,17 @@ export class SequencerEngine implements ModuleAudioEngine {
       Tone.context.rawContext.removeEventListener('statechange', this.stateChangeHandler)
       this.stateChangeHandler = null
     }
-    if (this.pollInterval !== null) {
-      window.clearInterval(this.pollInterval)
-      this.pollInterval = null
-    }
     if (this.gateOffTimer !== null) {
       window.clearTimeout(this.gateOffTimer)
       this.gateOffTimer = null
     }
+    this.clockPoller?.dispose()
+    this.resetPoller?.dispose()
     this.cvSignal?.dispose()
     this.gateSignal?.dispose()
-    this.clockInputGain?.dispose()
-    this.clockAnalyser?.dispose()
-    this.resetInputGain?.dispose()
-    this.resetAnalyser?.dispose()
+    this.clockPoller = null
+    this.resetPoller = null
     this.cvSignal = null
     this.gateSignal = null
-    this.clockInputGain = null
-    this.clockAnalyser = null
-    this.resetInputGain = null
-    this.resetAnalyser = null
   }
 }
