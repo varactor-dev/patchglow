@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useRackStore } from '@/store/rackStore'
 import { isCompatible } from '@/engine/signalTypes'
 import { getModuleDefinition } from '@/engine/moduleRegistry'
@@ -7,12 +8,13 @@ import { RACK_HP, NUM_ROWS, ROW_HEIGHT, RAIL_HEIGHT } from '@/ui/Rack/Rack'
 import { useAnimationFrame } from '@/modules/_shared/useAnimationFrame'
 import { CableSignalMonitor } from './CableSignalMonitor'
 import Cable, { DragCable, CableFlowKeyframes } from './Cable'
+import SignalProbe from '@/ui/Probe/SignalProbe'
 
 interface Point { x: number; y: number }
 
 // Coordinates are in content space (pre-transform).
 // With CSS zoom, getBoundingClientRect returns scaled coords, so we divide by zoom.
-function getPortCenter(moduleId: string, portId: string, container: HTMLElement, zoom: number): Point | null {
+export function getPortCenter(moduleId: string, portId: string, container: HTMLElement, zoom: number): Point | null {
   const selector = `[data-module-id="${moduleId}"][data-port-id="${portId}"]`
   const portEl = container.querySelector(selector)
   if (!portEl) return null
@@ -176,64 +178,76 @@ export default function CableLayer({ containerRef, scrollContainerRef, zoom }: C
   const container = containerRef.current
 
   return (
-    <svg
-      ref={svgRef}
-      style={{
-        position: 'absolute',
-        inset: 0,
-        width: RACK_HP * HP_PX,
-        height: NUM_ROWS * (ROW_HEIGHT + RAIL_HEIGHT) + RAIL_HEIGHT,
-        pointerEvents: 'none',  // always passthrough — cable <g> elements re-enable individually
-        overflow: 'visible',
-        zIndex: 10,
-      }}
-    >
-      <CableFlowKeyframes />
+    <>
+      <svg
+        ref={svgRef}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: RACK_HP * HP_PX,
+          height: NUM_ROWS * (ROW_HEIGHT + RAIL_HEIGHT) + RAIL_HEIGHT,
+          pointerEvents: 'none',  // always passthrough — cable <g> elements re-enable individually
+          overflow: 'visible',
+          zIndex: 10,
+        }}
+      >
+        <CableFlowKeyframes />
 
-      {/* Rendered connections — pointer-events disabled during drag so elementFromPoint finds ports */}
-      <g style={{ pointerEvents: draggingCable ? 'none' : undefined }}>
-      {container && connections.map((conn) => {
-        const start = getPortCenter(conn.sourceModuleId, conn.sourcePortId, container, zoom)
-        const end = getPortCenter(conn.destModuleId, conn.destPortId, container, zoom)
-        if (!start || !end) return null
+        {/* Rendered connections — pointer-events disabled during drag so elementFromPoint finds ports */}
+        <g style={{ pointerEvents: draggingCable ? 'none' : undefined }}>
+        {container && connections.map((conn) => {
+          const start = getPortCenter(conn.sourceModuleId, conn.sourcePortId, container, zoom)
+          const end = getPortCenter(conn.destModuleId, conn.destPortId, container, zoom)
+          if (!start || !end) return null
 
-        const sourceOff = modules[conn.sourceModuleId]?.off ?? false
-        const destOff = modules[conn.destModuleId]?.off ?? false
-        const sigState = monitorRef.current!.getSignalState(conn.id)
-        return (
-          <Cable
-            key={conn.id}
-            id={conn.id}
-            start={start}
-            end={end}
-            signalType={conn.signalType}
-            selected={conn.id === selectedCableId}
-            signalLevel={sigState.level}
-            gateHigh={sigState.gateHigh}
-            pulseProgress={sigState.pulseProgress}
-            pulseDirection={sigState.pulseDirection}
-            flowPhase={sigState.flowPhase}
-            dominantFreqHz={sigState.dominantFreqHz}
-            waveform={sigState.waveform}
-            moduleOff={sourceOff || destOff}
-            destSignalType={conn.destSignalType}
-          />
-        )
-      })}
-      </g>
+          const sourceOff = modules[conn.sourceModuleId]?.off ?? false
+          const destOff = modules[conn.destModuleId]?.off ?? false
+          const sigState = monitorRef.current!.getSignalState(conn.id)
+          return (
+            <Cable
+              key={conn.id}
+              id={conn.id}
+              start={start}
+              end={end}
+              signalType={conn.signalType}
+              selected={conn.id === selectedCableId}
+              signalLevel={sigState.level}
+              gateHigh={sigState.gateHigh}
+              pulseProgress={sigState.pulseProgress}
+              pulseDirection={sigState.pulseDirection}
+              flowPhase={sigState.flowPhase}
+              dominantFreqHz={sigState.dominantFreqHz}
+              waveform={sigState.waveform}
+              moduleOff={sourceOff || destOff}
+              destSignalType={conn.destSignalType}
+            />
+          )
+        })}
+        </g>
 
-      {/* In-progress drag cable */}
-      {container && draggingCable && (() => {
-        const start = getPortCenter(draggingCable.moduleId, draggingCable.portId, container, zoom)
-        if (!start) return null
-        return (
-          <DragCable
-            start={start}
-            end={cursorPos}
-            signalType={draggingCable.signalType}
-          />
-        )
-      })()}
-    </svg>
+        {/* In-progress drag cable */}
+        {container && draggingCable && (() => {
+          const start = getPortCenter(draggingCable.moduleId, draggingCable.portId, container, zoom)
+          if (!start) return null
+          return (
+            <DragCable
+              start={start}
+              end={cursorPos}
+              signalType={draggingCable.signalType}
+            />
+          )
+        })()}
+      </svg>
+
+      {/* Signal probe portal — renders to body for iOS-compatible fixed positioning */}
+      {selectedCableId && createPortal(
+        <SignalProbe
+          containerRef={containerRef}
+          scrollContainerRef={scrollContainerRef}
+          zoom={zoom}
+        />,
+        document.body,
+      )}
+    </>
   )
 }

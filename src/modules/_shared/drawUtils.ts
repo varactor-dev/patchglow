@@ -1,15 +1,30 @@
 // ─── Canvas Drawing Utilities ─────────────────────────────────────────────────
 
 /**
+ * Return the logical (CSS) canvas size, accounting for any DPR transform.
+ * When ctx.setTransform(dpr, 0, 0, dpr, 0, 0) has been applied, canvas.width
+ * is the physical pixel count; this returns the CSS-pixel dimensions instead.
+ * Safe to call with no transform (identity) — returns raw canvas dimensions.
+ */
+export function getLogicalSize(ctx: CanvasRenderingContext2D) {
+  const t = ctx.getTransform()
+  return {
+    width: ctx.canvas.width / (t.a || 1),
+    height: ctx.canvas.height / (t.d || 1),
+  }
+}
+
+/**
  * Clear canvas with a partial-alpha fade for phosphor trail effect.
  * Instead of clearing completely, we paint a semi-transparent dark rectangle
  * so previous frames slowly fade out, creating a "persistence of vision" glow.
  */
 export function clearWithFade(ctx: CanvasRenderingContext2D, alpha = 0.25): void {
+  const { width, height } = getLogicalSize(ctx)
   ctx.save()
   ctx.globalAlpha = alpha
   ctx.fillStyle = '#0d0d14'
-  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+  ctx.fillRect(0, 0, width, height)
   ctx.restore()
 }
 
@@ -17,9 +32,10 @@ export function clearWithFade(ctx: CanvasRenderingContext2D, alpha = 0.25): void
  * Full clear — no trail effect.
  */
 export function clearCanvas(ctx: CanvasRenderingContext2D): void {
-  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+  const { width, height } = getLogicalSize(ctx)
+  ctx.clearRect(0, 0, width, height)
   ctx.fillStyle = '#0d0d14'
-  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+  ctx.fillRect(0, 0, width, height)
 }
 
 /**
@@ -30,7 +46,7 @@ export function drawGrid(
   divisions = 4,
   color = '#1a1a28',
 ): void {
-  const { width, height } = ctx.canvas
+  const { width, height } = getLogicalSize(ctx)
   ctx.save()
   ctx.strokeStyle = color
   ctx.lineWidth = 0.5
@@ -54,7 +70,7 @@ export function drawGrid(
   }
 
   // Center line (zero reference) — slightly brighter
-  ctx.strokeStyle = '#222234'
+  ctx.strokeStyle = '#2a2a40'
   ctx.lineWidth = 1
   ctx.beginPath()
   ctx.moveTo(0, height / 2)
@@ -117,7 +133,7 @@ export function drawWaveform(
   thickness = 1.5,   // line thickness — increase for hero displays
   opacity = 1.0,     // overall opacity — reduce for dimmer panels
 ): void {
-  const { width, height } = ctx.canvas
+  const { width, height } = getLogicalSize(ctx)
   const centerY = height * yOffset + (height * yScale) / 2
   const amplitude = (height * yScale) / 2 * 0.85
 
@@ -143,7 +159,7 @@ export function drawSpectrum(
   yStart = 0,
   yEnd = 1,
 ): void {
-  const { width, height } = ctx.canvas
+  const { width, height } = getLogicalSize(ctx)
   const regionTop = height * yStart
   const regionHeight = height * (yEnd - yStart)
 

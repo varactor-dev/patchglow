@@ -1,11 +1,13 @@
 {
+  "name": "Neon Dreams",
+  "description": "Two-voice octave doubling — bright saw lead over deep square sub-bass, with S&H texture and spacious effects.",
   "modules": {
     "oscillator-1": {
       "instanceId": "oscillator-1",
       "type": "oscillator",
       "position": { "row": 0, "col": 0 },
       "parameters": {
-        "frequency": 220,
+        "frequency": 370,
         "detune": 0,
         "waveform": "sawtooth"
       }
@@ -15,8 +17,8 @@
       "type": "filter",
       "position": { "row": 0, "col": 14 },
       "parameters": {
-        "frequency": 1200,
-        "resonance": 6,
+        "frequency": 2200,
+        "resonance": 4,
         "type": "lowpass"
       }
     },
@@ -25,9 +27,9 @@
       "type": "distortion",
       "position": { "row": 0, "col": 26 },
       "parameters": {
-        "drive": 0.25,
+        "drive": 0.15,
         "mode": "soft",
-        "mix": 0.6
+        "mix": 0.4
       }
     },
     "vca-1": {
@@ -35,7 +37,7 @@
       "type": "vca",
       "position": { "row": 0, "col": 36 },
       "parameters": {
-        "level": 0.85
+        "level": 0.90
       }
     },
     "mixer-1": {
@@ -43,8 +45,8 @@
       "type": "mixer",
       "position": { "row": 0, "col": 44 },
       "parameters": {
-        "ch1": 0.75,
-        "ch2": 0.4
+        "level1": 0.55,
+        "level2": 0.65
       }
     },
     "delay-1": {
@@ -53,8 +55,8 @@
       "position": { "row": 0, "col": 52 },
       "parameters": {
         "time": 0.375,
-        "feedback": 0.35,
-        "mix": 0.3
+        "feedback": 0.40,
+        "mix": 0.30
       }
     },
     "reverb-1": {
@@ -62,48 +64,9 @@
       "type": "reverb",
       "position": { "row": 0, "col": 64 },
       "parameters": {
-        "decay": 3.5,
-        "mix": 0.25,
-        "damping": 0.5
-      }
-    },
-    "sequencer-1": {
-      "instanceId": "sequencer-1",
-      "type": "sequencer",
-      "position": { "row": 1, "col": 0 },
-      "parameters": {
-        "tempo": 130,
-        "gate-length": 60,
-        "step-count": "8",
-        "steps": "[4,7,9,11,12,11,7,9]"
-      }
-    },
-    "oscillator-2": {
-      "instanceId": "oscillator-2",
-      "type": "oscillator",
-      "position": { "row": 1, "col": 22 },
-      "parameters": {
-        "frequency": 110,
-        "detune": 7,
-        "waveform": "triangle"
-      }
-    },
-    "filter-2": {
-      "instanceId": "filter-2",
-      "type": "filter",
-      "position": { "row": 1, "col": 38 },
-      "parameters": {
-        "frequency": 600,
-        "resonance": 3,
-        "type": "lowpass"
-      }
-    },
-    "vca-2": {
-      "instanceId": "vca-2",
-      "type": "vca",
-      "position": { "row": 1, "col": 52 },
-      "parameters": {
-        "level": 0.45
+        "decay": 4.5,
+        "mix": 0.22,
+        "damping": 0.50
       }
     },
     "output-1": {
@@ -111,49 +74,90 @@
       "type": "output",
       "position": { "row": 0, "col": 74 },
       "parameters": {
-        "volume": -10
+        "volume": -8
+      }
+    },
+    "sequencer-1": {
+      "instanceId": "sequencer-1",
+      "type": "sequencer",
+      "position": { "row": 1, "col": 0 },
+      "parameters": {
+        "tempo": 118,
+        "gate-length": 55,
+        "step-count": "16",
+        "steps": "[0,3,5,7,5,7,10,7,0,2,3,7,5,3,2,0]"
+      }
+    },
+    "envelope-1": {
+      "instanceId": "envelope-1",
+      "type": "envelope",
+      "position": { "row": 1, "col": 18 },
+      "parameters": {
+        "attack": 0.02,
+        "decay": 0.3,
+        "sustain": 0.5,
+        "release": 0.6
+      }
+    },
+    "oscillator-2": {
+      "instanceId": "oscillator-2",
+      "type": "oscillator",
+      "position": { "row": 1, "col": 28 },
+      "parameters": {
+        "frequency": 110,
+        "detune": 0,
+        "waveform": "square"
+      }
+    },
+    "filter-2": {
+      "instanceId": "filter-2",
+      "type": "filter",
+      "position": { "row": 1, "col": 42 },
+      "parameters": {
+        "frequency": 500,
+        "resonance": 2.5,
+        "type": "lowpass"
+      }
+    },
+    "vca-2": {
+      "instanceId": "vca-2",
+      "type": "vca",
+      "position": { "row": 1, "col": 54 },
+      "parameters": {
+        "level": 0.90
       }
     },
     "keyboard-1": {
       "instanceId": "keyboard-1",
       "type": "keyboard",
       "position": { "row": 2, "col": 0 },
-      "parameters": {}
+      "parameters": {
+        "octave": 0
+      }
     },
     "lfo-1": {
       "instanceId": "lfo-1",
       "type": "lfo",
       "position": { "row": 2, "col": 16 },
       "parameters": {
-        "rate": 1.5,
+        "rate": 0.5,
         "shape": "sine",
-        "depth": 0.6
-      }
-    },
-    "envelope-1": {
-      "instanceId": "envelope-1",
-      "type": "envelope",
-      "position": { "row": 2, "col": 26 },
-      "parameters": {
-        "attack": 0.02,
-        "decay": 0.25,
-        "sustain": 0.4,
-        "release": 0.6
+        "depth": 0.55
       }
     },
     "noise-1": {
       "instanceId": "noise-1",
       "type": "noise",
-      "position": { "row": 2, "col": 36 },
+      "position": { "row": 2, "col": 26 },
       "parameters": {
-        "type": "white",
-        "level": 0.8
+        "type": "pink",
+        "level": 0.6
       }
     },
     "samplehold-1": {
       "instanceId": "samplehold-1",
       "type": "samplehold",
-      "position": { "row": 2, "col": 42 },
+      "position": { "row": 2, "col": 32 },
       "parameters": {}
     }
   },
@@ -167,8 +171,40 @@
       "signalType": "cv"
     },
     {
+      "id": "sequencer-1:cv-out→oscillator-2:voct",
+      "sourceModuleId": "sequencer-1",
+      "sourcePortId": "cv-out",
+      "destModuleId": "oscillator-2",
+      "destPortId": "voct",
+      "signalType": "cv"
+    },
+    {
       "id": "sequencer-1:gate-out→envelope-1:gate",
       "sourceModuleId": "sequencer-1",
+      "sourcePortId": "gate-out",
+      "destModuleId": "envelope-1",
+      "destPortId": "gate",
+      "signalType": "gate"
+    },
+    {
+      "id": "keyboard-1:cv-out→oscillator-1:voct",
+      "sourceModuleId": "keyboard-1",
+      "sourcePortId": "cv-out",
+      "destModuleId": "oscillator-1",
+      "destPortId": "voct",
+      "signalType": "cv"
+    },
+    {
+      "id": "keyboard-1:cv-out→oscillator-2:voct",
+      "sourceModuleId": "keyboard-1",
+      "sourcePortId": "cv-out",
+      "destModuleId": "oscillator-2",
+      "destPortId": "voct",
+      "signalType": "cv"
+    },
+    {
+      "id": "keyboard-1:gate-out→envelope-1:gate",
+      "sourceModuleId": "keyboard-1",
       "sourcePortId": "gate-out",
       "destModuleId": "envelope-1",
       "destPortId": "gate",
@@ -215,14 +251,6 @@
       "signalType": "cv"
     },
     {
-      "id": "vca-1:out→mixer-1:in1",
-      "sourceModuleId": "vca-1",
-      "sourcePortId": "out",
-      "destModuleId": "mixer-1",
-      "destPortId": "in1",
-      "signalType": "audio"
-    },
-    {
       "id": "noise-1:out→samplehold-1:signal-in",
       "sourceModuleId": "noise-1",
       "sourcePortId": "out",
@@ -239,11 +267,11 @@
       "signalType": "gate"
     },
     {
-      "id": "samplehold-1:out→oscillator-2:voct",
+      "id": "samplehold-1:out→filter-2:cutoff-cv",
       "sourceModuleId": "samplehold-1",
       "sourcePortId": "out",
-      "destModuleId": "oscillator-2",
-      "destPortId": "voct",
+      "destModuleId": "filter-2",
+      "destPortId": "cutoff-cv",
       "signalType": "cv"
     },
     {
@@ -269,6 +297,14 @@
       "destModuleId": "vca-2",
       "destPortId": "cv",
       "signalType": "cv"
+    },
+    {
+      "id": "vca-1:out→mixer-1:in1",
+      "sourceModuleId": "vca-1",
+      "sourcePortId": "out",
+      "destModuleId": "mixer-1",
+      "destPortId": "in1",
+      "signalType": "audio"
     },
     {
       "id": "vca-2:out→mixer-1:in2",
@@ -301,22 +337,6 @@
       "destModuleId": "output-1",
       "destPortId": "in",
       "signalType": "audio"
-    },
-    {
-      "id": "keyboard-1:cv-out→oscillator-2:voct",
-      "sourceModuleId": "keyboard-1",
-      "sourcePortId": "cv-out",
-      "destModuleId": "oscillator-2",
-      "destPortId": "voct",
-      "signalType": "cv"
-    },
-    {
-      "id": "keyboard-1:gate-out→envelope-1:gate",
-      "sourceModuleId": "keyboard-1",
-      "sourcePortId": "gate-out",
-      "destModuleId": "envelope-1",
-      "destPortId": "gate",
-      "signalType": "gate"
     }
   ]
 }

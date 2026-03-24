@@ -8,11 +8,11 @@ import { encodePatchToUrl } from '@/store/patchUrl'
 import styles from './Toolbar.module.css'
 
 const PRESETS = [
-  { name: 'Neon Dreams', file: 'showcase.json' },
-  { name: 'Sequencer Melody', file: 'sequencer-melody.json' },
-  { name: 'Random Melody', file: 'random-melody.json' },
-  { name: 'Ambient Pad', file: 'ambient-pad.json' },
-  { name: 'Basic Voice', file: 'basic-voice.json' },
+  { name: 'First Light', file: 'first-light.json' },
+  { name: 'Pulse', file: 'pulse.json' },
+  { name: 'Drift', file: 'drift.json' },
+  { name: 'Echo Chamber', file: 'echo-chamber.json' },
+  { name: 'Neon Dreams', file: 'neon-dreams.json' },
 ]
 
 interface ToolbarProps {

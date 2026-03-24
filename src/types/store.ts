@@ -38,6 +38,7 @@ export interface RackStore {
   modules: Record<string, RackModule>
   connections: Connection[]
   selectedCableId: string | null
+  probeClickPos: { x: number; y: number } | null
   draggingCable: DraggingCable | null
   audioStarted: boolean
   zoom: number
@@ -59,6 +60,7 @@ export interface RackStore {
   ) => string | null
   removeConnection: (connectionId: string) => void
   selectCable: (connectionId: string | null) => void
+  setProbeClickPos: (pos: { x: number; y: number } | null) => void
 
   // Cable drag actions
   startCableDrag: (moduleId: string, portId: string, signalType: SignalType) => void

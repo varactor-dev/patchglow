@@ -1,0 +1,251 @@
+.probePanel {
+  position: fixed;
+  z-index: 10000;
+  background: #1a1a24;
+  border: 1px solid var(--probe-color);
+  border-radius: 6px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 12px var(--probe-glow),
+    0 0 1px var(--probe-glow);
+  overflow: visible;
+  animation: probeSlideIn 150ms ease-out;
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.15s;
+}
+
+.probePanelLifted {
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.7),
+    0 0 18px var(--probe-glow),
+    0 0 4px var(--probe-glow);
+}
+
+@keyframes probeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--probe-bg);
+  user-select: none;
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.header:active {
+  cursor: grabbing;
+}
+
+.title {
+  font-family: 'Orbitron', 'Audiowide', sans-serif;
+  font-size: var(--probe-title-font, 12px);
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--probe-color);
+  text-shadow: 0 0 6px var(--probe-glow);
+}
+
+.activityDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 4px var(--probe-glow);
+}
+
+.presetGroup {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  margin-right: 4px;
+}
+
+.presetBtn {
+  font-size: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  background: none;
+  border: none;
+  padding: 1px 3px;
+  cursor: pointer;
+  color: var(--probe-color);
+  opacity: 0.3;
+  transition: opacity 0.15s;
+}
+
+.presetBtn:hover {
+  opacity: 0.8;
+}
+
+.presetBtnActive {
+  opacity: 0.6;
+}
+
+.headerBtn {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0;
+  color: var(--probe-color);
+  opacity: 0.6;
+  transition: opacity 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.headerBtn:hover {
+  opacity: 1;
+  border-color: var(--probe-color);
+}
+
+.displayArea {
+  position: relative;
+  margin: 4px 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #0d0d14;
+  box-shadow:
+    inset 0 0 10px rgba(0, 0, 0, 0.6),
+    inset 0 0 1px rgba(255, 255, 255, 0.05);
+  flex: 1;
+  min-height: 0;
+}
+
+/* CRT scanline overlay */
+.displayArea::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    transparent 0px,
+    transparent 3px,
+    rgba(0, 0, 0, 0.13) 3px,
+    rgba(0, 0, 0, 0.13) 6px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.infoSection {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  font-size: var(--probe-info-font, 10px);
+  color: #808098;
+  line-height: 1.5;
+}
+
+.infoSection span {
+  color: #a0a0b8;
+}
+
+.annotation {
+  padding: 2px 8px 6px;
+  font-size: var(--probe-info-font, 10px);
+  font-style: italic;
+  color: #606078;
+  line-height: 1.4;
+}
+
+/* Stat displays for CV and Gate probes */
+.statRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  font-size: var(--probe-stat-font, 10px);
+  color: #a0a0b8;
+}
+
+.statLabel {
+  color: #606078;
+  font-size: var(--probe-info-font, 10px);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 42px;
+}
+
+.statValue {
+  font-size: var(--probe-stat-font, 10px);
+  font-weight: 500;
+  color: var(--probe-color);
+  text-shadow: 0 0 4px var(--probe-glow);
+}
+
+.gateDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--probe-color);
+  box-shadow: 0 0 8px var(--probe-glow);
+  transition: opacity 0.05s;
+}
+
+.gateDotLow {
+  opacity: 0.15;
+}
+
+/* Resize grip — bottom-right corner */
+.resizeGrip {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: var(--probe-grip-size, 10px);
+  height: var(--probe-grip-size, 10px);
+  padding: 8px;
+  box-sizing: content-box;
+  cursor: nwse-resize;
+  opacity: 0.3;
+  color: var(--probe-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s;
+}
+
+.resizeGrip:hover {
+  opacity: 0.6;
+}
+
+/* HUD overlay — value readout floating over canvas */
+.hudOverlay {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(10, 10, 15, 0.75);
+  padding: var(--probe-hud-pad, 4px) calc(var(--probe-hud-pad, 4px) * 2);
+  border-radius: 3px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.hudValue {
+  font-size: var(--probe-hud-font, 18px);
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.hudNote {
+  font-size: var(--probe-info-font, 10px);
+  opacity: 0.7;
+  color: inherit;
+}

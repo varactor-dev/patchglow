@@ -53,6 +53,7 @@ export const useRackStore = create<RackStore>()(
     modules: {},
     connections: [],
     selectedCableId: null,
+    probeClickPos: null,
     draggingCable: null,
     audioStarted: false,
     zoom: 1.0,
@@ -238,7 +239,11 @@ export const useRackStore = create<RackStore>()(
     },
 
     selectCable(connectionId) {
-      set({ selectedCableId: connectionId })
+      set({ selectedCableId: connectionId, probeClickPos: connectionId ? get().probeClickPos : null })
+    },
+
+    setProbeClickPos(pos) {
+      set({ probeClickPos: pos })
     },
 
     // ─── Cable Drag ──────────────────────────────────────────────────────────

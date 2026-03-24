@@ -1,17 +1,24 @@
 {
+  "name": "Pulse",
+  "description": "A driving bassline with rhythmic energy. Feel the sequence.",
   "modules": {
-    "keyboard-1": {
-      "instanceId": "keyboard-1",
-      "type": "keyboard",
+    "sequencer-1": {
+      "instanceId": "sequencer-1",
+      "type": "sequencer",
       "position": { "row": 0, "col": 0 },
-      "parameters": {}
+      "parameters": {
+        "tempo": 128,
+        "gate-length": 45,
+        "step-count": "8",
+        "steps": "[9,7,4,9,12,9,7,2]"
+      }
     },
     "oscillator-1": {
       "instanceId": "oscillator-1",
       "type": "oscillator",
-      "position": { "row": 0, "col": 16 },
+      "position": { "row": 0, "col": 18 },
       "parameters": {
-        "frequency": 440,
+        "frequency": 220,
         "detune": 0,
         "waveform": "sawtooth"
       }
@@ -19,52 +26,76 @@
     "filter-1": {
       "instanceId": "filter-1",
       "type": "filter",
-      "position": { "row": 0, "col": 30 },
+      "position": { "row": 0, "col": 32 },
       "parameters": {
-        "frequency": 800,
-        "resonance": 4,
+        "frequency": 600,
+        "resonance": 5,
         "type": "lowpass"
       }
     },
     "vca-1": {
       "instanceId": "vca-1",
       "type": "vca",
-      "position": { "row": 0, "col": 42 },
+      "position": { "row": 0, "col": 44 },
       "parameters": {
-        "level": 1
+        "level": 0.9
       }
     },
     "output-1": {
       "instanceId": "output-1",
       "type": "output",
-      "position": { "row": 0, "col": 50 },
+      "position": { "row": 0, "col": 52 },
       "parameters": {
-        "volume": -12
+        "volume": -10
       }
     },
-    "lfo-1": {
-      "instanceId": "lfo-1",
-      "type": "lfo",
-      "position": { "row": 1, "col": 30 },
+    "keyboard-1": {
+      "instanceId": "keyboard-1",
+      "type": "keyboard",
+      "position": { "row": 0, "col": 68 },
       "parameters": {
-        "rate": 2,
-        "shape": "sine",
-        "depth": 0.5
+        "octave": 0
       }
     },
     "envelope-1": {
       "instanceId": "envelope-1",
       "type": "envelope",
-      "position": { "row": 1, "col": 42 },
+      "position": { "row": 1, "col": 0 },
       "parameters": {
-        "attack": 0.02,
-        "decay": 0.3,
-        "sustain": 0.6,
-        "release": 0.8
+        "attack": 0.01,
+        "decay": 0.15,
+        "sustain": 0.3,
+        "release": 0.15
+      }
+    },
+    "lfo-1": {
+      "instanceId": "lfo-1",
+      "type": "lfo",
+      "position": { "row": 1, "col": 10 },
+      "parameters": {
+        "rate": 0.25,
+        "shape": "sine",
+        "depth": 0.3
       }
     }
   },
   "connections": [
+    {
+      "id": "sequencer-1:cv-out→oscillator-1:voct",
+      "sourceModuleId": "sequencer-1",
+      "sourcePortId": "cv-out",
+      "destModuleId": "oscillator-1",
+      "destPortId": "voct",
+      "signalType": "cv"
+    },
+    {
+      "id": "sequencer-1:gate-out→envelope-1:gate",
+      "sourceModuleId": "sequencer-1",
+      "sourcePortId": "gate-out",
+      "destModuleId": "envelope-1",
+      "destPortId": "gate",
+      "signalType": "gate"
+    },
     {
       "id": "keyboard-1:cv-out→oscillator-1:voct",
       "sourceModuleId": "keyboard-1",

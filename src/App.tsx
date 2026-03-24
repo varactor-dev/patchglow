@@ -74,7 +74,7 @@ export default function App() {
     await AudioEngineManager.getInstance().start()
     setAudioStarted()
     try {
-      const res = await fetch('/patches/showcase.json')
+      const res = await fetch('/patches/neon-dreams.json')
       const json = await res.text()
       useRackStore.getState().importPatch(json)
     } catch { /* ignore */ }
@@ -141,7 +141,7 @@ export default function App() {
       if (isMobile) {
         // Mobile: always load demo, skip welcome
         localStorage.setItem('patchglow-welcomed', 'true')
-        fetch('/patches/showcase.json')
+        fetch('/patches/neon-dreams.json')
           .then((r) => r.text())
           .then((json) => useRackStore.getState().importPatch(json))
           .catch(() => {})
@@ -149,7 +149,7 @@ export default function App() {
         setShowWelcome(true)
       } else {
         // Returning visitor with no autosave — auto-load demo
-        fetch('/patches/showcase.json')
+        fetch('/patches/neon-dreams.json')
           .then((r) => r.text())
           .then((json) => useRackStore.getState().importPatch(json))
           .catch(() => {})

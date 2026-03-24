@@ -1,14 +1,16 @@
 {
+  "name": "Drift",
+  "description": "A slow, evolving atmosphere with modulation that breathes.",
   "modules": {
     "sequencer-1": {
       "instanceId": "sequencer-1",
       "type": "sequencer",
       "position": { "row": 0, "col": 0 },
       "parameters": {
-        "tempo": 140,
-        "gate-length": 50,
+        "tempo": 72,
+        "gate-length": 85,
         "step-count": "8",
-        "steps": "[0,4,7,9,4,12,7,2]"
+        "steps": "[9,12,7,4,7,2,4,0]"
       }
     },
     "oscillator-1": {
@@ -18,7 +20,7 @@
       "parameters": {
         "frequency": 440,
         "detune": 0,
-        "waveform": "sawtooth"
+        "waveform": "triangle"
       }
     },
     "filter-1": {
@@ -27,7 +29,7 @@
       "position": { "row": 0, "col": 32 },
       "parameters": {
         "frequency": 1200,
-        "resonance": 5,
+        "resonance": 7,
         "type": "lowpass"
       }
     },
@@ -36,13 +38,23 @@
       "type": "vca",
       "position": { "row": 0, "col": 44 },
       "parameters": {
-        "level": 1
+        "level": 0.75
+      }
+    },
+    "reverb-1": {
+      "instanceId": "reverb-1",
+      "type": "reverb",
+      "position": { "row": 0, "col": 52 },
+      "parameters": {
+        "decay": 5.0,
+        "mix": 0.35,
+        "damping": 0.6
       }
     },
     "output-1": {
       "instanceId": "output-1",
       "type": "output",
-      "position": { "row": 0, "col": 52 },
+      "position": { "row": 0, "col": 62 },
       "parameters": {
         "volume": -12
       }
@@ -50,22 +62,30 @@
     "envelope-1": {
       "instanceId": "envelope-1",
       "type": "envelope",
-      "position": { "row": 1, "col": 44 },
+      "position": { "row": 1, "col": 0 },
       "parameters": {
-        "attack": 0.01,
-        "decay": 0.2,
-        "sustain": 0.5,
-        "release": 0.3
+        "attack": 0.8,
+        "decay": 0.5,
+        "sustain": 0.7,
+        "release": 1.5
       }
     },
     "lfo-1": {
       "instanceId": "lfo-1",
       "type": "lfo",
-      "position": { "row": 1, "col": 32 },
+      "position": { "row": 1, "col": 10 },
       "parameters": {
-        "rate": 1.5,
+        "rate": 0.4,
         "shape": "sine",
-        "depth": 0.4
+        "depth": 0.65
+      }
+    },
+    "keyboard-1": {
+      "instanceId": "keyboard-1",
+      "type": "keyboard",
+      "position": { "row": 1, "col": 20 },
+      "parameters": {
+        "octave": 0
       }
     }
   },
@@ -81,6 +101,22 @@
     {
       "id": "sequencer-1:gate-out→envelope-1:gate",
       "sourceModuleId": "sequencer-1",
+      "sourcePortId": "gate-out",
+      "destModuleId": "envelope-1",
+      "destPortId": "gate",
+      "signalType": "gate"
+    },
+    {
+      "id": "keyboard-1:cv-out→oscillator-1:voct",
+      "sourceModuleId": "keyboard-1",
+      "sourcePortId": "cv-out",
+      "destModuleId": "oscillator-1",
+      "destPortId": "voct",
+      "signalType": "cv"
+    },
+    {
+      "id": "keyboard-1:gate-out→envelope-1:gate",
+      "sourceModuleId": "keyboard-1",
       "sourcePortId": "gate-out",
       "destModuleId": "envelope-1",
       "destPortId": "gate",
@@ -119,8 +155,16 @@
       "signalType": "cv"
     },
     {
-      "id": "vca-1:out→output-1:in",
+      "id": "vca-1:out→reverb-1:in",
       "sourceModuleId": "vca-1",
+      "sourcePortId": "out",
+      "destModuleId": "reverb-1",
+      "destPortId": "in",
+      "signalType": "audio"
+    },
+    {
+      "id": "reverb-1:out→output-1:in",
+      "sourceModuleId": "reverb-1",
       "sourcePortId": "out",
       "destModuleId": "output-1",
       "destPortId": "in",

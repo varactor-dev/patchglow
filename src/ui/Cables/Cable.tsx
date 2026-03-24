@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useRackStore } from '@/store/rackStore'
 import {
   CABLE_COLORS,
@@ -6,9 +6,8 @@ import {
   PULSE_SEGMENT_RATIO,
   PULSE_COLOR_ATTACK,
   FLOW_HOT_COLOR,
-  AUDIO_COLOR_COLD,
-  AUDIO_COLOR_MID,
-  AUDIO_COLOR_HOT,
+  getAudioCableVisuals,
+  getCvCableVisuals,
 } from './cableColors'
 import type { SignalType } from '@/types/module'
 
@@ -28,7 +27,7 @@ function computeDroop(start: Point, end: Point): number {
   return Math.min(dist * droopFactor, 120)
 }
 
-function getCableBezier(start: Point, end: Point): BezierCtrl {
+export function getCableBezier(start: Point, end: Point): BezierCtrl {
   const dx = end.x - start.x
   const droop = computeDroop(start, end)
   return {
@@ -39,7 +38,7 @@ function getCableBezier(start: Point, end: Point): BezierCtrl {
   }
 }
 
-function bezierPoint(t: number, b: BezierCtrl): Point {
+export function bezierPoint(t: number, b: BezierCtrl): Point {
   const u = 1 - t
   return {
     x: u*u*u*b.p0.x + 3*u*u*t*b.p1.x + 3*u*t*t*b.p2.x + t*t*t*b.p3.x,
@@ -59,8 +58,6 @@ function bezierNormal(t: number, b: BezierCtrl): Point {
 // ── Waveform-riding path ─────────────────────────────────────────────────────
 
 const WAVEFORM_SAMPLES = 64
-const AUDIO_AMPLITUDE = 8   // max ±px deviation for audio
-const CV_AMPLITUDE = 6      // max ±px for CV signals
 
 function computeWaveformPath(
   start: Point, end: Point,
@@ -94,22 +91,6 @@ function computeWaveformPath(
     path += i === 0 ? `M${x.toFixed(1)} ${y.toFixed(1)}` : ` L${x.toFixed(1)} ${y.toFixed(1)}`
   }
   return path
-}
-
-// ── Color helpers ─────────────────────────────────────────────────────────────
-
-function lerpColor(a: string, b: string, t: number): string {
-  const p = (c: string, i: number) => parseInt(c.slice(i, i + 2), 16)
-  const r = Math.round(p(a, 1) + (p(b, 1) - p(a, 1)) * t)
-  const g = Math.round(p(a, 3) + (p(b, 3) - p(a, 3)) * t)
-  const bl = Math.round(p(a, 5) + (p(b, 5) - p(a, 5)) * t)
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${bl.toString(16).padStart(2, '0')}`
-}
-
-function getAudioHeatColor(level: number): string {
-  if (level > 0.95) return '#ffffff' // clipping flash
-  if (level < 0.5) return lerpColor(AUDIO_COLOR_COLD, AUDIO_COLOR_MID, level * 2)
-  return lerpColor(AUDIO_COLOR_MID, AUDIO_COLOR_HOT, (level - 0.5) * 2)
 }
 
 // ── Cable path ────────────────────────────────────────────────────────────────
@@ -167,6 +148,8 @@ export default function Cable({
 }: CableProps) {
   const selectCable = useRackStore((s) => s.selectCable)
   const selectedCableId = useRackStore((s) => s.selectedCableId)
+  const setProbeClickPos = useRackStore((s) => s.setProbeClickPos)
+  const [hovered, setHovered] = useState(false)
 
   const baseColor = CABLE_COLORS[signalType]
   const d = getCablePath(start, end)
@@ -177,18 +160,21 @@ export default function Cable({
       if (selectedCableId === id) {
         selectCable(null)
       } else {
+        setProbeClickPos({ x: e.clientX, y: e.clientY })
         selectCable(id)
       }
     },
-    [id, selectedCableId, selectCable],
+    [id, selectedCableId, selectCable, setProbeClickPos],
   )
 
   // ── Ghost state for OFF modules ──────────────────────────────────────────
   // When either end's module is OFF, cable goes ghost: nearly invisible, no effects
   if (moduleOff) {
     return (
-      <g onClick={handleClick} style={{ cursor: 'pointer', pointerEvents: 'auto' }}>
-        <path d={d} stroke="transparent" strokeWidth={12} fill="none" />
+      <g onClick={handleClick} onPointerEnter={() => setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
+      style={{ cursor: 'crosshair', pointerEvents: 'auto' }}>
+        <path d={d} stroke="transparent" strokeWidth={20} fill="none" />
         <path
           d={d}
           stroke={baseColor}
@@ -209,11 +195,16 @@ export default function Cable({
     // GATE LOW: nearly invisible thin line
     if (!gateHigh && !showPulse) {
       return (
-        <g onClick={handleClick} style={{ cursor: 'pointer', pointerEvents: 'auto' }}>
-          <path d={d} stroke="transparent" strokeWidth={12} fill="none" />
+        <g onClick={handleClick} onPointerEnter={() => setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
+      style={{ cursor: 'crosshair', pointerEvents: 'auto' }}>
+          <path d={d} stroke="transparent" strokeWidth={20} fill="none" />
           <path d={d} stroke={baseColor} strokeWidth={2} strokeOpacity={0.08} fill="none" strokeLinecap="round" />
+          {hovered && !selected && (
+            <path d={d} stroke={baseColor} strokeWidth={4} strokeOpacity={0.35} fill="none" strokeLinecap="round" style={{ filter: 'blur(4px)' }} />
+          )}
           {selected && (
-            <path d={d} stroke={baseColor} strokeWidth={6} strokeOpacity={0.2} fill="none" strokeLinecap="round" />
+            <path d={d} stroke={baseColor} strokeWidth={6} fill="none" strokeLinecap="round" style={{ animation: 'probePulse 1.5s ease-in-out infinite' }} />
           )}
         </g>
       )
@@ -223,8 +214,10 @@ export default function Cable({
     // Dark unlit fuse ahead → white-hot fire front → bright magenta fill behind
     if (showPulse && pulseDirection === 'attack') {
       return (
-        <g onClick={handleClick} style={{ cursor: 'pointer', pointerEvents: 'auto' }}>
-          <path d={d} stroke="transparent" strokeWidth={12} fill="none" />
+        <g onClick={handleClick} onPointerEnter={() => setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
+      style={{ cursor: 'crosshair', pointerEvents: 'auto' }}>
+          <path d={d} stroke="transparent" strokeWidth={20} fill="none" />
           {/* Layer 1: Dark unlit fuse — full cable at low opacity */}
           <path d={d} stroke={baseColor} strokeWidth={2} strokeOpacity={0.12}
             fill="none" strokeLinecap="round" />
@@ -256,8 +249,10 @@ export default function Cable({
     // GATE HIGH SUSTAINED: solid bright magenta, no dashes
     if (gateHigh && !showPulse) {
       return (
-        <g onClick={handleClick} style={{ cursor: 'pointer', pointerEvents: 'auto' }}>
-          <path d={d} stroke="transparent" strokeWidth={12} fill="none" />
+        <g onClick={handleClick} onPointerEnter={() => setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
+      style={{ cursor: 'crosshair', pointerEvents: 'auto' }}>
+          <path d={d} stroke="transparent" strokeWidth={20} fill="none" />
           <path
             d={d} stroke={baseColor} strokeWidth={4} strokeOpacity={1.0}
             fill="none" strokeLinecap="round"
@@ -269,7 +264,7 @@ export default function Cable({
           <circle cx={end.x} cy={end.y} r={4} fill={baseColor} opacity={0.6}
             style={{ filter: 'blur(2px)' }} />
           {selected && (
-            <path d={d} stroke={baseColor} strokeWidth={6} strokeOpacity={0.2} fill="none" strokeLinecap="round" />
+            <path d={d} stroke={baseColor} strokeWidth={6} fill="none" strokeLinecap="round" style={{ animation: 'probePulse 1.5s ease-in-out infinite' }} />
           )}
         </g>
       )
@@ -277,52 +272,46 @@ export default function Cable({
 
     // GATE RELEASE: instant snap to dark
     return (
-      <g onClick={handleClick} style={{ cursor: 'pointer', pointerEvents: 'auto' }}>
-        <path d={d} stroke="transparent" strokeWidth={12} fill="none" />
+      <g onClick={handleClick} onPointerEnter={() => setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
+      style={{ cursor: 'crosshair', pointerEvents: 'auto' }}>
+        <path d={d} stroke="transparent" strokeWidth={20} fill="none" />
         <path d={d} stroke={baseColor} strokeWidth={2} strokeOpacity={0.08} fill="none" strokeLinecap="round" />
       </g>
     )
   }
 
-  // ── Dynamic brightness — audio/cv cables only (gate returned early above) ─
-  const brightness = signalLevel
+  // ── Normalized visual params — same function for every cable of this type ──
+  const params = signalType === 'audio'
+    ? getAudioCableVisuals(signalLevel)
+    : getCvCableVisuals(signalLevel)
 
-  // Cross-row cables get a subtle glow boost for visual prominence
-  const crossRowDy = Math.abs(end.y - start.y)
-  const crossRowBoost = Math.min(0.3, crossRowDy / 600)
-
-  // Color: audio cables shift hotter with signal, others use fixed color
-  const activeColor = signalType === 'audio'
-    ? getAudioHeatColor(brightness)
-    : baseColor
-
-  // IDLE: opacity 0.12, width 2px, no glow
-  // ACTIVE: opacity 1.0, width 4px, 12px glow — 8x opacity difference
-  const bodyOpacity = selected ? 0.6  : 0.12 + brightness * 0.88
-  const coreOpacity = selected ? 1.0  : 0.12 + brightness * 0.88
-  const bodyWidth   = selected ? 5    : 2 + (brightness + crossRowBoost) * 2        // 2px → 4px+
-  const coreWidth   = selected ? 2.5  : 1 + brightness * 1        // 1px → 2px
-  const flowOpacity = brightness < 0.05 ? 0 : brightness * 0.9    // invisible when idle
-  const glowBlur    = brightness < 0.05 ? 0 : Math.round(brightness * 12) // 0 → 12px
+  // Selected state overrides
+  const activeColor = params.bodyColor
+  const bodyOpacity = selected ? 0.6  : params.bodyOpacity
+  const coreOpacity = selected ? 1.0  : params.coreOpacity
+  const bodyWidth   = selected ? 5    : params.bodyWidth
+  const coreWidth   = selected ? 2.5  : params.coreWidth
+  const flowOpacity = params.flowOpacity
 
   const flowDasharray = FLOW_DASHARRAY
 
-  // Glow halo with alpha scaling
-  const glowHex = Math.round(brightness * 255).toString(16).padStart(2, '0')
-  const bodyFilter = glowBlur > 0
-    ? `drop-shadow(0 0 ${glowBlur}px ${baseColor}${glowHex})`
+  // Derive filter strings from params
+  const glowHex = Math.round(params.glowOpacity * 255).toString(16).padStart(2, '0')
+  const bodyFilter = params.glowBlur > 0
+    ? `drop-shadow(0 0 ${params.glowBlur}px ${params.glowColor}${glowHex})`
     : 'none'
   const coreFilter = selected
-    ? `drop-shadow(0 0 12px ${baseColor}) drop-shadow(0 0 4px ${baseColor})`
-    : glowBlur > 0
-      ? `drop-shadow(0 0 ${glowBlur + 2}px ${baseColor}${glowHex}) drop-shadow(0 0 ${Math.round(glowBlur * 0.4)}px ${baseColor})`
+    ? `drop-shadow(0 0 12px ${params.glowColor}) drop-shadow(0 0 4px ${params.glowColor})`
+    : params.glowBlur > 0
+      ? `drop-shadow(0 0 ${params.glowBlur + 2}px ${params.glowColor}${glowHex}) drop-shadow(0 0 ${Math.round(params.glowBlur * 0.4)}px ${params.glowColor})`
       : 'none'
 
   const transition = 'stroke-opacity 0.15s linear, filter 0.15s linear, stroke-width 0.15s linear'
 
   // ── Glow field specs ──────────────────────────────────────────────────────
-  const glowFieldOpacity = brightness * 0.7
-  const glowFieldBlur = 4 + Math.round((brightness + crossRowBoost) * 8) // 4px → 12px+
+  const glowFieldOpacity = params.glowOpacity
+  const glowFieldBlur = params.glowBlur
 
   // ── Pulse overlay (gate transitions only) ─────────────────────────────────
   const showPulse = pulseProgress > 0 && pulseProgress < 1 && pulseDirection !== null
@@ -335,34 +324,35 @@ export default function Cable({
   }
 
   // ── Waveform-riding path ─────────────────────────────────────────────────
-  const hasWaveform = waveform && waveform.length > 0 && brightness > 0.05
+  const hasWaveform = waveform && waveform.length > 0 && signalLevel > 0.05
   let waveformPathStr = ''
   if (hasWaveform) {
     const isUnipolar = signalType === 'cv'
-    const maxAmp = signalType === 'audio' ? AUDIO_AMPLITUDE : CV_AMPLITUDE
-    const amp = maxAmp * brightness
+    const amp = params.waveformAmplitude
     const scrollOffset = (flowPhase / 24) * waveform.length
     waveformPathStr = computeWaveformPath(start, end, waveform, scrollOffset, amp, isUnipolar)
   }
 
   // ── Endpoint spark specs ──────────────────────────────────────────────────
-  const sparkRadius = 4 + brightness * 3         // 4px → 7px
-  const sparkBlur = 2 + Math.round(brightness * 2) // 2px → 4px
-  const sparkOpacity = brightness * 0.5
-  const sparkCenterOpacity = brightness * 0.7
+  const sparkRadius = params.sparkRadius
+  const sparkBlur = 2 + Math.round(signalLevel * 2)
+  const sparkOpacity = params.sparkOpacity
+  const sparkCenterOpacity = signalLevel * 0.7
 
   return (
-    <g onClick={handleClick} style={{ cursor: 'pointer', pointerEvents: 'auto' }}>
+    <g onClick={handleClick} onPointerEnter={() => setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
+      style={{ cursor: 'crosshair', pointerEvents: 'auto' }}>
       {/* Hit area — invisible wide stroke for easy clicking */}
       <path
         d={d}
         stroke="transparent"
-        strokeWidth={12}
+        strokeWidth={20}
         fill="none"
       />
 
       {/* Layer 0: Glow field — wide blurred ambient halo, signal-reactive */}
-      {brightness > 0.05 && (
+      {signalLevel > 0.05 && (
         <path
           d={d}
           stroke={activeColor}
@@ -418,8 +408,8 @@ export default function Cable({
           strokeLinecap="round"
           strokeLinejoin="round"
           style={{
-            filter: glowBlur > 0
-              ? `drop-shadow(0 0 ${Math.round(glowBlur * 0.7)}px ${baseColor}) drop-shadow(0 0 2px #ffffff)`
+            filter: params.glowBlur > 0
+              ? `drop-shadow(0 0 ${Math.round(params.glowBlur * 0.7)}px ${params.glowColor}) drop-shadow(0 0 2px #ffffff)`
               : 'none',
           }}
         />
@@ -434,8 +424,8 @@ export default function Cable({
           strokeDasharray={flowDasharray}
           strokeDashoffset={-flowPhase}
           style={{
-            filter: glowBlur > 0
-              ? `drop-shadow(0 0 ${Math.round(glowBlur * 0.7)}px ${baseColor}) drop-shadow(0 0 2px #ffffff)`
+            filter: params.glowBlur > 0
+              ? `drop-shadow(0 0 ${Math.round(params.glowBlur * 0.7)}px ${params.glowColor}) drop-shadow(0 0 2px #ffffff)`
               : 'none',
             transition,
           }}
@@ -465,33 +455,46 @@ export default function Cable({
           d={d}
           stroke={CABLE_COLORS[destSignalType]}
           strokeWidth={1.5}
-          strokeOpacity={0.4 + brightness * 0.4}
+          strokeOpacity={0.4 + signalLevel * 0.4}
           fill="none"
           strokeLinecap="round"
           strokeDasharray="3 9"
           strokeDashoffset={-flowPhase * 0.5}
           style={{
-            filter: brightness > 0.1
+            filter: signalLevel > 0.1
               ? `drop-shadow(0 0 3px ${CABLE_COLORS[destSignalType]})`
               : 'none',
           }}
         />
       )}
 
-      {/* Selection highlight */}
+      {/* Hover glow overlay — brightens cable on hover (not when selected) */}
+      {hovered && !selected && (
+        <path
+          d={d}
+          stroke={baseColor}
+          strokeWidth={bodyWidth + 2}
+          strokeOpacity={0.35}
+          fill="none"
+          strokeLinecap="round"
+          style={{ filter: `blur(4px)` }}
+        />
+      )}
+
+      {/* Selection / probe highlight — pulsing when probed */}
       {selected && (
         <path
           d={d}
           stroke={baseColor}
           strokeWidth={6}
-          strokeOpacity={0.2}
           fill="none"
           strokeLinecap="round"
+          style={{ animation: 'probePulse 1.5s ease-in-out infinite' }}
         />
       )}
 
       {/* Endpoint sparks — bloom at cable-port connections */}
-      {brightness > 0.08 && (
+      {signalLevel > 0.08 && (
         <>
           <circle
             cx={start.x} cy={start.y} r={sparkRadius}
@@ -531,6 +534,10 @@ export function CableFlowKeyframes() {
         }
         @keyframes cableFlowIdle {
           to { stroke-dashoffset: -30; }
+        }
+        @keyframes probePulse {
+          0%, 100% { stroke-opacity: 0.20; }
+          50% { stroke-opacity: 0.40; }
         }
       `}</style>
     </defs>
