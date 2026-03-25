@@ -16,6 +16,7 @@ export interface CableSignalState {
   flowPhase: number                            // drives dash animation from JS
   dominantFreqHz: number                       // from FFT, for frequency-reactive speed
   waveform: Float32Array | null                // raw waveform for cable visualization
+  gateWidth: number                            // interpolated gate body width (2→4 on HIGH)
 }
 
 const DEFAULT_STATE: CableSignalState = {
@@ -26,6 +27,7 @@ const DEFAULT_STATE: CableSignalState = {
   flowPhase: 0,
   dominantFreqHz: 440,
   waveform: null,
+  gateWidth: 4,
 }
 
 /**
@@ -43,6 +45,8 @@ export class CableSignalMonitor {
   private flowPhases = new Map<string, number>()
   // Gate release fade
   private gateFadeStart = new Map<string, number>()
+  // Gate polygon width interpolation
+  private gateWidths = new Map<string, number>()
   // Envelope CV history buffer (128 samples circular)
   private cvHistory = new Map<string, Float32Array>()
   private cvHistoryWriteIdx = new Map<string, number>()
@@ -87,6 +91,7 @@ export class CableSignalMonitor {
         this.gateFadeStart.delete(id)
         this.cvHistory.delete(id)
         this.cvHistoryWriteIdx.delete(id)
+        this.gateWidths.delete(id)
       }
     }
 
@@ -176,6 +181,16 @@ export class CableSignalMonitor {
       const newPhase = (prevPhase + dt * baseSpeed * speedMult) % patternLen
       this.flowPhases.set(conn.id, newPhase)
 
+      // Gate polygon width interpolation (~50ms smooth inflate/deflate)
+      // Total width: 4px LOW (baseHalfWidth=2) → 16px HIGH (halfWidth=8)
+      let gateWidth = 4
+      if (conn.signalType === 'gate') {
+        const target = rawGateHigh ? 16 : 4
+        const prev = this.gateWidths.get(conn.id) ?? 4
+        gateWidth = prev + (target - prev) * Math.min(1, dt * 20)
+        this.gateWidths.set(conn.id, gateWidth)
+      }
+
       this.prevGate.set(conn.id, rawGateHigh)
       this.states.set(conn.id, {
         level,
@@ -185,6 +200,7 @@ export class CableSignalMonitor {
         flowPhase: newPhase,
         dominantFreqHz,
         waveform,
+        gateWidth,
       })
     }
   }

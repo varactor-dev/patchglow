@@ -1,15 +1,14 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useRackStore } from '@/store/rackStore'
 import {
   CABLE_COLORS,
-  FLOW_DASHARRAY,
   PULSE_SEGMENT_RATIO,
   PULSE_COLOR_ATTACK,
-  FLOW_HOT_COLOR,
   getAudioCableVisuals,
   getCvCableVisuals,
 } from './cableColors'
 import type { SignalType } from '@/types/module'
+import type { CableDisplayMode } from '@/types/store'
 
 interface Point { x: number; y: number }
 
@@ -55,42 +54,79 @@ function bezierNormal(t: number, b: BezierCtrl): Point {
   return { x: -ty / len, y: tx / len }
 }
 
-// ── Waveform-riding path ─────────────────────────────────────────────────────
+// ── Signal-shaped polygon ─────────────────────────────────────────────────────
 
-const WAVEFORM_SAMPLES = 64
+const POLYGON_SAMPLES = 96
+const BASE_HALF_WIDTH = 2          // 4px total minimum cable width
+const AUDIO_MAX_DEVIATION = 8      // ±8px per side for audio
+const CV_MAX_DEVIATION = 10        // ±10px per side for CV
 
-function computeWaveformPath(
+/**
+ * Build a filled polygon whose edges deform based on signal data.
+ *
+ * Audio (signed -1..+1): top edge follows positive half, bottom follows negative.
+ *   signal=+1 → top bulges out, bottom at base. signal=-1 → bottom bulges out.
+ *   Cable width = 4px at zero crossings, 12px at peaks.
+ *
+ * CV/Gate (unsigned 0..1): both edges expand symmetrically.
+ *   signal=1 → cable fully expanded. signal=0 → base width only.
+ */
+function computeSignalPolygon(
   start: Point, end: Point,
-  waveform: Float32Array,
+  waveform: Float32Array | null,
   scrollOffset: number,
-  amplitude: number,
-  isUnipolar: boolean,
+  maxDeviation: number,
+  baseHalfWidth: number,
+  mode: 'audio' | 'cv' | 'gate',
 ): string {
   const bz = getCableBezier(start, end)
-  const N = WAVEFORM_SAMPLES
-  const wLen = waveform.length
+  const N = POLYGON_SAMPLES
 
-  let path = ''
+  const topX = new Float64Array(N)
+  const topY = new Float64Array(N)
+  const botX = new Float64Array(N)
+  const botY = new Float64Array(N)
+  const wLen = waveform ? waveform.length : 0
+
   for (let i = 0; i < N; i++) {
     const t = i / (N - 1)
     const pt = bezierPoint(t, bz)
     const norm = bezierNormal(t, bz)
 
-    const rawIdx = (((i / N) * wLen - scrollOffset) % wLen + wLen) % wLen
-    const idx0 = Math.floor(rawIdx)
-    const idx1 = (idx0 + 1) % wLen
-    const frac = rawIdx - idx0
-    let value = waveform[idx0] * (1 - frac) + waveform[idx1] * frac
+    let signal = 0
+    if (waveform && wLen > 0) {
+      const rawIdx = (((i / N) * wLen - scrollOffset) % wLen + wLen) % wLen
+      const idx0 = Math.floor(rawIdx)
+      const idx1 = (idx0 + 1) % wLen
+      const frac = rawIdx - idx0
+      signal = waveform[idx0] * (1 - frac) + waveform[idx1] * frac
+    }
 
-    if (isUnipolar) value = value * 2 - 1
+    let topDev: number, botDev: number
+    if (mode === 'audio') {
+      // Asymmetric: top edge traces positive half, bottom traces negative half
+      topDev = Math.max(0, signal) * maxDeviation
+      botDev = Math.max(0, -signal) * maxDeviation
+    } else {
+      // Symmetric: both edges expand equally (CV 0-1, gate 0-1)
+      const dev = Math.max(0, signal) * maxDeviation
+      topDev = dev
+      botDev = dev
+    }
 
-    const offset = value * amplitude
-    const x = pt.x + norm.x * offset
-    const y = pt.y + norm.y * offset
-
-    path += i === 0 ? `M${x.toFixed(1)} ${y.toFixed(1)}` : ` L${x.toFixed(1)} ${y.toFixed(1)}`
+    topX[i] = pt.x + norm.x * (baseHalfWidth + topDev)
+    topY[i] = pt.y + norm.y * (baseHalfWidth + topDev)
+    botX[i] = pt.x - norm.x * (baseHalfWidth + botDev)
+    botY[i] = pt.y - norm.y * (baseHalfWidth + botDev)
   }
-  return path
+
+  // Build closed polygon: forward top edge, backward bottom edge
+  const parts: string[] = []
+  parts.push(`M${topX[0].toFixed(1)} ${topY[0].toFixed(1)}`)
+  for (let i = 1; i < N; i++) parts.push(`L${topX[i].toFixed(1)} ${topY[i].toFixed(1)}`)
+  for (let i = N - 1; i >= 0; i--) parts.push(`L${botX[i].toFixed(1)} ${botY[i].toFixed(1)}`)
+  parts.push('Z')
+  return parts.join('')
 }
 
 // ── Cable path ────────────────────────────────────────────────────────────────
@@ -131,8 +167,10 @@ interface CableProps {
   flowPhase?: number
   dominantFreqHz?: number
   waveform?: Float32Array | null
+  gateWidth?: number
   moduleOff?: boolean
   destSignalType?: SignalType
+  displayMode?: CableDisplayMode
 }
 
 export default function Cable({
@@ -143,13 +181,41 @@ export default function Cable({
   pulseDirection = null,
   flowPhase = 0,
   waveform = null,
+  gateWidth = 2,
   moduleOff = false,
   destSignalType,
+  displayMode,
 }: CableProps) {
   const selectCable = useRackStore((s) => s.selectCable)
   const selectedCableId = useRackStore((s) => s.selectedCableId)
   const setProbeClickPos = useRackStore((s) => s.setProbeClickPos)
   const [hovered, setHovered] = useState(false)
+
+  // ── Display mode deviation interpolation ──────────────────────────────
+  const prevTimeRef = useRef(performance.now())
+  const devScaleRef = useRef(0)
+
+  const mode = displayMode ?? 'clean'
+  let targetDevScale: number
+  if (selected || hovered) {
+    targetDevScale = 1.0
+  } else {
+    switch (mode) {
+      case 'full':   targetDevScale = 1.0; break
+      case 'subtle': targetDevScale = 0.25; break
+      default:       targetDevScale = 0.0; break
+    }
+  }
+
+  const now = performance.now()
+  const dt = (now - prevTimeRef.current) / 1000
+  prevTimeRef.current = now
+  const rate = targetDevScale > devScaleRef.current ? 6.67 : 5.0
+  devScaleRef.current += (targetDevScale - devScaleRef.current) * Math.min(1, dt * rate)
+  if (Math.abs(devScaleRef.current - targetDevScale) < 0.01) {
+    devScaleRef.current = targetDevScale
+  }
+  const effectiveDevScale = devScaleRef.current
 
   const baseColor = CABLE_COLORS[signalType]
   const d = getCablePath(start, end)
@@ -191,15 +257,17 @@ export default function Cable({
   if (signalType === 'gate') {
     const showPulse = pulseProgress > 0 && pulseProgress < 1 && pulseDirection !== null
     const pulsePathLen = estimatePathLength(start, end)
+    const effectiveGateHalfWidth = BASE_HALF_WIDTH + (gateWidth / 2 - BASE_HALF_WIDTH) * effectiveDevScale
+    const gatePolygon = computeSignalPolygon(start, end, null, 0, 0, effectiveGateHalfWidth, 'gate')
 
-    // GATE LOW: nearly invisible thin line
+    // GATE LOW: nearly invisible thin polygon
     if (!gateHigh && !showPulse) {
       return (
         <g onClick={handleClick} onPointerEnter={() => setHovered(true)}
       onPointerLeave={() => setHovered(false)}
       style={{ cursor: 'crosshair', pointerEvents: 'auto' }}>
           <path d={d} stroke="transparent" strokeWidth={20} fill="none" />
-          <path d={d} stroke={baseColor} strokeWidth={2} strokeOpacity={0.08} fill="none" strokeLinecap="round" />
+          <path d={gatePolygon} fill={baseColor} fillOpacity={0.08} stroke="none" />
           {hovered && !selected && (
             <path d={d} stroke={baseColor} strokeWidth={4} strokeOpacity={0.35} fill="none" strokeLinecap="round" style={{ filter: 'blur(4px)' }} />
           )}
@@ -210,7 +278,7 @@ export default function Cable({
       )
     }
 
-    // GATE HIGH + ATTACK PULSE: fuse-burning effect
+    // GATE HIGH + ATTACK PULSE: fuse-burning effect (strokes for animation overlays)
     // Dark unlit fuse ahead → white-hot fire front → bright magenta fill behind
     if (showPulse && pulseDirection === 'attack') {
       return (
@@ -218,10 +286,9 @@ export default function Cable({
       onPointerLeave={() => setHovered(false)}
       style={{ cursor: 'crosshair', pointerEvents: 'auto' }}>
           <path d={d} stroke="transparent" strokeWidth={20} fill="none" />
-          {/* Layer 1: Dark unlit fuse — full cable at low opacity */}
-          <path d={d} stroke={baseColor} strokeWidth={2} strokeOpacity={0.12}
-            fill="none" strokeLinecap="round" />
-          {/* Layer 2: Lit portion behind the pulse — bright fill */}
+          {/* Layer 1: Dark unlit fuse — polygon at low opacity */}
+          <path d={gatePolygon} fill={baseColor} fillOpacity={0.12} stroke="none" />
+          {/* Layer 2: Lit portion behind the pulse — bright stroke */}
           <path
             d={d} stroke={baseColor} strokeWidth={4} strokeOpacity={1.0}
             fill="none" strokeLinecap="round"
@@ -246,7 +313,7 @@ export default function Cable({
       )
     }
 
-    // GATE HIGH SUSTAINED: solid bright magenta, no dashes
+    // GATE HIGH SUSTAINED: solid bright polygon
     if (gateHigh && !showPulse) {
       return (
         <g onClick={handleClick} onPointerEnter={() => setHovered(true)}
@@ -254,8 +321,7 @@ export default function Cable({
       style={{ cursor: 'crosshair', pointerEvents: 'auto' }}>
           <path d={d} stroke="transparent" strokeWidth={20} fill="none" />
           <path
-            d={d} stroke={baseColor} strokeWidth={4} strokeOpacity={1.0}
-            fill="none" strokeLinecap="round"
+            d={gatePolygon} fill={baseColor} fillOpacity={1.0} stroke="none"
             style={{ filter: `drop-shadow(0 0 8px ${baseColor})` }}
           />
           {/* Endpoint sparks */}
@@ -270,13 +336,13 @@ export default function Cable({
       )
     }
 
-    // GATE RELEASE: instant snap to dark
+    // GATE RELEASE: instant snap to thin polygon
     return (
       <g onClick={handleClick} onPointerEnter={() => setHovered(true)}
       onPointerLeave={() => setHovered(false)}
       style={{ cursor: 'crosshair', pointerEvents: 'auto' }}>
         <path d={d} stroke="transparent" strokeWidth={20} fill="none" />
-        <path d={d} stroke={baseColor} strokeWidth={2} strokeOpacity={0.08} fill="none" strokeLinecap="round" />
+        <path d={gatePolygon} fill={baseColor} fillOpacity={0.08} stroke="none" />
       </g>
     )
   }
@@ -292,10 +358,6 @@ export default function Cable({
   const coreOpacity = selected ? 1.0  : params.coreOpacity
   const bodyWidth   = selected ? 5    : params.bodyWidth
   const coreWidth   = selected ? 2.5  : params.coreWidth
-  const flowOpacity = params.flowOpacity
-
-  const flowDasharray = FLOW_DASHARRAY
-
   // Derive filter strings from params
   const glowHex = Math.round(params.glowOpacity * 255).toString(16).padStart(2, '0')
   const bodyFilter = params.glowBlur > 0
@@ -307,7 +369,8 @@ export default function Cable({
       ? `drop-shadow(0 0 ${params.glowBlur + 2}px ${params.glowColor}${glowHex}) drop-shadow(0 0 ${Math.round(params.glowBlur * 0.4)}px ${params.glowColor})`
       : 'none'
 
-  const transition = 'stroke-opacity 0.15s linear, filter 0.15s linear, stroke-width 0.15s linear'
+  const transition = 'fill-opacity 0.15s linear, filter 0.15s linear'
+  const strokeTransition = 'stroke-opacity 0.15s linear, filter 0.15s linear, stroke-width 0.15s linear'
 
   // ── Glow field specs ──────────────────────────────────────────────────────
   const glowFieldOpacity = params.glowOpacity
@@ -323,15 +386,32 @@ export default function Cable({
     pulseDashoffset = pulsePathLen * (1 - travel)
   }
 
-  // ── Waveform-riding path ─────────────────────────────────────────────────
-  const hasWaveform = waveform && waveform.length > 0 && signalLevel > 0.05
-  let waveformPathStr = ''
-  if (hasWaveform) {
-    const isUnipolar = signalType === 'cv'
-    const amp = params.waveformAmplitude
-    const scrollOffset = (flowPhase / 24) * waveform.length
-    waveformPathStr = computeWaveformPath(start, end, waveform, scrollOffset, amp, isUnipolar)
-  }
+  // ── Signal-shaped polygon body ────────────────────────────────────────────
+  const hasSignal = waveform && waveform.length > 0 && signalLevel > 0.05
+  const scrollOffset = hasSignal ? (flowPhase / 24) * waveform!.length : 0
+  const fullMaxDev = signalType === 'audio' ? AUDIO_MAX_DEVIATION : CV_MAX_DEVIATION
+  const maxDev = fullMaxDev * effectiveDevScale
+  const polyMode = signalType === 'audio' ? 'audio' as const : 'cv' as const
+  const polygonPath = computeSignalPolygon(
+    start, end,
+    hasSignal ? waveform! : null,
+    scrollOffset,
+    maxDev,
+    BASE_HALF_WIDTH,
+    polyMode,
+  )
+
+  // Wider polygon for glow field — follows the deformed body shape
+  const glowPolygonPath = signalLevel > 0.05 && effectiveDevScale > 0.01
+    ? computeSignalPolygon(
+        start, end,
+        hasSignal ? waveform! : null,
+        scrollOffset,
+        fullMaxDev * effectiveDevScale + 4 * effectiveDevScale,
+        BASE_HALF_WIDTH + 3 * effectiveDevScale,
+        polyMode,
+      )
+    : ''
 
   // ── Endpoint spark specs ──────────────────────────────────────────────────
   const sparkRadius = params.sparkRadius
@@ -351,15 +431,13 @@ export default function Cable({
         fill="none"
       />
 
-      {/* Layer 0: Glow field — wide blurred ambient halo, signal-reactive */}
+      {/* Layer 0: Glow field — wider deformed polygon with blur */}
       {signalLevel > 0.05 && (
         <path
-          d={d}
-          stroke={activeColor}
-          strokeWidth={14}
-          strokeOpacity={glowFieldOpacity}
-          fill="none"
-          strokeLinecap="round"
+          d={glowPolygonPath}
+          fill={activeColor}
+          fillOpacity={glowFieldOpacity}
+          stroke="none"
           style={{
             filter: `blur(${glowFieldBlur}px)`,
             transition,
@@ -367,22 +445,19 @@ export default function Cable({
         />
       )}
 
-      {/* Layer 1: Cable body — medium stroke, always visible */}
+      {/* Layer 1: Cable body — signal-shaped filled polygon */}
       <path
-        d={d}
-        stroke={activeColor}
-        strokeWidth={bodyWidth}
-        strokeOpacity={bodyOpacity}
-        fill="none"
-        strokeLinecap="round"
+        d={polygonPath}
+        fill={activeColor}
+        fillOpacity={bodyOpacity}
+        stroke="none"
         style={{
           filter: bodyFilter,
           transition,
-          willChange: 'filter, stroke-opacity',
         }}
       />
 
-      {/* Layer 2: Cable core — thin bright stroke with neon glow */}
+      {/* Layer 2: Cable core — thin bright centerline stroke with neon glow */}
       <path
         d={d}
         stroke={activeColor}
@@ -392,45 +467,10 @@ export default function Cable({
         strokeLinecap="round"
         style={{
           filter: coreFilter,
-          transition,
+          transition: strokeTransition,
           willChange: 'filter, stroke-opacity',
         }}
       />
-
-      {/* Layer 3: Signal visualization — waveform riding OR dashed particles */}
-      {hasWaveform ? (
-        <path
-          d={waveformPathStr}
-          stroke={FLOW_HOT_COLOR[signalType]}
-          strokeWidth={2}
-          strokeOpacity={flowOpacity}
-          fill="none"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{
-            filter: params.glowBlur > 0
-              ? `drop-shadow(0 0 ${Math.round(params.glowBlur * 0.7)}px ${params.glowColor}) drop-shadow(0 0 2px #ffffff)`
-              : 'none',
-          }}
-        />
-      ) : (
-        <path
-          d={d}
-          stroke={FLOW_HOT_COLOR[signalType]}
-          strokeWidth={2}
-          strokeOpacity={flowOpacity}
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={flowDasharray}
-          strokeDashoffset={-flowPhase}
-          style={{
-            filter: params.glowBlur > 0
-              ? `drop-shadow(0 0 ${Math.round(params.glowBlur * 0.7)}px ${params.glowColor}) drop-shadow(0 0 2px #ffffff)`
-              : 'none',
-            transition,
-          }}
-        />
-      )}
 
       {/* Traveling pulse — bright segment races along the cable on gate transitions */}
       {showPulse && (

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
-import type { RackStore, RackModule, Connection, DraggingCable } from '@/types/store'
+import type { RackStore, RackModule, Connection, DraggingCable, CableDisplayMode } from '@/types/store'
 import type { SignalType } from '@/types/module'
 
 // Module instance counter for unique IDs
@@ -57,6 +57,7 @@ export const useRackStore = create<RackStore>()(
     draggingCable: null,
     audioStarted: false,
     zoom: 1.0,
+    cableDisplayMode: (localStorage.getItem('patchglow-cable-mode') as CableDisplayMode) || 'clean',
     soloModuleId: null,
     canUndo: false,
     canRedo: false,
@@ -268,6 +269,19 @@ export const useRackStore = create<RackStore>()(
 
     setZoom(zoom: number) {
       set({ zoom: Math.max(0.4, Math.min(1.5, zoom)) })
+    },
+
+    setCableDisplayMode(mode: CableDisplayMode) {
+      localStorage.setItem('patchglow-cable-mode', mode)
+      set({ cableDisplayMode: mode })
+    },
+
+    cycleCableDisplayMode() {
+      const order: CableDisplayMode[] = ['clean', 'subtle', 'full']
+      const current = get().cableDisplayMode
+      const next = order[(order.indexOf(current) + 1) % order.length]
+      localStorage.setItem('patchglow-cable-mode', next)
+      set({ cableDisplayMode: next })
     },
 
     // ─── Undo/Redo ──────────────────────────────────────────────────────────

@@ -26,6 +26,8 @@ export default function Toolbar({ onAbout, onToast }: ToolbarProps) {
   const addModule = useRackStore((s) => s.addModule)
   const zoom = useRackStore((s) => s.zoom)
   const setZoom = useRackStore((s) => s.setZoom)
+  const cableDisplayMode = useRackStore((s) => s.cableDisplayMode)
+  const cycleCableDisplayMode = useRackStore((s) => s.cycleCableDisplayMode)
   const modules = useRackStore((s) => s.modules)
   const exportPatch = useRackStore((s) => s.exportPatch)
   const importPatch = useRackStore((s) => s.importPatch)
@@ -266,6 +268,10 @@ export default function Toolbar({ onAbout, onToast }: ToolbarProps) {
               <button className={styles.patchButton} onClick={() => { handleReset(); setShowMenu(null) }}>RESET</button>
               <button className={styles.patchButton} onClick={() => { handleShare(); setShowMenu(null) }}>SHARE</button>
               <div className={styles.dropdownDivider} />
+              <button className={styles.patchButton} onClick={() => { cycleCableDisplayMode() }}>
+                CABLES: {cableDisplayMode.toUpperCase()}
+              </button>
+              <div className={styles.dropdownDivider} />
               {PRESETS.map((p) => (
                 <button
                   key={p.file}
@@ -293,6 +299,13 @@ export default function Toolbar({ onAbout, onToast }: ToolbarProps) {
         <button className={`${styles.patchButton} ${styles.demoButton}`} onClick={() => setZoom(computeFitZoom())}>FIT</button>
         <button className={`${styles.patchButton} ${styles.docsButton}`} onClick={handleFullscreen}>
           {'⛶'}
+        </button>
+        <button
+          className={`${styles.patchButton} ${styles.demoButton}`}
+          onClick={cycleCableDisplayMode}
+          title={`Cable style: ${cableDisplayMode.toUpperCase()} (C)`}
+        >
+          {cableDisplayMode === 'clean' ? '~' : cableDisplayMode === 'subtle' ? '~~' : '~~~'}
         </button>
       </div>
 

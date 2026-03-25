@@ -31,6 +31,10 @@ export interface DraggingCable {
   signalType: SignalType
 }
 
+// ─── Cable Display Mode ─────────────────────────────────────────────────────
+
+export type CableDisplayMode = 'clean' | 'subtle' | 'full'
+
 // ─── Rack Store Interface ────────────────────────────────────────────────────
 
 export interface RackStore {
@@ -42,6 +46,7 @@ export interface RackStore {
   draggingCable: DraggingCable | null
   audioStarted: boolean
   zoom: number
+  cableDisplayMode: CableDisplayMode
   soloModuleId: string | null
 
   // Module actions
@@ -75,6 +80,10 @@ export interface RackStore {
 
   // Zoom
   setZoom: (zoom: number) => void
+
+  // Cable display mode
+  setCableDisplayMode: (mode: CableDisplayMode) => void
+  cycleCableDisplayMode: () => void
 
   // Undo/redo
   undo: () => void

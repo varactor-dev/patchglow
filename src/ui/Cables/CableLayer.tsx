@@ -39,6 +39,7 @@ export default function CableLayer({ containerRef, scrollContainerRef, zoom }: C
   const draggingCable = useRackStore((s) => s.draggingCable)
   const removeConnection = useRackStore((s) => s.removeConnection)
   const selectCable = useRackStore((s) => s.selectCable)
+  const cableDisplayMode = useRackStore((s) => s.cableDisplayMode)
   const endCableDrag = useRackStore((s) => s.endCableDrag)
   const addConnection = useRackStore((s) => s.addConnection)
   // Keep a ref to draggingCable so async handlers see the latest value
@@ -218,8 +219,10 @@ export default function CableLayer({ containerRef, scrollContainerRef, zoom }: C
               flowPhase={sigState.flowPhase}
               dominantFreqHz={sigState.dominantFreqHz}
               waveform={sigState.waveform}
+              gateWidth={sigState.gateWidth}
               moduleOff={sourceOff || destOff}
               destSignalType={conn.destSignalType}
+              displayMode={cableDisplayMode}
             />
           )
         })}

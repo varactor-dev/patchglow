@@ -73,7 +73,6 @@ export interface CableVisualParams {
   glowOpacity: number
   glowBlur: number
   flowOpacity: number
-  waveformAmplitude: number
   speedMult: number
   sparkRadius: number
   sparkOpacity: number
@@ -126,9 +125,6 @@ export function getAudioCableVisuals(level: number): CableVisualParams {
   // Flow particles: invisible when idle
   const flowOpacity = level < 0.05 ? 0 : Math.min(level * 0.8, 0.8)
 
-  // Waveform amplitude: max ±6px at full signal
-  const waveformAmplitude = 6 * level
-
   // Speed multiplier: 0.3x idle → 2.0x full
   const speedMult = 0.3 + level * 1.7
 
@@ -147,7 +143,6 @@ export function getAudioCableVisuals(level: number): CableVisualParams {
     glowOpacity,
     glowBlur,
     flowOpacity,
-    waveformAmplitude,
     speedMult,
     sparkRadius,
     sparkOpacity,
@@ -166,14 +161,13 @@ export function getCvCableVisuals(level: number): CableVisualParams {
   const glowOpacity = level < 0.05 ? 0 : level * 0.6
   const glowBlur = level < 0.05 ? 0 : Math.round(4 + level * 8)
   const flowOpacity = level < 0.05 ? 0 : level * 0.8
-  const waveformAmplitude = 6 * level
   const speedMult = 0.3 + level * 1.7
 
   return {
     bodyColor: color, bodyOpacity, bodyWidth,
     coreColor: color, coreOpacity: bodyOpacity, coreWidth,
     glowColor: color, glowOpacity, glowBlur,
-    flowOpacity, waveformAmplitude, speedMult,
+    flowOpacity, speedMult,
     sparkRadius: 4 + level * 3, sparkOpacity: level * 0.5,
   }
 }
@@ -189,7 +183,7 @@ export function getGateCableVisuals(gateHigh: boolean): CableVisualParams {
       bodyColor: color, bodyOpacity: 1.0, bodyWidth: 4,
       coreColor: color, coreOpacity: 1.0, coreWidth: 2,
       glowColor: color, glowOpacity: 0.6, glowBlur: 8,
-      flowOpacity: 0.8, waveformAmplitude: 0, speedMult: 1.0,
+      flowOpacity: 0.8, speedMult: 1.0,
       sparkRadius: 4, sparkOpacity: 0.6,
     }
   }
@@ -197,7 +191,7 @@ export function getGateCableVisuals(gateHigh: boolean): CableVisualParams {
     bodyColor: color, bodyOpacity: 0.08, bodyWidth: 2,
     coreColor: color, coreOpacity: 0.08, coreWidth: 1,
     glowColor: color, glowOpacity: 0, glowBlur: 0,
-    flowOpacity: 0, waveformAmplitude: 0, speedMult: 0.3,
+    flowOpacity: 0, speedMult: 0.3,
     sparkRadius: 0, sparkOpacity: 0,
   }
 }

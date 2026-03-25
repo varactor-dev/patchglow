@@ -164,6 +164,15 @@ export default function App() {
   // Keyboard shortcuts: Cmd/Ctrl +/- for zoom, Cmd/Ctrl+0 for fit, Cmd/Ctrl+Z undo, Cmd/Ctrl+Shift+Z redo
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // C key (no modifier): cycle cable display mode
+      if (e.key === 'c' || e.key === 'C') {
+        const tag = (e.target as HTMLElement)?.tagName
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+        if (e.metaKey || e.ctrlKey || e.altKey) return
+        e.preventDefault()
+        useRackStore.getState().cycleCableDisplayMode()
+        return
+      }
       if (!(e.metaKey || e.ctrlKey)) return
       if (e.key === 'z' || e.key === 'Z') {
         e.preventDefault()
