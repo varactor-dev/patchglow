@@ -88,7 +88,7 @@ export default function DrumSynthVisualization({ moduleId, accentColor, off, byp
           }
         } else {
           // Inactive cell outline
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)'
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)'
           ctx.lineWidth = 0.5
           ctx.strokeRect(x + 1, rowY + 1, cellW - 2, cellH - 2)
         }

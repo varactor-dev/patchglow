@@ -36,8 +36,8 @@
       "position": { "row": 0, "col": 34 },
       "parameters": {
         "level1": 0.45,
-        "level2": 0.35,
-        "level3": 0.25
+        "level2": 0.55,
+        "level3": 0.30
       }
     },
     "delay-1": {
@@ -47,7 +47,7 @@
       "parameters": {
         "time": 0.375,
         "feedback": 0.30,
-        "mix": 0.20
+        "mix": 0.25
       }
     },
     "reverb-1": {
@@ -55,8 +55,8 @@
       "type": "reverb",
       "position": { "row": 0, "col": 52 },
       "parameters": {
-        "decay": 4.0,
-        "mix": 0.30,
+        "decay": 2.5,
+        "mix": 0.18,
         "damping": 0.50
       }
     },
@@ -65,7 +65,7 @@
       "type": "output",
       "position": { "row": 0, "col": 62 },
       "parameters": {
-        "volume": -6
+        "volume": -8
       }
     },
     "drumsynth-1": {
@@ -87,7 +87,7 @@
       "type": "sequencer",
       "position": { "row": 1, "col": 20 },
       "parameters": {
-        "tempo": 130,
+        "tempo": 120,
         "gate-length": 55,
         "step-count": "8",
         "steps": "[0,3,7,0,12,7,3,5]"
@@ -154,8 +154,8 @@
       "type": "filter",
       "position": { "row": 2, "col": 36 },
       "parameters": {
-        "frequency": 800,
-        "resonance": 1.0,
+        "frequency": 1500,
+        "resonance": 3.0,
         "type": "lowpass"
       }
     },
