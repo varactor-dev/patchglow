@@ -13,6 +13,7 @@ const PRESETS = [
   { name: 'Drift', file: 'drift.json' },
   { name: 'Echo Chamber', file: 'echo-chamber.json' },
   { name: 'Neon Dreams', file: 'neon-dreams.json' },
+  { name: 'The Grid', file: 'the-grid.json' },
 ]
 
 interface ToolbarProps {

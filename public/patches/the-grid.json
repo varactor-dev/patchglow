@@ -1,0 +1,310 @@
+{
+  "name": "The Grid",
+  "description": "Slow ambient three-voice patch — bass sequence, pad melody, and pedal drone with deep reverb, inspired by Daft Punk's TRON: Legacy score.",
+  "modules": {
+    "sequencer-1": {
+      "instanceId": "sequencer-1",
+      "type": "sequencer",
+      "position": { "row": 0, "col": 0 },
+      "parameters": {
+        "tempo": 36,
+        "gate-length": 90,
+        "step-count": "16",
+        "steps": "[7,7,11,11,4,4,0,0,9,9,2,2,7,7,2,2]"
+      }
+    },
+    "oscillator-1": {
+      "instanceId": "oscillator-1",
+      "type": "oscillator",
+      "position": { "row": 0, "col": 18 },
+      "parameters": {
+        "frequency": 92.5,
+        "detune": 0,
+        "waveform": "sawtooth"
+      }
+    },
+    "filter-1": {
+      "instanceId": "filter-1",
+      "type": "filter",
+      "position": { "row": 0, "col": 32 },
+      "parameters": {
+        "frequency": 400,
+        "resonance": 1.5,
+        "type": "lowpass"
+      }
+    },
+    "vca-1": {
+      "instanceId": "vca-1",
+      "type": "vca",
+      "position": { "row": 0, "col": 44 },
+      "parameters": {
+        "level": 0.7
+      }
+    },
+    "mixer-1": {
+      "instanceId": "mixer-1",
+      "type": "mixer",
+      "position": { "row": 0, "col": 52 },
+      "parameters": {
+        "level1": 0.5,
+        "level2": 0.6,
+        "level3": 0.15
+      }
+    },
+    "reverb-1": {
+      "instanceId": "reverb-1",
+      "type": "reverb",
+      "position": { "row": 0, "col": 60 },
+      "parameters": {
+        "decay": 6.0,
+        "mix": 0.55,
+        "damping": 0.4
+      }
+    },
+    "output-1": {
+      "instanceId": "output-1",
+      "type": "output",
+      "position": { "row": 0, "col": 70 },
+      "parameters": {
+        "volume": -8
+      }
+    },
+    "sequencer-2": {
+      "instanceId": "sequencer-2",
+      "type": "sequencer",
+      "position": { "row": 1, "col": 0 },
+      "parameters": {
+        "tempo": 120,
+        "gate-length": 90,
+        "step-count": "16",
+        "steps": "[5,5,7,7,4,4,0,0,5,5,4,4,7,7,4,4]"
+      }
+    },
+    "oscillator-2": {
+      "instanceId": "oscillator-2",
+      "type": "oscillator",
+      "position": { "row": 1, "col": 18 },
+      "parameters": {
+        "frequency": 415.3,
+        "detune": 15,
+        "waveform": "sawtooth"
+      }
+    },
+    "filter-2": {
+      "instanceId": "filter-2",
+      "type": "filter",
+      "position": { "row": 1, "col": 32 },
+      "parameters": {
+        "frequency": 800,
+        "resonance": 2,
+        "type": "lowpass"
+      }
+    },
+    "vca-2": {
+      "instanceId": "vca-2",
+      "type": "vca",
+      "position": { "row": 1, "col": 44 },
+      "parameters": {
+        "level": 0.8
+      }
+    },
+    "delay-1": {
+      "instanceId": "delay-1",
+      "type": "delay",
+      "position": { "row": 1, "col": 52 },
+      "parameters": {
+        "time": 0.4,
+        "feedback": 0.35,
+        "mix": 0.4
+      }
+    },
+    "oscillator-3": {
+      "instanceId": "oscillator-3",
+      "type": "oscillator",
+      "position": { "row": 2, "col": 0 },
+      "parameters": {
+        "frequency": 82.41,
+        "detune": 0,
+        "waveform": "triangle"
+      }
+    },
+    "filter-3": {
+      "instanceId": "filter-3",
+      "type": "filter",
+      "position": { "row": 2, "col": 14 },
+      "parameters": {
+        "frequency": 200,
+        "resonance": 0.5,
+        "type": "lowpass"
+      }
+    },
+    "envelope-1": {
+      "instanceId": "envelope-1",
+      "type": "envelope",
+      "position": { "row": 2, "col": 32 },
+      "parameters": {
+        "attack": 0.8,
+        "decay": 0.3,
+        "sustain": 0.8,
+        "release": 3.0
+      }
+    },
+    "envelope-2": {
+      "instanceId": "envelope-2",
+      "type": "envelope",
+      "position": { "row": 2, "col": 44 },
+      "parameters": {
+        "attack": 2.0,
+        "decay": 1.0,
+        "sustain": 0.8,
+        "release": 4.0
+      }
+    }
+  },
+  "connections": [
+    {
+      "id": "sequencer-1:cv-out→oscillator-1:voct",
+      "sourceModuleId": "sequencer-1",
+      "sourcePortId": "cv-out",
+      "destModuleId": "oscillator-1",
+      "destPortId": "voct",
+      "signalType": "cv"
+    },
+    {
+      "id": "sequencer-1:gate-out→envelope-1:gate",
+      "sourceModuleId": "sequencer-1",
+      "sourcePortId": "gate-out",
+      "destModuleId": "envelope-1",
+      "destPortId": "gate",
+      "signalType": "gate"
+    },
+    {
+      "id": "sequencer-1:gate-out→sequencer-2:clock-in",
+      "sourceModuleId": "sequencer-1",
+      "sourcePortId": "gate-out",
+      "destModuleId": "sequencer-2",
+      "destPortId": "clock-in",
+      "signalType": "gate"
+    },
+    {
+      "id": "oscillator-1:out→filter-1:in",
+      "sourceModuleId": "oscillator-1",
+      "sourcePortId": "out",
+      "destModuleId": "filter-1",
+      "destPortId": "in",
+      "signalType": "audio"
+    },
+    {
+      "id": "filter-1:out→vca-1:in",
+      "sourceModuleId": "filter-1",
+      "sourcePortId": "out",
+      "destModuleId": "vca-1",
+      "destPortId": "in",
+      "signalType": "audio"
+    },
+    {
+      "id": "envelope-1:out→vca-1:cv",
+      "sourceModuleId": "envelope-1",
+      "sourcePortId": "out",
+      "destModuleId": "vca-1",
+      "destPortId": "cv",
+      "signalType": "cv"
+    },
+    {
+      "id": "vca-1:out→mixer-1:in1",
+      "sourceModuleId": "vca-1",
+      "sourcePortId": "out",
+      "destModuleId": "mixer-1",
+      "destPortId": "in1",
+      "signalType": "audio"
+    },
+    {
+      "id": "sequencer-2:cv-out→oscillator-2:voct",
+      "sourceModuleId": "sequencer-2",
+      "sourcePortId": "cv-out",
+      "destModuleId": "oscillator-2",
+      "destPortId": "voct",
+      "signalType": "cv"
+    },
+    {
+      "id": "sequencer-2:gate-out→envelope-2:gate",
+      "sourceModuleId": "sequencer-2",
+      "sourcePortId": "gate-out",
+      "destModuleId": "envelope-2",
+      "destPortId": "gate",
+      "signalType": "gate"
+    },
+    {
+      "id": "oscillator-2:out→filter-2:in",
+      "sourceModuleId": "oscillator-2",
+      "sourcePortId": "out",
+      "destModuleId": "filter-2",
+      "destPortId": "in",
+      "signalType": "audio"
+    },
+    {
+      "id": "filter-2:out→vca-2:in",
+      "sourceModuleId": "filter-2",
+      "sourcePortId": "out",
+      "destModuleId": "vca-2",
+      "destPortId": "in",
+      "signalType": "audio"
+    },
+    {
+      "id": "envelope-2:out→vca-2:cv",
+      "sourceModuleId": "envelope-2",
+      "sourcePortId": "out",
+      "destModuleId": "vca-2",
+      "destPortId": "cv",
+      "signalType": "cv"
+    },
+    {
+      "id": "vca-2:out→delay-1:in",
+      "sourceModuleId": "vca-2",
+      "sourcePortId": "out",
+      "destModuleId": "delay-1",
+      "destPortId": "in",
+      "signalType": "audio"
+    },
+    {
+      "id": "delay-1:out→mixer-1:in2",
+      "sourceModuleId": "delay-1",
+      "sourcePortId": "out",
+      "destModuleId": "mixer-1",
+      "destPortId": "in2",
+      "signalType": "audio"
+    },
+    {
+      "id": "oscillator-3:out→filter-3:in",
+      "sourceModuleId": "oscillator-3",
+      "sourcePortId": "out",
+      "destModuleId": "filter-3",
+      "destPortId": "in",
+      "signalType": "audio"
+    },
+    {
+      "id": "filter-3:out→mixer-1:in3",
+      "sourceModuleId": "filter-3",
+      "sourcePortId": "out",
+      "destModuleId": "mixer-1",
+      "destPortId": "in3",
+      "signalType": "audio"
+    },
+    {
+      "id": "mixer-1:out→reverb-1:in",
+      "sourceModuleId": "mixer-1",
+      "sourcePortId": "out",
+      "destModuleId": "reverb-1",
+      "destPortId": "in",
+      "signalType": "audio"
+    },
+    {
+      "id": "reverb-1:out→output-1:in",
+      "sourceModuleId": "reverb-1",
+      "sourcePortId": "out",
+      "destModuleId": "output-1",
+      "destPortId": "in",
+      "signalType": "audio"
+    }
+  ]
+}
