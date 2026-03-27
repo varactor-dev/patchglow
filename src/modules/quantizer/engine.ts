@@ -65,7 +65,9 @@ export class QuantizerEngine implements ModuleAudioEngine {
   private readInput(): void {
     if (!this.cvAnalyser) return
     const data = this.cvAnalyser.getValue() as Float32Array
-    this.inputValue = data[data.length - 1] as number
+    // Scale audio-level input (±1) to cents: 1.0 = 2 octaves (2400 cents).
+    // Noise→S&H outputs ±0.3 which becomes ±720 cents (±6 semitones) — a useful melodic range.
+    this.inputValue = (data[data.length - 1] as number) * 2400
   }
 
   private doQuantize(): void {
