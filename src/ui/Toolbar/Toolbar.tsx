@@ -14,6 +14,7 @@ const PRESETS = [
   { name: 'Echo Chamber', file: 'echo-chamber.json' },
   { name: 'Neon Dreams', file: 'neon-dreams.json' },
   { name: 'The Grid', file: 'the-grid.json' },
+  { name: 'Beat Lab', file: 'beat-lab.json' },
 ]
 
 interface ToolbarProps {

@@ -1,0 +1,349 @@
+{
+  "name": "Beat Lab",
+  "description": "Drums, bass riff, and generative melody — the drum synth drives a sequenced bass line while noise through sample-and-hold and quantizer creates an ever-changing pentatonic melody.",
+  "modules": {
+    "oscillator-1": {
+      "instanceId": "oscillator-1",
+      "type": "oscillator",
+      "position": { "row": 0, "col": 0 },
+      "parameters": {
+        "frequency": 220,
+        "detune": 0,
+        "waveform": "sawtooth"
+      }
+    },
+    "filter-1": {
+      "instanceId": "filter-1",
+      "type": "filter",
+      "position": { "row": 0, "col": 14 },
+      "parameters": {
+        "frequency": 1200,
+        "resonance": 1.5,
+        "type": "lowpass"
+      }
+    },
+    "vca-1": {
+      "instanceId": "vca-1",
+      "type": "vca",
+      "position": { "row": 0, "col": 26 },
+      "parameters": {
+        "level": 0.80
+      }
+    },
+    "mixer-1": {
+      "instanceId": "mixer-1",
+      "type": "mixer",
+      "position": { "row": 0, "col": 34 },
+      "parameters": {
+        "level1": 0.45,
+        "level2": 0.35,
+        "level3": 0.25
+      }
+    },
+    "delay-1": {
+      "instanceId": "delay-1",
+      "type": "delay",
+      "position": { "row": 0, "col": 42 },
+      "parameters": {
+        "time": 0.375,
+        "feedback": 0.30,
+        "mix": 0.20
+      }
+    },
+    "reverb-1": {
+      "instanceId": "reverb-1",
+      "type": "reverb",
+      "position": { "row": 0, "col": 52 },
+      "parameters": {
+        "decay": 4.0,
+        "mix": 0.30,
+        "damping": 0.50
+      }
+    },
+    "output-1": {
+      "instanceId": "output-1",
+      "type": "output",
+      "position": { "row": 0, "col": 62 },
+      "parameters": {
+        "volume": -6
+      }
+    },
+    "drumsynth-1": {
+      "instanceId": "drumsynth-1",
+      "type": "drumsynth",
+      "position": { "row": 1, "col": 0 },
+      "parameters": {
+        "bpm": 130,
+        "kick": 0.70,
+        "snare": 0.60,
+        "hat": 0.45,
+        "tone": 0.35,
+        "decay": 0.50,
+        "step-count": "16"
+      }
+    },
+    "sequencer-1": {
+      "instanceId": "sequencer-1",
+      "type": "sequencer",
+      "position": { "row": 1, "col": 20 },
+      "parameters": {
+        "tempo": 130,
+        "gate-length": 55,
+        "step-count": "8",
+        "steps": "[0,3,7,0,12,7,3,5]"
+      }
+    },
+    "envelope-1": {
+      "instanceId": "envelope-1",
+      "type": "envelope",
+      "position": { "row": 1, "col": 38 },
+      "parameters": {
+        "attack": 0.01,
+        "decay": 0.20,
+        "sustain": 0.40,
+        "release": 0.30
+      }
+    },
+    "envelope-2": {
+      "instanceId": "envelope-2",
+      "type": "envelope",
+      "position": { "row": 1, "col": 48 },
+      "parameters": {
+        "attack": 0.01,
+        "decay": 0.15,
+        "sustain": 0.30,
+        "release": 0.25
+      }
+    },
+    "noise-1": {
+      "instanceId": "noise-1",
+      "type": "noise",
+      "position": { "row": 2, "col": 0 },
+      "parameters": {
+        "type": "pink",
+        "level": 0.30
+      }
+    },
+    "samplehold-1": {
+      "instanceId": "samplehold-1",
+      "type": "samplehold",
+      "position": { "row": 2, "col": 6 },
+      "parameters": {}
+    },
+    "quantizer-1": {
+      "instanceId": "quantizer-1",
+      "type": "quantizer",
+      "position": { "row": 2, "col": 14 },
+      "parameters": {
+        "root": "A",
+        "scale": "pentatonic"
+      }
+    },
+    "oscillator-2": {
+      "instanceId": "oscillator-2",
+      "type": "oscillator",
+      "position": { "row": 2, "col": 22 },
+      "parameters": {
+        "frequency": 440,
+        "detune": 0,
+        "waveform": "triangle"
+      }
+    },
+    "filter-2": {
+      "instanceId": "filter-2",
+      "type": "filter",
+      "position": { "row": 2, "col": 36 },
+      "parameters": {
+        "frequency": 800,
+        "resonance": 1.0,
+        "type": "lowpass"
+      }
+    },
+    "vca-2": {
+      "instanceId": "vca-2",
+      "type": "vca",
+      "position": { "row": 2, "col": 48 },
+      "parameters": {
+        "level": 0.70
+      }
+    },
+    "keyboard-1": {
+      "instanceId": "keyboard-1",
+      "type": "keyboard",
+      "position": { "row": 2, "col": 56 },
+      "parameters": {
+        "octave": 0
+      }
+    }
+  },
+  "connections": [
+    {
+      "id": "sequencer-1:cv-out\u2192oscillator-1:voct",
+      "sourceModuleId": "sequencer-1",
+      "sourcePortId": "cv-out",
+      "destModuleId": "oscillator-1",
+      "destPortId": "voct",
+      "signalType": "cv"
+    },
+    {
+      "id": "sequencer-1:gate-out\u2192envelope-1:gate",
+      "sourceModuleId": "sequencer-1",
+      "sourcePortId": "gate-out",
+      "destModuleId": "envelope-1",
+      "destPortId": "gate",
+      "signalType": "gate"
+    },
+    {
+      "id": "sequencer-1:gate-out\u2192drumsynth-1:clock-in",
+      "sourceModuleId": "sequencer-1",
+      "sourcePortId": "gate-out",
+      "destModuleId": "drumsynth-1",
+      "destPortId": "clock-in",
+      "signalType": "gate"
+    },
+    {
+      "id": "sequencer-1:gate-out\u2192samplehold-1:trigger",
+      "sourceModuleId": "sequencer-1",
+      "sourcePortId": "gate-out",
+      "destModuleId": "samplehold-1",
+      "destPortId": "trigger",
+      "signalType": "gate"
+    },
+    {
+      "id": "sequencer-1:gate-out\u2192quantizer-1:trig-in",
+      "sourceModuleId": "sequencer-1",
+      "sourcePortId": "gate-out",
+      "destModuleId": "quantizer-1",
+      "destPortId": "trig-in",
+      "signalType": "gate"
+    },
+    {
+      "id": "oscillator-1:out\u2192filter-1:in",
+      "sourceModuleId": "oscillator-1",
+      "sourcePortId": "out",
+      "destModuleId": "filter-1",
+      "destPortId": "in",
+      "signalType": "audio"
+    },
+    {
+      "id": "filter-1:out\u2192vca-1:in",
+      "sourceModuleId": "filter-1",
+      "sourcePortId": "out",
+      "destModuleId": "vca-1",
+      "destPortId": "in",
+      "signalType": "audio"
+    },
+    {
+      "id": "envelope-1:out\u2192vca-1:cv",
+      "sourceModuleId": "envelope-1",
+      "sourcePortId": "out",
+      "destModuleId": "vca-1",
+      "destPortId": "cv",
+      "signalType": "cv"
+    },
+    {
+      "id": "vca-1:out\u2192mixer-1:in1",
+      "sourceModuleId": "vca-1",
+      "sourcePortId": "out",
+      "destModuleId": "mixer-1",
+      "destPortId": "in1",
+      "signalType": "audio"
+    },
+    {
+      "id": "drumsynth-1:out\u2192mixer-1:in2",
+      "sourceModuleId": "drumsynth-1",
+      "sourcePortId": "out",
+      "destModuleId": "mixer-1",
+      "destPortId": "in2",
+      "signalType": "audio"
+    },
+    {
+      "id": "noise-1:out\u2192samplehold-1:signal-in",
+      "sourceModuleId": "noise-1",
+      "sourcePortId": "out",
+      "destModuleId": "samplehold-1",
+      "destPortId": "signal-in",
+      "signalType": "cv"
+    },
+    {
+      "id": "samplehold-1:out\u2192quantizer-1:cv-in",
+      "sourceModuleId": "samplehold-1",
+      "sourcePortId": "out",
+      "destModuleId": "quantizer-1",
+      "destPortId": "cv-in",
+      "signalType": "cv"
+    },
+    {
+      "id": "quantizer-1:cv-out\u2192oscillator-2:voct",
+      "sourceModuleId": "quantizer-1",
+      "sourcePortId": "cv-out",
+      "destModuleId": "oscillator-2",
+      "destPortId": "voct",
+      "signalType": "cv"
+    },
+    {
+      "id": "quantizer-1:trig-out\u2192envelope-2:gate",
+      "sourceModuleId": "quantizer-1",
+      "sourcePortId": "trig-out",
+      "destModuleId": "envelope-2",
+      "destPortId": "gate",
+      "signalType": "gate"
+    },
+    {
+      "id": "oscillator-2:out\u2192filter-2:in",
+      "sourceModuleId": "oscillator-2",
+      "sourcePortId": "out",
+      "destModuleId": "filter-2",
+      "destPortId": "in",
+      "signalType": "audio"
+    },
+    {
+      "id": "filter-2:out\u2192vca-2:in",
+      "sourceModuleId": "filter-2",
+      "sourcePortId": "out",
+      "destModuleId": "vca-2",
+      "destPortId": "in",
+      "signalType": "audio"
+    },
+    {
+      "id": "envelope-2:out\u2192vca-2:cv",
+      "sourceModuleId": "envelope-2",
+      "sourcePortId": "out",
+      "destModuleId": "vca-2",
+      "destPortId": "cv",
+      "signalType": "cv"
+    },
+    {
+      "id": "vca-2:out\u2192mixer-1:in3",
+      "sourceModuleId": "vca-2",
+      "sourcePortId": "out",
+      "destModuleId": "mixer-1",
+      "destPortId": "in3",
+      "signalType": "audio"
+    },
+    {
+      "id": "mixer-1:out\u2192delay-1:in",
+      "sourceModuleId": "mixer-1",
+      "sourcePortId": "out",
+      "destModuleId": "delay-1",
+      "destPortId": "in",
+      "signalType": "audio"
+    },
+    {
+      "id": "delay-1:out\u2192reverb-1:in",
+      "sourceModuleId": "delay-1",
+      "sourcePortId": "out",
+      "destModuleId": "reverb-1",
+      "destPortId": "in",
+      "signalType": "audio"
+    },
+    {
+      "id": "reverb-1:out\u2192output-1:in",
+      "sourceModuleId": "reverb-1",
+      "sourcePortId": "out",
+      "destModuleId": "output-1",
+      "destPortId": "in",
+      "signalType": "audio"
+    }
+  ]
+}

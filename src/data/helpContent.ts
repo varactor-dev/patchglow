@@ -662,4 +662,92 @@ export const helpContent: Record<string, ModuleHelp> = {
     tryThis:
       'Create a generative random melody: connect Noise OUT to Sample & Hold SIGNAL IN. Connect a Sequencer GATE OUT (or an LFO square wave) to the TRIGGER input. Send the Sample & Hold OUT to an Oscillator V/OCT. Each trigger grabs a random voltage from the noise, sending the Oscillator to a random pitch. Add an Envelope and VCA to shape each note. You now have a self-playing patch that never repeats the same melody twice.',
   },
+
+  drumsynth: {
+    tooltip:
+      'A drum machine with kick, snare, and hi-hat. Click the grid to make a beat. Each drum sound is built from synthesis — oscillators and noise, not samples.',
+    whatItDoes:
+      'The Drum Synth creates three drum voices from scratch using basic waveforms and noise. The kick drum is a sine wave that sweeps down rapidly in pitch — this falling frequency is what gives a kick its deep "thud." The snare combines a short pitched tone (the "body") with burst of filtered noise (the "snap" or rattle of the snare wires). The hi-hat is pure filtered noise at a high frequency — a tight burst for a closed hat, a longer sizzle for an open hat. A built-in step sequencer lets you program patterns directly on the module.',
+    signalFlow: 'Internal pattern triggers voices → Oscillators + noise shaped by envelopes → Voice mix → Audio Out',
+    controls: [
+      {
+        name: 'BPM',
+        description: 'Sets the tempo of the built-in pattern sequencer in beats per minute. Ignored when an external clock is connected.',
+        tryThis: 'Start at 120 BPM, then try slowing down to 80 for a half-time feel, or speed up to 160 for a driving rhythm.',
+      },
+      {
+        name: 'Kick',
+        description: 'Controls the volume of the kick drum voice.',
+        tryThis: 'Turn it up to hear the deep sine sweep that makes the kick punch. Turn it all the way down to isolate the snare and hat.',
+      },
+      {
+        name: 'Snare',
+        description: 'Controls the volume of the snare drum voice.',
+        tryThis: 'Listen to how the snare combines a pitched tone with a burst of noise. The tone gives it body, the noise gives it snap.',
+      },
+      {
+        name: 'Hat',
+        description: 'Controls the volume of the hi-hat voice.',
+        tryThis: 'Hi-hats add rhythm between the main beats. Try turning the hat up and adding more hat steps to the pattern for a busier groove.',
+      },
+      {
+        name: 'Tone',
+        description: 'Shifts all voices higher or lower in pitch. At 0 the kick is deep and boomy, at 1 it becomes a tight click. The snare body pitch and hat filter frequency shift too.',
+        tryThis: 'Sweep the tone knob from 0 to 1 while the pattern plays. Notice how the character of all three voices changes together.',
+      },
+      {
+        name: 'Decay',
+        description: 'Globally scales how long each drum voice rings out. Low values make tight, clipped hits. High values make long, boomy tails.',
+        tryThis: 'Set decay to 0 for very tight electronic drums, then push it toward 1 for a more open, roomy sound.',
+      },
+      {
+        name: 'Steps',
+        description: 'Sets the pattern length to 4, 8, or 16 steps.',
+        tryThis: 'Try 8 steps for a shorter loop that cycles faster, or 4 steps for a minimal pattern.',
+      },
+    ],
+    ports: [
+      { name: 'OUT', type: 'audio', direction: 'out', connectTo: 'Mixer, Filter, Distortion, Delay, Reverb, or Output — the mixed drum signal' },
+      { name: 'KICK', type: 'audio', direction: 'out', connectTo: 'Filter, Distortion, Delay, Reverb — process the kick separately from other drums' },
+      { name: 'SNR', type: 'audio', direction: 'out', connectTo: 'Filter, Distortion, Delay, Reverb — process the snare separately' },
+      { name: 'HAT', type: 'audio', direction: 'out', connectTo: 'Filter, Delay, Reverb — process the hat separately for spatial effects' },
+      { name: 'CLK', type: 'gate', direction: 'in', connectTo: 'Sequencer GATE OUT — syncs the drum pattern to an external clock, ignoring the BPM knob' },
+      { name: 'RST', type: 'gate', direction: 'in', connectTo: 'Sequencer GATE OUT or LFO — resets the pattern to step 1' },
+      { name: 'ACC', type: 'gate', direction: 'in', connectTo: 'Sequencer GATE OUT or LFO — when high, the current step plays louder for rhythmic emphasis' },
+    ],
+    vizGuide:
+      'The display is a drum pattern grid with three rows — Kick (top, red), Snare (middle, orange), Hat (bottom, yellow). Each column is a step in the pattern. Bright cells are active hits; dim cells are silent. A glowing column sweeps left to right showing the current step. When a voice triggers, its row briefly flashes brighter.',
+    tryThis:
+      'Connect the Drum Synth OUT to the Output IN. You should hear a basic four-on-the-floor beat immediately. Click cells in the grid to add or remove hits. Try adding a snare on step 11 for a syncopated feel. Then connect the Drum Synth to a Delay or Reverb for spatial effects. For sync with a melody, connect a Sequencer GATE OUT to the Drum Synth CLK IN so both play in lockstep.',
+  },
+
+  quantizer: {
+    tooltip:
+      'Snaps pitch CV to the nearest note in a musical scale. Connect it between a CV source and an oscillator to make random or imprecise signals sound musical.',
+    whatItDoes:
+      'The Quantizer takes any incoming pitch control voltage and forces it to the nearest note in your chosen scale. Think of it as auto-tune for control voltage. If the input is between two notes in your scale, the output snaps to whichever is closest. This transforms random or continuously changing CV — like the output of a Sample & Hold or LFO — into musically correct pitches that always sound good together. The root knob selects the key (A, C, F#, etc.) and the scale selector chooses which notes within that key are allowed.',
+    signalFlow: 'CV In → snap to nearest scale note → CV Out',
+    controls: [
+      {
+        name: 'Root',
+        description: 'Selects the root note (key) of the scale — all 12 chromatic notes from C to B.',
+        tryThis: 'Change the root while a quantized melody is playing. The entire melody shifts to a new key instantly, like transposing a song.',
+      },
+      {
+        name: 'Scale',
+        description: 'Selects which notes are allowed: Chromatic (all 12), Major (bright, happy), Minor (dark, sad), Pentatonic (5 notes, bluesy, impossible to sound bad), Blues (pentatonic plus the blue note).',
+        tryThis: 'Start with Pentatonic — it is the safest, most musical choice. Switch to Minor for a darker mood, or Blues to add grit. Chromatic allows all notes, which sounds more random and atonal.',
+      },
+    ],
+    ports: [
+      { name: 'IN', type: 'cv', direction: 'in', connectTo: 'Sample & Hold OUT, LFO OUT, Keyboard CV OUT — any pitch CV source you want to constrain to a scale' },
+      { name: 'TRIG', type: 'gate', direction: 'in', connectTo: 'Sequencer GATE OUT — when connected, the quantizer only updates on triggers (sample-and-hold behavior), preventing pitch slides during held notes' },
+      { name: 'OUT', type: 'cv', direction: 'out', connectTo: 'Oscillator V/OCT — the quantized pitch goes here to control the oscillator' },
+      { name: 'CHNG', type: 'gate', direction: 'out', connectTo: 'Envelope GATE IN — fires a trigger pulse whenever the output note changes, useful for triggering envelopes from quantized pitch changes' },
+    ],
+    vizGuide:
+      'The display shows a piano keyboard spanning one octave (C to B). Notes that belong to the current scale glow green; notes outside the scale are dark. The root note glows brightest. A diamond (◆) shows which note the raw input is closest to, and a circle (●) shows which note the quantized output snapped to. When they differ, you can see the correction happening in real time.',
+    tryThis:
+      'Build a generative melody machine: connect Noise → Sample & Hold → Quantizer → Oscillator V/OCT. Set the Quantizer to A minor pentatonic. Connect a Sequencer GATE to both the S&H trigger and the Quantizer TRIG input. The random voltages from noise are now snapped to a five-note scale — every note sounds musical. Try changing the scale to Blues and hear the character shift. Add an Envelope, VCA, and Filter to shape the sound.',
+  },
 };

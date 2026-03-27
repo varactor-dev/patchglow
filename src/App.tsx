@@ -17,6 +17,8 @@ import delayReg from '@/modules/delay'
 import reverbReg from '@/modules/reverb'
 import distortionReg from '@/modules/distortion'
 import sampleHoldReg from '@/modules/samplehold'
+import quantizerReg from '@/modules/quantizer'
+import drumSynthReg from '@/modules/drumsynth'
 
 registerModule(oscillatorReg)
 registerModule(outputReg)
@@ -32,6 +34,8 @@ registerModule(delayReg)
 registerModule(reverbReg)
 registerModule(distortionReg)
 registerModule(sampleHoldReg)
+registerModule(quantizerReg)
+registerModule(drumSynthReg)
 
 // Core
 import { useRackStore } from '@/store/rackStore'
