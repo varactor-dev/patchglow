@@ -18,12 +18,17 @@ PatchGlow is designed for anyone curious about how synthesizers work. No prior e
 
 ## Features
 
-- **14 Modules** — Oscillator, Filter, VCA, Envelope, LFO, Mixer, Keyboard, Output, Step Sequencer, Noise, Delay, Reverb, Distortion, and Sample & Hold
+- **16 Modules** — Oscillator, Filter, VCA, Envelope, LFO, Mixer, Keyboard, Output, Step Sequencer, Noise, Delay, Reverb, Distortion, Sample & Hold, Drum Synth, and Quantizer
 - **Waveform-Riding Cables** — patch cables show the actual audio waveform traveling through them
-- **Three Signal Types** — audio (cyan), CV/control voltage (amber), and gate (green), with type-safe connections
+- **Three Signal Types** — audio (amber), CV/control voltage (cyan), and gate (magenta), with type-safe connections
+- **Cable Display Modes** — press C to cycle between clean, subtle, and full signal visualization on cables
+- **Signal Probe** — click any cable to inspect the live signal flowing through it
+- **Module Controls** — OFF, BYPASS, and SOLO buttons on every module for flexible signal routing
 - **Multi-Row Rack** — Eurorack-style layout with rail holes, HP grid, and mounting screws
-- **Real-Time Visualizations** — every module renders its internal state live (waveforms, spectra, envelope shapes, key states)
-- **Patch Save/Load** — export and import patches as JSON files
+- **Real-Time Visualizations** — every module renders its internal state live (waveforms, spectra, envelope shapes, drum grids)
+- **7 Demo Presets** — progressive patches from simple (First Light) to complex (Beat Lab)
+- **Patch Save/Load & URL Sharing** — export/import patches as JSON, or share via compressed URL
+- **Undo/Redo** — full patch history with Ctrl+Z / Ctrl+Shift+Z
 - **Autosave** — your rack state persists automatically across sessions
 - **Viewport Zoom** — pinch-to-zoom, keyboard shortcuts (Cmd+/−), and auto-fit
 
@@ -41,7 +46,7 @@ Open [http://localhost:5173](http://localhost:5173) and click **START AUDIO**.
 ## Your First Patch
 
 1. Click **START AUDIO** (or click anywhere on the overlay)
-2. Click **DEMO** in the toolbar to load the subtractive voice patch
+2. Click **PATCHES** in the toolbar and choose a preset (try **Neon Dreams**)
 3. Click the on-screen keyboard to play notes
 4. Watch the signal flow: Keyboard → Oscillator → Filter → VCA → Output
 5. Try tweaking the oscillator waveform, filter cutoff, or envelope attack

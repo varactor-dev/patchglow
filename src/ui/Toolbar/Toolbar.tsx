@@ -100,7 +100,7 @@ export default function Toolbar({ onAbout, onToast }: ToolbarProps) {
     if (!window.confirm('Reset rack? This will remove all modules and cables.')) return
     clearAutosave()
     importPatch('{"modules":{},"connections":[]}')
-    onToast?.('Rack cleared. Click DEMO to reload the demo patch.')
+    onToast?.('Rack cleared. Use PATCHES to load a preset.')
   }, [importPatch, onToast])
 
   const handleShare = useCallback(async () => {

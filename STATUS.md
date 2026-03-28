@@ -33,8 +33,10 @@ PatchGlow is an open-source, browser-based modular Eurorack synthesizer emulator
 | 12 | Distortion | 10 | modifier | Waveshaper with 3 modes (soft clip, hard clip, wave fold) + drive + mix | Complete |
 | 13 | Sample & Hold | 8 | utility | Samples input on trigger rising edge, holds until next trigger | Complete |
 | 14 | Sequencer | 18 | source | Step sequencer (4/8/16 steps) with tempo, gate length, external clock/reset | Complete |
+| 15 | Drum Synth | 20 | source | Synthesized drum machine (kick/snare/hat) with programmable step grid, per-voice outputs | Complete |
+| 16 | Quantizer | 8 | utility | Snaps pitch CV to nearest note in a musical scale (chromatic/major/minor/pentatonic/blues) | Complete |
 
-All 14 modules follow an identical 4-file structure: `definition.ts`, `engine.ts`, `Visualization.tsx`, `index.ts`. Exception: keyboard adds a 5th file for piano key CSS.
+All 16 modules follow an identical 4-file structure: `definition.ts`, `engine.ts`, `Visualization.tsx`, `index.ts`. Exception: keyboard adds a 5th file for piano key CSS.
 
 ---
 
@@ -69,7 +71,7 @@ All 14 modules follow an identical 4-file structure: `definition.ts`, `engine.ts
 | BYPASS button | Complete | Routes signal around processing, dims controls to 40% opacity |
 | SOLO button | Complete | Routes only soloed module to output, gold glow, dims others to 70% |
 | HELP button | Complete | Per-module educational help panel with synthesis concepts |
-| Per-module help content | Complete | 14 entries in helpContent.ts, educational focus |
+| Per-module help content | Complete | 16 entries in helpContent.ts, educational focus |
 
 ### Cable System
 
@@ -103,16 +105,20 @@ All 14 modules follow an identical 4-file structure: `definition.ts`, `engine.ts
 | Distortion | Transfer curve + before/after waveform | Complete |
 | Sample & Hold | Staircase output display | Complete |
 | Sequencer | Step grid with playhead | Complete |
+| Drum Synth | Drum pattern grid with per-voice waveforms | Complete |
+| Quantizer | Piano keyboard with scale highlight + pitch display | Complete |
 
 ### Preset Patches
 
-| Patch | Description | Status |
-|-------|-------------|--------|
-| Neon Dreams | Full 15-module showcase using all signal types | Complete |
-| Sequencer Melody | Step sequencer melody at 140 BPM | Complete |
-| Random Melody | Noise -> S&H random pitch generation | Complete |
-| Ambient Pad | Slow LFO, long reverb atmospheric | Complete |
-| Basic Voice | Minimal subtractive synthesizer voice | Complete |
+| Patch | File | Description | Status |
+|-------|------|-------------|--------|
+| First Light | first-light.json | Intro: Oscillator → Output | Complete |
+| Pulse | pulse.json | Simple rhythm setup | Complete |
+| Drift | drift.json | Evolving pad with modulation | Complete |
+| Echo Chamber | echo-chamber.json | Delay effect demonstration | Complete |
+| Neon Dreams | neon-dreams.json | Full showcase using all signal types (default) | Complete |
+| The Grid | the-grid.json | TRON-inspired cinematic pad | Complete |
+| Beat Lab | beat-lab.json | Drum Synth + Quantizer demo | Complete |
 
 ---
 
@@ -138,9 +144,9 @@ src/
   main.tsx              # React bootstrap
   App.tsx               # Root: welcome screen, audio init, zoom, module registration
   engine/               # AudioEngineManager singleton, module registry, signal types
-  store/                # Zustand store (rackStore), persistence, patch URL encoding
+  store/                # Zustand store (rackStore), persistence, patchUrl (URL sharing)
   types/                # ModuleDefinition, RackModule, Connection, RackStore
-  modules/              # 14 modules + _shared utilities (GatePoller, bypassRouting, drawUtils)
+  modules/              # 16 modules + _shared utilities (GatePoller, bypassRouting, drawUtils)
   ui/
     Toolbar/            # Top bar: audio start, add module, save/load, zoom, presets
     Rack/               # 3-row rack grid, module rendering, drag repositioning
@@ -149,10 +155,10 @@ src/
     HelpPanel/          # Per-module help documentation modal
     HelpTooltip/        # Contextual tooltips
     utils/              # Shared UI utilities (computeFitZoom)
-  data/                 # Educational help content for all 14 modules
+  data/                 # Educational help content for all 16 modules
   theme/                # CSS variables, global reset, fonts
 public/
-  patches/              # 5 JSON preset patches
+  patches/              # 7 JSON preset patches
   docs/                 # User guide + technical reference (self-contained HTML)
 ```
 
@@ -234,7 +240,7 @@ A comprehensive architecture, code quality, and signal accuracy audit was perfor
 
 ### Signal Accuracy
 
-**All 14 modules passed signal accuracy verification.** No signal issues found. Key checks:
+**All 16 modules passed signal accuracy verification.** No signal issues found. Key checks:
 - V/Oct consistent between keyboard and sequencer: both use `(midiNote - 69) * 100` cents
 - Gate is clean 0/1 from all sources, all receivers use `> 0.5` threshold
 - Filter uses native Web Audio BiquadFilter (mathematically correct IIR)
@@ -345,7 +351,7 @@ The practical maximum is approximately 20 modules across 3 rows (252 HP total), 
 | No visual feedback for undo/redo | Ctrl+Z works but there's no indicator of what was undone |
 | No cable deletion via right-click | Cables can only be deleted by selecting + pressing Delete |
 | Module context menu is basic | Right-click only offers "Remove module" — could include duplicate, move to row, etc. |
-| No module search/filter | With 14 modules, the ADD section is getting long. A filter or categorized dropdown would help. |
+| No module search/filter | With 16 modules, the ADD section is getting long. A filter or categorized dropdown would help. |
 | Share link length | Complex patches produce long URLs. No URL shortener integration. |
 | No audio level metering | No master level meter or clipping indicator in the output module |
 | Rack scroll on mobile | Horizontal scrolling through a 3-row, 84HP rack on a phone is awkward |

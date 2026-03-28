@@ -744,8 +744,14 @@
 <pre class="file-tree"><code><span class="dir">patchglow/</span>
 &#x251C;&#x2500;&#x2500; <span class="dir">public/</span>
 &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">docs/</span>                    <span class="comment"># Documentation pages (this file)</span>
-&#x2502;   &#x2514;&#x2500;&#x2500; <span class="dir">patches/</span>
-&#x2502;       &#x2514;&#x2500;&#x2500; <span class="file">subtractive-voice.json</span>  <span class="comment"># Demo patch</span>
+&#x2502;   &#x2514;&#x2500;&#x2500; <span class="dir">patches/</span>                 <span class="comment"># 7 preset patches</span>
+&#x2502;       &#x251C;&#x2500;&#x2500; <span class="file">first-light.json</span>        <span class="comment"># Intro: Oscillator &rarr; Output</span>
+&#x2502;       &#x251C;&#x2500;&#x2500; <span class="file">pulse.json</span>              <span class="comment"># Simple rhythm</span>
+&#x2502;       &#x251C;&#x2500;&#x2500; <span class="file">drift.json</span>              <span class="comment"># Evolving pad with modulation</span>
+&#x2502;       &#x251C;&#x2500;&#x2500; <span class="file">echo-chamber.json</span>       <span class="comment"># Delay effect demo</span>
+&#x2502;       &#x251C;&#x2500;&#x2500; <span class="file">neon-dreams.json</span>        <span class="comment"># Full showcase (default)</span>
+&#x2502;       &#x251C;&#x2500;&#x2500; <span class="file">the-grid.json</span>           <span class="comment"># Cinematic pad</span>
+&#x2502;       &#x2514;&#x2500;&#x2500; <span class="file">beat-lab.json</span>           <span class="comment"># Drum Synth + Quantizer demo</span>
 &#x251C;&#x2500;&#x2500; <span class="dir">src/</span>
 &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">App.tsx</span>                  <span class="comment"># Root component &mdash; registers modules, initializes engine</span>
 &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">App.module.css</span>           <span class="comment"># App-level layout styles</span>
@@ -759,7 +765,8 @@
 &#x2502;   &#x2502;
 &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">store/</span>
 &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">rackStore.ts</span>           <span class="comment"># Zustand store &mdash; all rack state + actions</span>
-&#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; <span class="file">persistence.ts</span>         <span class="comment"># localStorage autosave, import/export</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">persistence.ts</span>         <span class="comment"># localStorage autosave, import/export</span>
+&#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; <span class="file">patchUrl.ts</span>            <span class="comment"># URL sharing &mdash; compress/encode patch into URL hash</span>
 &#x2502;   &#x2502;
 &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">types/</span>
 &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="file">module.ts</span>              <span class="comment"># ModuleDefinition, ModuleAudioEngine, etc.</span>
@@ -789,7 +796,9 @@
 &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">delay/</span>                  <span class="comment"># Feedback delay effect</span>
 &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">reverb/</span>                 <span class="comment"># Reverb effect with damping</span>
 &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">distortion/</span>             <span class="comment"># Waveshaper (soft/hard/fold)</span>
-&#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; <span class="dir">samplehold/</span>             <span class="comment"># Sample &amp; Hold utility</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">samplehold/</span>             <span class="comment"># Sample &amp; Hold utility</span>
+&#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">drumsynth/</span>              <span class="comment"># Drum machine (kick/snare/hat synthesis)</span>
+&#x2502;   &#x2502;   &#x2514;&#x2500;&#x2500; <span class="dir">quantizer/</span>              <span class="comment"># Pitch quantizer (scale-aware)</span>
 &#x2502;   &#x2502;
 &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">ui/</span>
 &#x2502;   &#x2502;   &#x251C;&#x2500;&#x2500; <span class="dir">Toolbar/</span>
@@ -1094,8 +1103,18 @@
         <li>Calls <code>addConnection()</code> on the store</li>
       </ul>
 
-      <h3>Cable Selection</h3>
+      <h3>Cable Selection &amp; Signal Probe</h3>
       <p>Click toggles selection via <code>selectCable()</code>. <strong>Delete / Backspace</strong> removes selected cable. <strong>Escape</strong> deselects.</p>
+      <p>When a cable is selected, a <strong>Signal Probe</strong> panel appears showing real-time analysis of the signal. The probe adapts to signal type: audio shows waveform + frequency, CV shows voltage/min/max/rate, gate shows HIGH/LOW state + duty cycle. The probe panel is draggable and resizable.</p>
+
+      <h3>Cable Display Modes</h3>
+      <p>Three rendering modes, cycled via the <kbd>C</kbd> key or toolbar button:</p>
+      <ul class="key-points">
+        <li><strong>Clean</strong> &mdash; Thin colored lines, minimal signal visualization</li>
+        <li><strong>Subtle</strong> &mdash; Medium lines with gentle signal-shaped width modulation</li>
+        <li><strong>Full</strong> &mdash; Thick polygon paths showing actual signal amplitude riding along the cable</li>
+      </ul>
+      <p>Mode is stored in the Zustand store as <code>cableDisplayMode</code> and affects all cables uniformly. Signal-reactive brightness (0.12 idle to 1.0 active) and heat coloring on audio cables apply in all modes.</p>
     </div>
 
     <hr class="divider" />

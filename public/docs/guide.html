@@ -681,6 +681,32 @@
     </div>
   </div>
 
+  <h3>Module Controls</h3>
+  <p>Every module has three state buttons on its label bar:</p>
+  <ul>
+    <li><strong>OFF</strong> &mdash; Mutes the module completely. Audio and CV output drops to zero. The panel dims to show it's inactive.</li>
+    <li><strong>BYPASS</strong> &mdash; Routes the input signal straight to the output, skipping the module's processing. Useful for A/B comparison&thinsp;&mdash;&thinsp;hear with and without the effect.</li>
+    <li><strong>SOLO</strong> &mdash; Isolates this module so you only hear its output. All other modules fade to 70% opacity. Click SOLO again to return to normal.</li>
+  </ul>
+  <p>Each module also has a <strong>?</strong> help button that opens a detailed explanation of what it does, how to use its controls, and a hands-on patching exercise.</p>
+
+  <h3>Cable Display Modes</h3>
+  <p>Press <kbd>C</kbd> on your keyboard (or click the cable style button in the toolbar) to cycle through three cable rendering modes:</p>
+  <ul>
+    <li><strong>Clean</strong> (~) &mdash; Thin colored lines with minimal signal visualization. Easiest to read when you have many cables.</li>
+    <li><strong>Subtle</strong> (~~) &mdash; Medium lines with gentle signal-shaped width modulation. A good balance.</li>
+    <li><strong>Full</strong> (~~~) &mdash; Thick lines that show the actual signal amplitude as a waveform riding along the cable. Maximum visual feedback.</li>
+  </ul>
+
+  <h3>Signal Probe</h3>
+  <p>Click any cable to select it&thinsp;&mdash;&thinsp;a <strong>Signal Probe</strong> panel appears showing real-time analysis of the signal flowing through that cable. The probe shows different information depending on the signal type:</p>
+  <ul>
+    <li><strong>Audio</strong> &mdash; Waveform display and frequency analysis</li>
+    <li><strong>CV</strong> &mdash; Current voltage value, min/max range, and rate of change</li>
+    <li><strong>Gate</strong> &mdash; HIGH/LOW state and duty cycle</li>
+  </ul>
+  <p>You can drag the probe panel to reposition it. Press <kbd>Escape</kbd> or click elsewhere to dismiss it.</p>
+
   <!-- ════════ 3. YOUR FIRST PATCH ════════ -->
   <h2 id="first-patch">3. Your First Patch</h2>
 
@@ -1225,6 +1251,88 @@
     <div class="vis-desc"><strong>Visualization:</strong> Staircase waveform showing held values as horizontal steps with vertical jumps. A dim input reference line shows the continuous signal being sampled. Sample points flash on trigger.</div>
   </div>
 
+  <!-- ──── Drum Synth ──── -->
+  <div class="mod-head">
+    <div class="mod-icon" style="color: #ff4444; background: #ff4444;"></div>
+    <h3 style="color: #ff4444;" id="mod-drumsynth">Drum Synth</h3>
+  </div>
+
+  <div class="mod-section" style="border-left-color: #ff4444;">
+    <p>A synthesized drum machine with kick, snare, and hi-hat voices&thinsp;&mdash;&thinsp;click the step grid to program a beat.</p>
+    <p><strong>Teaches:</strong> Drum sounds are synthesis too. A kick is a sine wave sweeping down in pitch, a snare mixes tone with noise, a hi-hat is filtered noise. Layering simple building blocks creates complex rhythms.</p>
+
+    <h4>Knobs</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>What It Controls</th><th>Range</th></tr></thead>
+        <tbody>
+          <tr><td>BPM</td><td>Playback tempo</td><td>60&ndash;200 bpm</td></tr>
+          <tr><td>KICK</td><td>Kick drum level</td><td>0&ndash;1</td></tr>
+          <tr><td>SNR</td><td>Snare drum level</td><td>0&ndash;1</td></tr>
+          <tr><td>HAT</td><td>Hi-hat level</td><td>0&ndash;1</td></tr>
+          <tr><td>TONE</td><td>Voice pitch&thinsp;&mdash;&thinsp;deep to high</td><td>0&ndash;1</td></tr>
+          <tr><td>DECAY</td><td>Voice decay time&thinsp;&mdash;&thinsp;tight to boomy</td><td>0&ndash;1</td></tr>
+          <tr><td>STEPS</td><td>Number of steps in the pattern</td><td>4, 8, or 16</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Ports</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Direction</th><th>Connect To</th></tr></thead>
+        <tbody>
+          <tr><td>OUT</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>Out</td><td>Filter IN, Distortion IN, Output IN</td></tr>
+          <tr><td>KICK</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>Out</td><td>Separate kick voice for individual processing</td></tr>
+          <tr><td>SNR</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>Out</td><td>Separate snare voice for individual processing</td></tr>
+          <tr><td>HAT</td><td><span class="badge badge-audio"><span class="dot dot-audio"></span> Audio</span></td><td>Out</td><td>Separate hi-hat voice for individual processing</td></tr>
+          <tr><td>CLK</td><td><span class="badge badge-gate"><span class="dot dot-gate"></span> Gate</span></td><td>In</td><td>External clock overrides internal BPM</td></tr>
+          <tr><td>RST</td><td><span class="badge badge-gate"><span class="dot dot-gate"></span> Gate</span></td><td>In</td><td>Reset to step 1</td></tr>
+          <tr><td>ACC</td><td><span class="badge badge-gate"><span class="dot dot-gate"></span> Gate</span></td><td>In</td><td>Accent current step at 130% volume</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="vis-desc"><strong>Visualization:</strong> A step grid showing the programmed drum pattern. Click cells to toggle hits. A playhead sweeps across showing the current step. Each voice row (kick, snare, hat) is color-coded with active steps highlighted.</div>
+  </div>
+
+  <!-- ──── Quantizer ──── -->
+  <div class="mod-head">
+    <div class="mod-icon" style="color: #88ff88; background: #88ff88;"></div>
+    <h3 style="color: #88ff88;" id="mod-quantizer">Quantizer</h3>
+  </div>
+
+  <div class="mod-section" style="border-left-color: #88ff88;">
+    <p>Snaps any incoming pitch CV to the nearest note in a chosen musical scale&thinsp;&mdash;&thinsp;turns random or imprecise signals into music.</p>
+    <p><strong>Teaches:</strong> A quantizer forces continuous voltage to discrete musical notes. Connect it between a CV source (like Noise &rarr; Sample &amp; Hold) and an Oscillator to make random signals sound melodic.</p>
+
+    <h4>Knobs</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>What It Controls</th><th>Range</th></tr></thead>
+        <tbody>
+          <tr><td>ROOT</td><td>Root note of the scale</td><td>C, C#, D, D#, E, F, F#, G, G#, A, A#, B</td></tr>
+          <tr><td>SCALE</td><td>Scale type</td><td>Chromatic, Major, Minor, Pentatonic, Blues</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Ports</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Type</th><th>Direction</th><th>Connect To</th></tr></thead>
+        <tbody>
+          <tr><td>IN</td><td><span class="badge badge-cv"><span class="dot dot-cv"></span> CV</span></td><td>In</td><td>Sample &amp; Hold OUT, Sequencer CV, LFO OUT</td></tr>
+          <tr><td>TRIG</td><td><span class="badge badge-gate"><span class="dot dot-gate"></span> Gate</span></td><td>In</td><td>Optional trigger&thinsp;&mdash;&thinsp;quantize only on rising edge</td></tr>
+          <tr><td>OUT</td><td><span class="badge badge-cv"><span class="dot dot-cv"></span> CV</span></td><td>Out</td><td>Oscillator V/OCT</td></tr>
+          <tr><td>CHNG</td><td><span class="badge badge-gate"><span class="dot dot-gate"></span> Gate</span></td><td>Out</td><td>Fires when output note changes&thinsp;&mdash;&thinsp;trigger Envelope or other gates</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="vis-desc"><strong>Visualization:</strong> A piano keyboard display with the active scale notes highlighted. The incoming CV and quantized output pitch are shown, so you can see the snapping in action as imprecise values lock to the nearest note in the scale.</div>
+  </div>
+
   <!-- ════════ 5. SIGNAL TYPES EXPLAINED ════════ -->
   <h2 id="signal-types">5. Signal Types Explained</h2>
 
@@ -1289,7 +1397,8 @@
     <li><strong>Save</strong> &mdash; Click <strong>SAVE</strong> in the toolbar to download your patch as a <code>.json</code> file. You can share it or back it up.</li>
     <li><strong>Load</strong> &mdash; Click <strong>LOAD</strong> to import a previously saved <code>.json</code> patch file.</li>
     <li><strong>Reset</strong> &mdash; Click <strong>RESET</strong> to clear everything and start fresh. You'll be asked to confirm.</li>
-    <li><strong>Demo</strong> &mdash; Click <strong>DEMO</strong> to load a reference patch&thinsp;&mdash;&thinsp;a complete subtractive synth voice with Keyboard &rarr; Oscillator &rarr; Filter &rarr; VCA &rarr; Output, plus an Envelope on the VCA and an LFO modulating the filter cutoff. It's a great starting point to explore.</li>
+    <li><strong>Share</strong> &mdash; Click <strong>SHARE</strong> to generate a URL with your patch embedded in it. The link is copied to your clipboard&thinsp;&mdash;&thinsp;send it to anyone and they'll see your exact patch when they open it.</li>
+    <li><strong>Presets</strong> &mdash; Click <strong>PATCHES</strong> to browse 7 built-in presets: <em>First Light</em> (simple intro), <em>Pulse</em>, <em>Drift</em>, <em>Echo Chamber</em>, <em>Neon Dreams</em> (full showcase), <em>The Grid</em> (cinematic pad), and <em>Beat Lab</em> (drum synth demo).</li>
   </ul>
 
   <!-- ════════ 8. KEYBOARD SHORTCUTS ════════ -->
@@ -1333,6 +1442,11 @@
         <tr><td><kbd>Delete</kbd> / <kbd>Backspace</kbd></td><td>Remove selected cable</td></tr>
         <tr><td><kbd>Escape</kbd></td><td>Deselect cable</td></tr>
         <tr><td>Right-click module</td><td>Remove module from rack</td></tr>
+        <tr><td><kbd>C</kbd></td><td>Cycle cable display mode (clean &rarr; subtle &rarr; full)</td></tr>
+        <tr><td><kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Z</kbd></td><td>Undo</td></tr>
+        <tr><td><kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd></td><td>Redo</td></tr>
+        <tr><td><kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>+</kbd> / <kbd>-</kbd></td><td>Zoom in / out</td></tr>
+        <tr><td><kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>0</kbd></td><td>Fit zoom to content</td></tr>
       </tbody>
     </table>
   </div>
