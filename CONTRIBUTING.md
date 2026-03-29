@@ -3,7 +3,7 @@
 ## Dev Setup
 
 ```bash
-git clone https://github.com/YOURUSERNAME/patchglow.git
+git clone https://github.com/varactor-dev/patchglow.git
 cd patchglow
 npm install
 npm run dev
@@ -169,9 +169,17 @@ That's it — the module will appear in the toolbar's ADD menu automatically.
 - **Tone.js** for all Web Audio — no raw `AudioContext`
 - Prefer named exports for engines, default exports for React components and registrations
 
+## Demo Patches
+
+Demo patches (in `public/patches/`) must use only existing modules. Do not add new components or dependencies to make a demo work.
+
 ## Pull Requests
 
 1. Fork and create a feature branch
 2. Follow the checklist above
 3. `npm run build` must pass cleanly
 4. Open a PR with a clear description of what the module/feature does and why
+
+## Looking for Ideas?
+
+See [BACKLOG.md](BACKLOG.md) for a list of planned features and improvements open for contribution.

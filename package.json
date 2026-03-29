@@ -1,14 +1,18 @@
 {
   "name": "patchglow",
-  "version": "0.1.0",
-  "description": "A visual modular synthesizer that teaches synthesis by showing you what's happening",
+  "version": "1.0.0",
+  "description": "A visual modular synthesizer in your browser — patch, play, and see sound",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/YOURUSERNAME/patchglow.git"
+    "url": "https://github.com/varactor-dev/patchglow.git"
   },
+  "bugs": {
+    "url": "https://github.com/varactor-dev/patchglow/issues"
+  },
+  "author": "Varactor <info@patchglow.app> (https://patchglow.app)",
   "homepage": "https://patchglow.app",
-  "keywords": ["synthesizer", "modular", "web-audio", "tone-js", "eurorack", "education"],
+  "keywords": ["synthesizer", "modular", "eurorack", "web-audio", "tone-js", "music", "education", "visualization"],
   "type": "module",
   "scripts": {
     "dev": "vite",

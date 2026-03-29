@@ -1,97 +1,87 @@
 # PatchGlow
 
-**A visual modular synthesizer that teaches synthesis by showing you what's happening.**
+**A visual modular synthesizer in your browser — patch, play, and *see* sound.**
 
-![PatchGlow Screenshot](docs/screenshots/demo-patch.png)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/demo-patchglow.app-ff6b35)](https://patchglow.app)
 
-## What Is This?
+<!-- TODO: Add hero screenshot or GIF -->
 
-PatchGlow is a browser-based modular synthesizer built for learning. Instead of hiding what audio signals are doing behind knobs and labels, PatchGlow makes every signal visible — oscillator waveforms dance in real time, cables ripple with the audio they carry, envelopes rise and fall on screen as they shape your sound.
+PatchGlow is a browser-based modular synthesizer built for learning. Every module visualizes its function in real time, patch cables glow with the actual signal flowing through them, and you can click any cable to inspect the live waveform. It's modeled after Eurorack hardware synthesizers — place modules in a virtual rack, connect them with patch cables, and build sounds from scratch.
 
-It's modeled after Eurorack hardware synthesizers: you place modules in a virtual rack, connect them with patch cables, and build sounds from scratch. Each module has a focused job — an oscillator generates a waveform, a filter removes harmonics, an envelope shapes volume over time — and you wire them together to create something that sounds (and looks) alive.
-
-PatchGlow is designed for anyone curious about how synthesizers work. No prior experience required. Start the audio, load the demo patch, and watch the signal flow from oscillator to speaker.
-
-## Live Demo
-
-**[patchglow.app](https://patchglow.app)**
+No install, no plugins. Open the app and start patching.
 
 ## Features
 
-- **16 Modules** — Oscillator, Filter, VCA, Envelope, LFO, Mixer, Keyboard, Output, Step Sequencer, Noise, Delay, Reverb, Distortion, Sample & Hold, Drum Synth, and Quantizer
-- **Waveform-Riding Cables** — patch cables show the actual audio waveform traveling through them
-- **Three Signal Types** — audio (amber), CV/control voltage (cyan), and gate (magenta), with type-safe connections
-- **Cable Display Modes** — press C to cycle between clean, subtle, and full signal visualization on cables
-- **Signal Probe** — click any cable to inspect the live signal flowing through it
-- **Module Controls** — OFF, BYPASS, and SOLO buttons on every module for flexible signal routing
-- **Multi-Row Rack** — Eurorack-style layout with rail holes, HP grid, and mounting screws
-- **Real-Time Visualizations** — every module renders its internal state live (waveforms, spectra, envelope shapes, drum grids)
-- **7 Demo Presets** — progressive patches from simple (First Light) to complex (Beat Lab)
-- **Patch Save/Load & URL Sharing** — export/import patches as JSON, or share via compressed URL
-- **Undo/Redo** — full patch history with Ctrl+Z / Ctrl+Shift+Z
-- **Autosave** — your rack state persists automatically across sessions
-- **Viewport Zoom** — pinch-to-zoom, keyboard shortcuts (Cmd+/−), and auto-fit
+- **Signal-reactive patch cables** — cables glow, pulse, and deform based on the audio, CV, or gate signal flowing through them
+- **16 fully functional modules** — Oscillator, Filter, VCA, Envelope, LFO, Mixer, Keyboard, Output, Noise, Delay, Reverb, Distortion, Sample & Hold, Sequencer, Drum Synth, and Quantizer
+- **Real-time visualizations** — every module renders its internal state live (waveforms, spectra, envelope shapes, drum grids, piano keys)
+- **Signal probes** — click any cable to see an oscilloscope of the signal flowing through it
+- **7 demo patches** — progressive presets from simple oscillator-to-speaker up to full drum machines
+- **Drum Synth** — synthesized kick/snare/hat with a built-in 16-step sequencer
+- **Quantizer** — snaps pitch CV to musical scales with piano keyboard visualization
+- **Module controls** — OFF, BYPASS, SOLO, and HELP buttons on every module
+- **Cable display modes** — press C to cycle between clean, subtle, and full signal visualization
+- **Three signal types** — audio (amber), CV/control voltage (cyan), and gate (magenta) with type-safe connections
+- **Patch save/load & URL sharing** — export patches as JSON or share via compressed URL
+- **Undo/redo** — full patch history with Ctrl+Z / Ctrl+Shift+Z
+- **Fully browser-based** — no install, no plugins, works on desktop and iPad
 
-## Quick Start
+## Demo Patches
+
+| Patch | Description |
+|-------|-------------|
+| **First Light** | Your first sound — a single oscillator connected to the output |
+| **Pulse** | Simple rhythm with an LFO modulating the VCA |
+| **Drift** | Evolving pad with slow modulation and filtering |
+| **Echo Chamber** | Delay effect demonstration with feedback and modulation |
+| **Neon Dreams** | Full showcase using all three signal types — the default patch |
+| **The Grid** | TRON-inspired cinematic pad with layered modulation |
+| **Beat Lab** | Drum Synth + Quantizer working together for rhythm and melody |
+
+## Getting Started
 
 ```bash
-git clone https://github.com/YOURUSERNAME/patchglow.git
+git clone https://github.com/varactor-dev/patchglow.git
 cd patchglow
 npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) and click **START AUDIO**.
+Open [http://localhost:5173](http://localhost:5173) and click **START AUDIO**. Load a demo patch from the **PATCHES** menu, or build your own from scratch using the **ADD** button.
 
-## Your First Patch
-
-1. Click **START AUDIO** (or click anywhere on the overlay)
-2. Click **PATCHES** in the toolbar and choose a preset (try **Neon Dreams**)
-3. Click the on-screen keyboard to play notes
-4. Watch the signal flow: Keyboard → Oscillator → Filter → VCA → Output
-5. Try tweaking the oscillator waveform, filter cutoff, or envelope attack
-
-Or build from scratch:
-
-1. Click **ADD → Oscillator**, then **ADD → Output**
-2. Drag from the oscillator's **OUT** port to the output's **IN** port — you'll hear a tone
-3. Add a **Filter** between them, add a **Keyboard** and connect its **V/OCT** to the oscillator
-4. Add an **Envelope** and **VCA** to shape notes — connect the keyboard's **GATE** to the envelope's **GATE**
+Requires [Node.js](https://nodejs.org/) 18+.
 
 ## Tech Stack
 
 - **React 18** — UI components with CSS Modules
-- **TypeScript** — strict mode, no `any`
-- **Vite** — dev server and production builds
-- **Tone.js** — Web Audio abstraction layer
-- **Zustand** — lightweight state management
-- **@dnd-kit** — drag-and-drop module positioning
+- **TypeScript** — strict mode, zero `any`
+- **Tone.js 15** — Web Audio abstraction layer
+- **Zustand 5** — lightweight state management
+- **Vite 6** — dev server and production builds
+- **Canvas 2D** — per-module real-time visualizations
+- **SVG** — 5-layer signal-reactive cable rendering
 
-## Architecture
-
-PatchGlow follows a three-layer architecture:
+## Project Structure
 
 ```
-UI Layer          →  React components (Rack, ModulePanel, CableLayer, Toolbar)
-State Layer       →  Zustand store (modules, connections, parameters)
-Audio Layer       →  AudioEngineManager → per-module Tone.js engines
+src/
+  App.tsx               # Root component, module registration, audio init
+  engine/               # AudioEngineManager singleton, signal types
+  store/                # Zustand store, persistence, URL sharing
+  types/                # TypeScript interfaces (modules, connections, store)
+  modules/              # 16 synth modules + shared utilities
+  ui/                   # React components (Rack, Cables, Toolbar, Probe, Help)
+  data/                 # Educational help content for all modules
+  theme/                # CSS variables, global styles, fonts
+public/
+  patches/              # 7 JSON demo presets
+  docs/                 # User guide + technical reference
 ```
-
-Each module is a self-contained package with three files:
-
-| File | Purpose |
-|------|---------|
-| `definition.ts` | Static metadata: name, ports, parameters, HP width, accent color |
-| `engine.ts` | Audio engine: Tone.js nodes, signal routing, parameter handling |
-| `Visualization.tsx` | Real-time visual: canvas/SVG rendering driven by engine data |
-
-The `AudioEngineManager` singleton subscribes to the Zustand store and keeps the Web Audio graph in sync — creating/disposing engine instances when modules are added/removed, and connecting/disconnecting Tone.js nodes when cables change.
-
-See the in-app **DOCS** button for the full technical reference.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, module creation guide, and contribution checklist.
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, the module creation guide, and contribution checklist.
 
 ## Acknowledgments
 
@@ -120,3 +110,9 @@ If you're inspired by PatchGlow, please explore and support these projects. Open
 ## License
 
 [MIT](LICENSE) — Copyright 2025 PatchGlow Contributors
+
+## Links
+
+- **Live app**: [patchglow.app](https://patchglow.app)
+- **Issues**: [github.com/varactor-dev/patchglow/issues](https://github.com/varactor-dev/patchglow/issues)
+- **Contact**: [info@patchglow.app](mailto:info@patchglow.app)

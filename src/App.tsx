@@ -347,7 +347,7 @@ export default function App() {
             <div className={styles.aboutTagline}>
               A visual modular synthesizer that teaches synthesis by showing you what&apos;s happening
             </div>
-            <div className={styles.aboutVersion}>v0.1.0</div>
+            <div className={styles.aboutVersion}>v1.0.0</div>
             <div className={styles.aboutDivider} />
             <div className={styles.aboutBody}>
               PatchGlow is an open-source creative coding project. Every module visualizes its function
@@ -356,7 +356,7 @@ export default function App() {
             </div>
             <div className={styles.aboutDivider} />
             <div className={styles.aboutLinks}>
-              <a className={styles.aboutLink} href="https://github.com/kc-cl/patchglow" target="_blank" rel="noopener noreferrer">
+              <a className={styles.aboutLink} href="https://github.com/varactor-dev/patchglow" target="_blank" rel="noopener noreferrer">
                 GitHub
               </a>
               <a className={styles.aboutLink} href="mailto:info@patchglow.app">
@@ -409,7 +409,7 @@ export default function App() {
             </div>
             <div className={styles.aboutDivider} />
             <div className={styles.aboutLicense}>
-              <a className={styles.aboutLink} href="https://github.com/kc-cl/patchglow/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">
+              <a className={styles.aboutLink} href="https://github.com/varactor-dev/patchglow/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">
                 MIT License
               </a>
             </div>
